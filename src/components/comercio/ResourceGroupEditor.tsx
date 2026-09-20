@@ -76,12 +76,14 @@ export function ResourceGroupEditor({
   saving: boolean;
 }) {
   const [drafts, setDrafts] = useState<Draft[]>(() => groups.map(draftFromGroup));
-  const [open, setOpen] = useState(groups.length === 0 ? false : false);
+  const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // The map refetches in the background; only mirror it while the editor is
+  // closed so a refresh never wipes what the organizer is typing.
   useEffect(() => {
-    setDrafts(groups.map(draftFromGroup));
-  }, [groups]);
+    if (!open) setDrafts(groups.map(draftFromGroup));
+  }, [groups, open]);
 
   const preview = useMemo(() => drafts.map(labelsOf), [drafts]);
 

@@ -92,6 +92,11 @@ export function useReserveForm(eventId: string) {
     entryType?.remaining != null ? Math.max(entryType.remaining, 1) : MAX_QUANTITY,
   );
 
+  // Switching to a tier with fewer seats left must pull the quantity down.
+  useEffect(() => {
+    setQuantity((current) => Math.min(current, maxQuantity));
+  }, [maxQuantity]);
+
   // Ticket #1 is the buyer unless they type otherwise.
   useEffect(() => {
     if (!user) return;
