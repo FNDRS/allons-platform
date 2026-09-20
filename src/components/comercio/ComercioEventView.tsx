@@ -90,6 +90,11 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
 
       {resources.isLoading ? (
         <Skeleton className="h-40" />
+      ) : resources.error ? (
+        <ErrorState
+          message={`Recursos asignables: ${(resources.error as Error).message}`}
+          onRetry={() => void resources.refetch()}
+        />
       ) : (
         <>
           <ResourceMap

@@ -60,3 +60,8 @@ export function getPaymentOrder(orderId: string) {
 export const paymentKeys = {
   order: (id: string) => ["me", "payments", "orders", id] as const,
 };
+
+/** sessionStorage key where the reserve step keeps the hosted-page link. */
+export function paymentLinkStorageKey(orderId: string) {
+  return `allons.paymentLink.${orderId}`;
+}

@@ -8,16 +8,42 @@ import { useEffect, useRef, useState } from "react";
 import { useCountdown } from "@/hooks/useCountdown";
 import { usePaymentOrder } from "@/hooks/usePaymentOrder";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { paymentLinkStorageKey } from "@/lib/api/payments";
 import { formatCents } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 
-function safeLink(raw: string | null): string | null {
-  if (!raw) return null;
+/** Hosts the Paygate (Clinpays) hosted page is served from. */
+const PAYGATE_HOSTS = ["paygatehn.com", "clinpays.com"];
+
+/**
+ * The link only ever comes from `POST /me/payments/initiate`. The reserve
+ * step stores it per order in sessionStorage; the query param is a fallback
+ * for a page opened in another tab, and is honored only on a Paygate host so
+ * a crafted URL cannot make this page open somewhere else.
+ */
+function trustedLink(orderId: string, fromQuery: string | null): string | null {
+  const candidates = [readStoredLink(orderId), fromQuery];
+  for (const raw of candidates) {
+    if (!raw) continue;
+    try {
+      const url = new URL(raw);
+      const host = url.hostname.toLowerCase();
+      const known = PAYGATE_HOSTS.some(
+        (suffix) => host === suffix || host.endsWith(`.${suffix}`),
+      );
+      if (url.protocol === "https:" && known) return url.toString();
+    } catch {
+      /* try the next candidate */
+    }
+  }
+  return null;
+}
+
+function readStoredLink(orderId: string): string | null {
   try {
-    const url = new URL(raw);
-    return url.protocol === "https:" ? url.toString() : null;
+    return window.sessionStorage.getItem(paymentLinkStorageKey(orderId));
   } catch {
     return null;
   }
@@ -26,7 +52,10 @@ function safeLink(raw: string | null): string | null {
 export function PaymentView({ orderId }: { orderId: string }) {
   const { ready } = useRequireAuth();
   const params = useSearchParams();
-  const link = safeLink(params.get("link"));
+  const [link, setLink] = useState<string | null>(null);
+  useEffect(() => {
+    setLink(trustedLink(orderId, params.get("link")));
+  }, [orderId, params]);
   const eventId = params.get("event");
   const { order, phase, error, resume } = usePaymentOrder(ready ? orderId : "");
   const countdown = useCountdown(order?.expiresAt);

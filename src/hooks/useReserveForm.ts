@@ -3,14 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { displayNameOf, useAuth } from "@/components/app/AuthProvider";
-import { useEventDetail } from "@/hooks/useEventDetail";
+import { deriveReserveState, useEventDetail } from "@/hooks/useEventDetail";
 import { isApiError } from "@/lib/api/client";
 import {
   isEntryTypeOnSale,
   type EventEntryType,
   type EventQuestion,
 } from "@/lib/api/events";
-import { initiatePayment } from "@/lib/api/payments";
+import { initiatePayment, paymentLinkStorageKey } from "@/lib/api/payments";
 import { reserveFreeTickets, type AnswerInput } from "@/lib/api/tickets";
 
 export interface HolderDraft {
@@ -72,8 +72,11 @@ export function useReserveForm(eventId: string) {
   const [error, setError] = useState<string | null>(null);
 
   const availableTypes = useMemo(() => {
+    // Same gate as the detail CTA: a finished or sold-out event sells nothing,
+    // whatever a stale tier row says.
+    if (!event || deriveReserveState(event).kind === "closed") return [];
     const now = Date.now();
-    return (event?.entryTypes ?? []).filter(
+    return (event.entryTypes ?? []).filter(
       (type) => isEntryTypeOnSale(type, now) && !type.soldOut && type.remaining !== 0,
     );
   }, [event]);
@@ -224,6 +227,14 @@ export function useReserveForm(eventId: string) {
         answers: firstAnswers,
         ...(donationAllowed && donationCents > 0 ? { donationCents } : {}),
       });
+      try {
+        window.sessionStorage.setItem(
+          paymentLinkStorageKey(order.orderId),
+          order.paymentLink,
+        );
+      } catch {
+        /* the query param below still carries it */
+      }
       router.replace(
         `/pagar/${encodeURIComponent(order.orderId)}?link=${encodeURIComponent(order.paymentLink)}&event=${encodeURIComponent(event.id)}`,
       );

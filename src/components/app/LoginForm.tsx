@@ -25,9 +25,18 @@ function friendlyAuthError(message: string): string {
   return message || "Algo salió mal. Intenta de nuevo.";
 }
 
+/** Only a same-origin path: no protocol-relative, no backslash tricks. */
 function safeNext(raw: string | null): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/events";
-  return raw;
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || /[\\\s]/.test(raw)) {
+    return "/events";
+  }
+  try {
+    const url = new URL(raw, "https://allonsapp.com");
+    if (url.origin !== "https://allonsapp.com") return "/events";
+    return url.pathname + url.search;
+  } catch {
+    return "/events";
+  }
 }
 
 export function LoginForm() {

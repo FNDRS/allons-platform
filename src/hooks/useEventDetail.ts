@@ -15,6 +15,7 @@ export type ReserveState =
 
 export function deriveReserveState(event: EventDetail): ReserveState {
   if (event.status === "ended") return { kind: "closed", label: "Evento finalizado" };
+  if (event.status === "sold_out") return { kind: "closed", label: "Agotado" };
   const types = event.entryTypes ?? [];
   if (types.length === 0) {
     return { kind: "closed", label: "Reservas no disponibles" };
