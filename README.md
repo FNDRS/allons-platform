@@ -3,6 +3,27 @@
 Landing page super minimalista para Allons.
 Negro, logo + un solo CTA → captura email → guarda en Supabase con atribución por QR.
 
+## Plataforma web (allonsapp.com/events)
+
+Además de la landing, el sitio funciona como cliente web de Allons cuando la app
+no está disponible. Todo habla directo con **allons-api** desde el navegador con
+la sesión de Supabase (Bearer); no hay rutas `/api/*` propias para esto.
+
+| Ruta | Qué hace |
+| --- | --- |
+| `/events` | Lista pública de eventos, con búsqueda y filtro por ciudad |
+| `/events/{id}` | Detalle del evento + CTA de reserva (y enlace a la app) |
+| `/events/{id}/reservar` | Checkout: tipo de entrada, asistentes, preguntas, aporte |
+| `/pagar/{orderId}` | Abre el link de Paygate en otra pestaña y espera la confirmación |
+| `/tickets`, `/tickets/{id}` | Mis tickets: QR, código `ALL-`, y elección de recurso (bici/asiento) |
+| `/comercio` | Resumen del comercio: KPIs y eventos |
+| `/comercio/events/{id}` | Ventas por tipo y por hora, pagos, mapa y editor de recursos |
+| `/comercio/staff` | Invitar y desactivar staff |
+| `/login` | Correo + contraseña (misma cuenta que la app) |
+
+Requiere `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` en el
+navegador y, opcionalmente, `NEXT_PUBLIC_ALLONS_API_URL`.
+
 ## Stack
 
 - Next.js 15 (App Router)
