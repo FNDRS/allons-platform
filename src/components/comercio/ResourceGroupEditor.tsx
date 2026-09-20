@@ -22,7 +22,11 @@ interface Draft {
 }
 
 function draftFromGroup(group: ProviderResourceGroup): Draft {
-  const labels = group.resources.filter((unit) => unit.active).map((unit) => unit.label);
+  // Inactive units are hidden from buyers, but one that still has a ticket
+  // must stay in the list or the next save would try to drop it.
+  const labels = group.resources
+    .filter((unit) => unit.active || unit.ticket)
+    .map((unit) => unit.label);
   const generated = detectSeries(labels);
   return {
     id: group.id,

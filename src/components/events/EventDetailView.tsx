@@ -49,8 +49,6 @@ export function EventDetailView({
     );
   }
 
-  const open = reserve?.kind === "open";
-
   return (
     <div className="flex flex-col gap-6">
       <EventHero event={event} />
@@ -82,7 +80,7 @@ export function EventDetailView({
               {event.entryTypes?.length ? `Desde ${cheapest(event.entryTypes)}` : ""}
             </p>
           </div>
-          {open ? (
+          {reserve?.kind === "open" ? (
             <Link href={`/events/${encodeURIComponent(id)}/reservar`} className="shrink-0">
               <Button size="lg">{reserve.label}</Button>
             </Link>
