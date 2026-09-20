@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { Providers } from "@/components/app/Providers";
 
 const SITE_URL = "https://allonsapp.com";
 
@@ -148,7 +149,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        {children}
+        <Providers>{children}</Providers>
         <Toaster
           position="top-center"
           theme="dark"
