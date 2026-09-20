@@ -8,7 +8,7 @@ import { FieldError, Input, Label } from "@/components/ui/Field";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useAuth } from "./AuthProvider";
 
-type Mode = "login" | "signup" | "reset";
+type Mode = "login" | "signup" | "reset" | "update";
 
 function friendlyAuthError(message: string): string {
   const lower = message.toLowerCase();
@@ -53,9 +53,28 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  // A recovery link lands here with a session already open. Supabase raises
+  // PASSWORD_RECOVERY for it; switch to the new-password form instead of
+  // bouncing the user straight into the app with the old password.
   useEffect(() => {
-    if (!loading && user) router.replace(next);
-  }, [loading, user, router, next]);
+    if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
+      setMode("update");
+    }
+    let supabase: ReturnType<typeof getSupabaseBrowser>;
+    try {
+      supabase = getSupabaseBrowser();
+    } catch {
+      return;
+    }
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setMode("update");
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!loading && user && mode !== "update") router.replace(next);
+  }, [loading, user, router, next, mode]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -94,6 +113,14 @@ export function LoginForm() {
         }
         return;
       }
+      if (mode === "update") {
+        const { error: err } = await supabase.auth.updateUser({ password });
+        if (err) throw err;
+        toast.success("Contraseña actualizada");
+        setPassword("");
+        router.replace(next);
+        return;
+      }
       const { error: err } = await supabase.auth.resetPasswordForEmail(
         email.trim(),
         { redirectTo: `${window.location.origin}/login` },
@@ -113,7 +140,9 @@ export function LoginForm() {
       ? "Entra a Allons"
       : mode === "signup"
         ? "Crea tu cuenta"
-        : "Recupera tu contraseña";
+        : mode === "update"
+          ? "Elige una nueva contraseña"
+          : "Recupera tu contraseña";
 
   return (
     <div className="mx-auto w-full max-w-md">
@@ -126,7 +155,9 @@ export function LoginForm() {
       <p className="mt-3 text-sm text-white/55">
         {mode === "reset"
           ? "Te enviaremos un enlace para elegir una nueva contraseña."
-          : "Usa la misma cuenta que en la app. Tus tickets se ven en los dos lados."}
+          : mode === "update"
+            ? "Escribe la contraseña que usarás desde ahora, en la web y en la app."
+            : "Usa la misma cuenta que en la app. Tus tickets se ven en los dos lados."}
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-4">
@@ -142,6 +173,7 @@ export function LoginForm() {
             />
           </label>
         ) : null}
+        {mode !== "update" ? (
         <label className="block">
           <Label>Correo</Label>
           <Input
@@ -154,14 +186,15 @@ export function LoginForm() {
             required
           />
         </label>
+        ) : null}
         {mode !== "reset" ? (
           <label className="block">
-            <Label>Contraseña</Label>
+            <Label>{mode === "update" ? "Nueva contraseña" : "Contraseña"}</Label>
             <Input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
               placeholder="••••••••"
               minLength={6}
               required
@@ -181,7 +214,9 @@ export function LoginForm() {
             ? "Entrar"
             : mode === "signup"
               ? "Crear cuenta"
-              : "Enviar enlace"}
+              : mode === "update"
+                ? "Guardar contraseña"
+                : "Enviar enlace"}
         </Button>
       </form>
 
