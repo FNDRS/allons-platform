@@ -4,7 +4,7 @@ import { Check, Minus, Plus } from "lucide-react";
 import type { EventEntryType, EventQuestion } from "@/lib/api/events";
 import { formatCents, formatPriceCents } from "@/lib/format";
 import type { HolderDraft } from "@/hooks/useReserveForm";
-import { Card, SectionTitle } from "@/components/ui/Card";
+import { Card, StepTitle } from "@/components/ui/Card";
 import { FieldError, Input, Label, Select, Textarea } from "@/components/ui/Field";
 
 export function EntryTypePicker({
@@ -18,7 +18,7 @@ export function EntryTypePicker({
 }) {
   return (
     <section>
-      <SectionTitle>Tipo de entrada</SectionTitle>
+      <StepTitle step={1}>Entradas</StepTitle>
       <div role="radiogroup" className="flex flex-col gap-2.5">
         {types.map((type) => {
           const active = type.id === value;
@@ -72,7 +72,7 @@ export function QuantityStepper({
 }) {
   return (
     <section>
-      <SectionTitle>Cantidad</SectionTitle>
+      <StepTitle step={2}>Cantidad</StepTitle>
       <Card className="flex items-center justify-between py-4">
         <p className="text-sm text-white/60">
           {value === 1 ? "1 ticket" : `${value} tickets`}
@@ -284,7 +284,7 @@ export function DonationField({
 }) {
   return (
     <section>
-      <SectionTitle>Aporte voluntario</SectionTitle>
+      <StepTitle step={4} hint="opcional">Aporte</StepTitle>
       <Card>
         <p className="text-sm text-white/60">
           Este evento acepta un aporte extra además de la entrada. Es opcional.

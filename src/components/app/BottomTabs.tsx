@@ -2,17 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, Store, Ticket } from "lucide-react";
+import { Compass, Store, Ticket, type LucideIcon } from "lucide-react";
 import { isActivePath } from "./AppNav";
 
-const TABS = [
+export type BottomTab = { href: string; label: string; Icon: LucideIcon };
+
+const TABS: BottomTab[] = [
   { href: "/events", label: "Eventos", Icon: Compass },
   { href: "/tickets", label: "Tickets", Icon: Ticket },
   { href: "/comercio", label: "Comercio", Icon: Store },
 ];
 
 /** Phone navigation: a fixed frosted tab bar. Hidden from md up. */
-export function BottomTabs({ hidden = false }: { hidden?: boolean }) {
+export function BottomTabs({
+  hidden = false,
+  tabs = TABS,
+}: {
+  hidden?: boolean;
+  tabs?: BottomTab[];
+}) {
   const pathname = usePathname();
   if (hidden) return null;
   return (
@@ -21,8 +29,11 @@ export function BottomTabs({ hidden = false }: { hidden?: boolean }) {
       className="glass fixed inset-x-0 bottom-0 z-40 border-t border-border pb-[max(env(safe-area-inset-bottom),8px)] md:hidden"
     >
       <div className="mx-auto flex max-w-md items-stretch justify-around px-2 pt-2">
-        {TABS.map(({ href, label, Icon }) => {
-          const active = isActivePath(pathname, href);
+        {tabs.map(({ href, label, Icon }) => {
+          const active =
+            href === "/comercio"
+              ? isActivePath(pathname, href) && !pathname.startsWith("/comercio/staff")
+              : isActivePath(pathname, href);
           return (
             <Link
               key={href}

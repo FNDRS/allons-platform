@@ -5,7 +5,7 @@ import { ArrowLeft, Lock } from "lucide-react";
 import { useReserveForm } from "@/hooks/useReserveForm";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/Button";
-import { SectionTitle } from "@/components/ui/Card";
+import { StepTitle } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import {
   DonationField,
@@ -52,11 +52,12 @@ export function ReserveView({ eventId }: { eventId: string }) {
   return (
     <div className="flex flex-col gap-7">
       <div>
-        <Link href={back} className="inline-flex items-center gap-1.5 text-sm text-white/55 hover:text-white">
+        <Link href={back} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-white">
           <ArrowLeft className="size-4" /> Volver al evento
         </Link>
-        <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-[-0.04em]">
-          Reservar · {event.title}
+        <p className="mt-4 text-[12px] font-semibold uppercase tracking-[0.2em] text-accent">Reservar</p>
+        <h1 className="mt-1 text-[32px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[40px]">
+          {event.title}
         </h1>
       </div>
 
@@ -69,7 +70,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
       <QuantityStepper value={form.quantity} max={form.maxQuantity} onChange={form.setQuantity} />
 
       <section>
-        <SectionTitle>Asistentes</SectionTitle>
+        <StepTitle step={3}>Asistentes</StepTitle>
         <div className="flex flex-col gap-3">
           {form.holders.map((holder, index) => (
             <HolderCard
@@ -96,7 +97,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
       ) : null}
 
       <section>
-        <SectionTitle>Resumen</SectionTitle>
+        <StepTitle step={5}>Resumen</StepTitle>
         <ReserveSummary
           quantity={form.quantity}
           typeName={form.entryType?.name ?? ""}
