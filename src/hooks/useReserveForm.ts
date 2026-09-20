@@ -1,0 +1,265 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { displayNameOf, useAuth } from "@/components/app/AuthProvider";
+import { useEventDetail } from "@/hooks/useEventDetail";
+import { isApiError } from "@/lib/api/client";
+import {
+  isEntryTypeOnSale,
+  type EventEntryType,
+  type EventQuestion,
+} from "@/lib/api/events";
+import { initiatePayment } from "@/lib/api/payments";
+import { reserveFreeTickets, type AnswerInput } from "@/lib/api/tickets";
+
+export interface HolderDraft {
+  name: string;
+  email: string;
+  answers: Record<string, string>;
+}
+
+const MAX_QUANTITY = 10;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function emptyHolder(): HolderDraft {
+  return { name: "", email: "", answers: {} };
+}
+
+export function answersToList(
+  questions: EventQuestion[],
+  answers: Record<string, string>,
+): AnswerInput[] {
+  return questions
+    .map((question) => ({
+      questionId: question.id,
+      answer: (answers[question.id] ?? "").trim(),
+    }))
+    .filter((answer) => answer.answer.length > 0);
+}
+
+/** Missing required answers for one holder, by question id. */
+export function missingAnswers(
+  questions: EventQuestion[],
+  answers: Record<string, string>,
+): string[] {
+  return questions
+    .filter((question) => question.required)
+    .filter((question) => {
+      const value = (answers[question.id] ?? "").trim();
+      // The app treats a required yes/no as "must be yes" (a consent box).
+      if (question.kind === "boolean") return value !== "Sí";
+      return value.length === 0;
+    })
+    .map((question) => question.id);
+}
+
+/**
+ * All the state behind /events/[id]/reservar. The page only renders.
+ */
+export function useReserveForm(eventId: string) {
+  const router = useRouter();
+  const { user } = useAuth();
+  const detail = useEventDetail(eventId);
+  const event = detail.event;
+
+  const [entryTypeId, setEntryTypeId] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [holders, setHolders] = useState<HolderDraft[]>([emptyHolder()]);
+  const [donation, setDonation] = useState("");
+  const [touched, setTouched] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const availableTypes = useMemo(() => {
+    const now = Date.now();
+    return (event?.entryTypes ?? []).filter(
+      (type) => isEntryTypeOnSale(type, now) && !type.soldOut && type.remaining !== 0,
+    );
+  }, [event]);
+
+  // Pick the only (or first) tier so the buyer has one less tap.
+  useEffect(() => {
+    if (entryTypeId || availableTypes.length === 0) return;
+    setEntryTypeId(availableTypes[0].id);
+  }, [availableTypes, entryTypeId]);
+
+  const entryType: EventEntryType | null =
+    availableTypes.find((type) => type.id === entryTypeId) ?? null;
+
+  const maxQuantity = Math.min(
+    MAX_QUANTITY,
+    entryType?.remaining != null ? Math.max(entryType.remaining, 1) : MAX_QUANTITY,
+  );
+
+  // Ticket #1 is the buyer unless they type otherwise.
+  useEffect(() => {
+    if (!user) return;
+    setHolders((current) => {
+      const [first, ...rest] = current;
+      if (first.name || first.email) return current;
+      return [
+        { ...first, name: displayNameOf(user), email: user.email ?? "" },
+        ...rest,
+      ];
+    });
+  }, [user]);
+
+  useEffect(() => {
+    setHolders((current) => {
+      if (current.length === quantity) return current;
+      if (current.length > quantity) return current.slice(0, quantity);
+      return [
+        ...current,
+        ...Array.from({ length: quantity - current.length }, emptyHolder),
+      ];
+    });
+  }, [quantity]);
+
+  const questions = useMemo(
+    () => [...(event?.questions ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
+    [event],
+  );
+
+  const isFree =
+    event?.ticketMode === "free" || (entryType ? entryType.priceCents === 0 : false);
+  const donationCents = Math.max(0, Math.round((Number(donation) || 0) * 100));
+  const donationAllowed = Boolean(entryType?.donationEnabled) && !isFree;
+  const ticketsCents = (entryType?.priceCents ?? 0) * quantity;
+  const totalCents = ticketsCents + (donationAllowed ? donationCents : 0);
+
+  const holderErrors = useMemo(
+    () =>
+      holders.map((holder) => {
+        const errors: { name?: string; email?: string; answers: string[] } = {
+          answers: missingAnswers(questions, holder.answers),
+        };
+        if (!holder.name.trim()) errors.name = "Escribe el nombre";
+        if (!EMAIL_RE.test(holder.email.trim())) errors.email = "Correo inválido";
+        return errors;
+      }),
+    [holders, questions],
+  );
+
+  const duplicateEmail = useMemo(() => {
+    const seen = new Set<string>();
+    for (const holder of holders) {
+      const key = holder.email.trim().toLowerCase();
+      if (!key) continue;
+      if (seen.has(key)) return key;
+      seen.add(key);
+    }
+    return null;
+  }, [holders]);
+
+  const valid =
+    Boolean(entryType) &&
+    !duplicateEmail &&
+    holderErrors.every(
+      (errors) => !errors.name && !errors.email && errors.answers.length === 0,
+    );
+
+  function updateHolder(index: number, patch: Partial<HolderDraft>) {
+    setHolders((current) =>
+      current.map((holder, idx) => (idx === index ? { ...holder, ...patch } : holder)),
+    );
+  }
+
+  function setAnswer(index: number, questionId: string, value: string) {
+    setHolders((current) =>
+      current.map((holder, idx) =>
+        idx === index
+          ? { ...holder, answers: { ...holder.answers, [questionId]: value } }
+          : holder,
+      ),
+    );
+  }
+
+  async function submit() {
+    setTouched(true);
+    setError(null);
+    if (!event || !entryType) return;
+    if (duplicateEmail) {
+      setError("Cada ticket necesita un correo distinto.");
+      return;
+    }
+    if (!valid) {
+      setError("Revisa los datos marcados antes de continuar.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const holderPayload = holders.map((holder) => ({
+        name: holder.name.trim(),
+        email: holder.email.trim(),
+        answers: answersToList(questions, holder.answers),
+      }));
+      const firstAnswers = holderPayload[0]?.answers ?? [];
+
+      if (isFree) {
+        const result = await reserveFreeTickets({
+          eventId: event.id,
+          quantity,
+          ticketTypeId: entryType.id,
+          holders: holderPayload,
+          answers: firstAnswers,
+        });
+        const ticketId = result.ticketIds?.[0];
+        router.replace(
+          ticketId ? `/tickets/${encodeURIComponent(ticketId)}?nuevo=1` : "/tickets",
+        );
+        return;
+      }
+
+      const order = await initiatePayment({
+        eventId: event.id,
+        entryTypeId: entryType.id,
+        quantity,
+        holders: holderPayload.map((holder) => ({ ...holder, invite: false })),
+        answers: firstAnswers,
+        ...(donationAllowed && donationCents > 0 ? { donationCents } : {}),
+      });
+      router.replace(
+        `/pagar/${encodeURIComponent(order.orderId)}?link=${encodeURIComponent(order.paymentLink)}&event=${encodeURIComponent(event.id)}`,
+      );
+    } catch (err) {
+      setError(
+        isApiError(err) ? err.message : "No pudimos crear la reserva. Intenta de nuevo.",
+      );
+      setSubmitting(false);
+    }
+  }
+
+  return {
+    event,
+    isLoading: detail.isLoading,
+    loadError: detail.error as Error | null,
+    refetch: detail.refetch,
+    availableTypes,
+    entryType,
+    entryTypeId,
+    setEntryTypeId,
+    quantity,
+    setQuantity: (value: number) =>
+      setQuantity(Math.min(Math.max(1, value), maxQuantity)),
+    maxQuantity,
+    holders,
+    holderErrors,
+    duplicateEmail,
+    touched,
+    updateHolder,
+    setAnswer,
+    questions,
+    isFree,
+    donationAllowed,
+    donation,
+    setDonation,
+    ticketsCents,
+    donationCents,
+    totalCents,
+    submit,
+    submitting,
+    error,
+    valid,
+  };
+}
