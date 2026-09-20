@@ -48,7 +48,9 @@ export function missingAnswers(
     .filter((question) => {
       const value = (answers[question.id] ?? "").trim();
       // The app treats a required yes/no as "must be yes" (a consent box).
-      if (question.kind === "boolean") return value !== "Sí";
+      if (question.kind === "boolean" || question.kind === "checkbox") {
+        return value !== "Sí";
+      }
       return value.length === 0;
     })
     .map((question) => question.id);

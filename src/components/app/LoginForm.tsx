@@ -10,6 +10,8 @@ import { useAuth } from "./AuthProvider";
 
 type Mode = "login" | "signup" | "reset" | "update";
 
+const NEXT_STORAGE_KEY = "allons.login.next";
+
 function friendlyAuthError(message: string): string {
   const lower = message.toLowerCase();
   if (lower.includes("invalid login credentials"))
@@ -42,7 +44,8 @@ function safeNext(raw: string | null): string {
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = safeNext(params.get("next"));
+  const [storedNext, setStoredNext] = useState<string | null>(null);
+  const next = params.get("next") ? safeNext(params.get("next")) : storedNext ?? "/events";
   const { user, loading } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");
@@ -59,6 +62,13 @@ export function LoginForm() {
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
       setMode("update");
+    }
+    // The recovery email cannot carry ?next, so keep it across the round trip.
+    try {
+      const saved = window.sessionStorage.getItem(NEXT_STORAGE_KEY);
+      if (saved && !params.get("next")) setStoredNext(safeNext(saved));
+    } catch {
+      /* no session storage: fall back to the default destination */
     }
     let supabase: ReturnType<typeof getSupabaseBrowser>;
     try {
@@ -118,8 +128,18 @@ export function LoginForm() {
         if (err) throw err;
         toast.success("Contraseña actualizada");
         setPassword("");
+        try {
+          window.sessionStorage.removeItem(NEXT_STORAGE_KEY);
+        } catch {
+          /* nothing to clean */
+        }
         router.replace(next);
         return;
+      }
+      try {
+        window.sessionStorage.setItem(NEXT_STORAGE_KEY, next);
+      } catch {
+        /* the user simply lands on /events after the reset */
       }
       const { error: err } = await supabase.auth.resetPasswordForEmail(
         email.trim(),

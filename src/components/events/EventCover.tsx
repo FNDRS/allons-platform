@@ -34,7 +34,12 @@ export function EventCover({
   );
 }
 
+/** Six-digit hex or null; a short `#abc` is expanded so alpha can be appended. */
 function safeColor(value: string | null | undefined): string | null {
   if (!value) return null;
-  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value) ? value : null;
+  if (/^#[0-9a-f]{6}$/i.test(value)) return value;
+  const short = value.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
+  if (!short) return null;
+  const [, r, g, b] = short;
+  return `#${r}${r}${g}${g}${b}${b}`;
 }
