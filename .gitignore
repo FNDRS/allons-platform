@@ -37,3 +37,6 @@ next-env.d.ts
 # generated QR codes
 qrs/
 CLAUDE.md
+
+# claude worktrees
+.claude/

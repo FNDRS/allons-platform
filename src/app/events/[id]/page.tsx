@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { EventDownloadFallback } from "@/components/events/EventDownloadFallback";
+import { AppShell } from "@/components/app/AppShell";
+import { EventDetailView } from "@/components/events/EventDetailView";
 import { formatEventWhen, getPublicEvent } from "@/lib/allons-api";
 
 const SITE_URL = "https://allonsapp.com";
@@ -9,8 +10,8 @@ const DEFAULT_PLAY_STORE_LINK =
   "https://play.google.com/store/apps/details?id=com.fndrs.allons";
 
 /** Copia de respaldo cuando no se pudo resolver el evento. */
-const GENERIC_TITLE = "Evento compartido en Allons";
-const GENERIC_DESCRIPTION = "Abre este evento en Allons o descarga la app.";
+const GENERIC_TITLE = "Evento en Allons";
+const GENERIC_DESCRIPTION = "Mira los detalles y compra tu entrada en Allons.";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -40,8 +41,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       .filter(Boolean)
       .join(" · ") || GENERIC_DESCRIPTION;
 
-  // La portada del evento cuando existe. Hoy la mayoría no tiene, así que la
-  // imagen del sitio sigue siendo el respaldo y no un hueco en la tarjeta.
   const image = event?.coverImageUrl
     ? { url: event.coverImageUrl, alt: event.title }
     : {
@@ -50,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       };
 
   return {
-    title: event ? event.title : "Abrir evento",
+    title: event ? event.title : "Evento",
     description,
     alternates: {
       canonical: path,
@@ -70,22 +69,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function EventFallbackPage({ params }: Props) {
+/**
+ * The event page. Also the target of shared links and App Links: with the
+ * app installed the OS opens it there; without it, this page sells the
+ * ticket on the web and still offers the app.
+ */
+export default async function EventPage({ params }: Props) {
   const { id } = await params;
-  const event = await getPublicEvent(id);
-
   return (
-    <EventDownloadFallback
-      appDeepLink={buildEventDeepLink(id)}
-      appStoreLink={getAppStoreLink()}
-      playStoreLink={getPlayStoreLink()}
-      eventTitle={event?.title ?? null}
-      eventMeta={
-        [formatEventWhen(event?.startsAt ?? null), event?.city]
-          .filter(Boolean)
-          .join(" · ") || null
-      }
-      providerName={event?.providerName ?? null}
-    />
+    <AppShell>
+      <EventDetailView
+        id={id}
+        appDeepLink={buildEventDeepLink(id)}
+        appStoreLink={getAppStoreLink()}
+        playStoreLink={getPlayStoreLink()}
+      />
+    </AppShell>
   );
 }
