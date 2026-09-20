@@ -10,8 +10,9 @@ export interface ResourceTile {
 }
 
 /**
- * The unit map: a grid of round tiles. Shared by the attendee picker, the
- * public preview and the comercio map so all three read the same.
+ * The unit map: a grid of squircles. Shared by the attendee picker, the
+ * public preview and the comercio map so all three read the same. Taken
+ * units are dimmed; the attendee's own is the one orange block.
  */
 export function ResourceGrid({
   tiles,
@@ -29,23 +30,21 @@ export function ResourceGrid({
   const cols = Math.min(Math.max(columns ?? autoColumns(tiles.length), 2), 12);
   return (
     <div
-      className="grid gap-2.5 sm:gap-3"
+      className={compact ? "grid gap-1.5" : "grid gap-2.5 sm:gap-3"}
       style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
     >
       {tiles.map((tile) => {
-        const interactive = Boolean(onSelect) && !disabled;
-        const className = `flex aspect-square flex-col items-center justify-center rounded-full border text-center transition select-none ${
+        const interactive = Boolean(onSelect) && !disabled && !(tile.taken && !tile.mine);
+        const className = `flex aspect-[1/0.86] flex-col items-center justify-center rounded-[42%] border text-center transition duration-150 select-none ${
           tile.mine
-            ? "border-accent bg-accent text-black shadow-[0_10px_30px_rgba(246,112,16,0.35)]"
+            ? "border-accent bg-accent text-black shadow-[0_8px_30px_rgba(246,112,16,0.35)]"
             : tile.taken
-              ? "border-white/[0.06] bg-white/[0.03] text-white/25"
-              : "border-white/[0.14] bg-white/[0.08] text-white hover:bg-white/[0.14]"
+              ? "border-transparent bg-white/[0.03] text-white/25"
+              : "border-border bg-white/[0.09] text-white hover:border-border-strong hover:bg-white/[0.14]"
         } ${interactive ? "cursor-pointer active:scale-95" : "cursor-default"}`;
         const content = (
           <>
-            <span
-              className={`font-bold leading-none ${compact ? "text-[11px]" : "text-sm sm:text-base"}`}
-            >
+            <span className={`font-bold leading-none ${compact ? "text-[11px]" : "text-[14px] sm:text-[16px]"}`}>
               {tile.label}
             </span>
             {tile.caption && !compact ? (
@@ -57,7 +56,7 @@ export function ResourceGrid({
         );
         if (!interactive) {
           return (
-            <div key={tile.id} className={className} aria-label={tile.label}>
+            <div key={tile.id} className={className} aria-label={`${tile.label}${tile.taken ? ", ocupada" : ""}`}>
               {content}
             </div>
           );
@@ -69,7 +68,7 @@ export function ResourceGrid({
             className={className}
             onClick={() => onSelect?.(tile)}
             aria-pressed={tile.mine}
-            aria-label={`${tile.label}${tile.taken && !tile.mine ? " (ocupada)" : ""}`}
+            aria-label={`${tile.label}${tile.mine ? ", tuya" : ", libre"}`}
           >
             {content}
           </button>

@@ -2,13 +2,22 @@
 
 @theme {
   --color-bg: #050505;
+  --color-app: #070708;
   --color-fg: #ffffff;
-  --color-muted: rgba(255, 255, 255, 0.55);
-  --color-dim: rgba(255, 255, 255, 0.3);
+  --color-muted: rgba(255, 255, 255, 0.56);
+  --color-dim: rgba(255, 255, 255, 0.32);
   --color-faint: rgba(255, 255, 255, 0.12);
+  --color-surface: rgba(255, 255, 255, 0.035);
+  --color-surface-2: rgba(255, 255, 255, 0.06);
   --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.14);
   --color-accent: #f67010;
+  --color-accent-soft: rgba(246, 112, 16, 0.14);
   --color-accent-deep: #c8420a;
+  --color-success: #34d399;
+  --color-danger: #f87171;
+  --radius-card: 18px;
+  --radius-control: 12px;
   --font-sans: "Urbanist", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -545,4 +554,111 @@
 
 .sweep {
   animation: sweep 4.5s ease-in-out infinite;
+}
+
+/* ─────────────────────────────────────────────
+   App surfaces (events, tickets, comercio)
+   ───────────────────────────────────────────── */
+
+/* Faint warm glow at the top of the canvas; the rest stays near black. */
+.app-canvas {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--color-app);
+}
+.app-canvas::before {
+  content: "";
+  position: fixed;
+  inset: -20% -10% auto -10%;
+  height: 70vh;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(
+      60% 55% at 50% 0%,
+      rgba(246, 112, 16, 0.14) 0%,
+      rgba(246, 112, 16, 0.05) 40%,
+      rgba(246, 112, 16, 0) 75%
+    );
+  filter: blur(40px);
+}
+
+/* Translucent surface with a hairline border; the default card skin. */
+.surface {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+/* Frosted bar for sticky chrome. */
+.glass {
+  background: rgba(7, 7, 8, 0.72);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+}
+
+/* Shimmer for loading placeholders. */
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+.shimmer {
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.04) 20%,
+    rgba(255, 255, 255, 0.09) 45%,
+    rgba(255, 255, 255, 0.04) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+/* Short mount transition for lists and cards; staggered with --i. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.rise {
+  opacity: 0;
+  animation: rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Keyboard focus is visible everywhere in the app, in the accent. */
+.app-canvas :focus-visible {
+  outline: 2px solid rgba(246, 112, 16, 0.9);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .fade-up,
+  .shimmer,
+  .modal-card,
+  .modal-overlay {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .app-canvas * {
+    transition-duration: 0.01ms !important;
+  }
 }
