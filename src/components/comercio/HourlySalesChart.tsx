@@ -20,7 +20,7 @@ export function HourlySalesChart({ data }: { data: HourlySales }) {
   const plotH = H - PAD.top - PAD.bottom;
   const slot = plotW / 24;
   const barW = Math.max(4, slot - 4);
-  const ticks = [0, Math.ceil(max / 2), max];
+  const ticks = [...new Set([0, Math.ceil(max / 2), max])];
 
   return (
     <section>

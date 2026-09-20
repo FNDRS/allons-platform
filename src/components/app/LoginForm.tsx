@@ -10,6 +10,47 @@ import { useAuth } from "./AuthProvider";
 
 type Mode = "login" | "signup" | "reset" | "update";
 
+const NEXT_STORAGE_KEY = "allons.login.next";
+/** A reset link older than this is stale; forget where it was going. */
+const NEXT_TTL_MS = 60 * 60 * 1000;
+
+/**
+ * The recovery email opens in a fresh tab, so the destination has to live in
+ * localStorage (sessionStorage is per tab). Stored only once Supabase accepted
+ * the reset request, and read at most once.
+ */
+function rememberNext(next: string) {
+  try {
+    window.localStorage.setItem(NEXT_STORAGE_KEY, JSON.stringify({ next, at: Date.now() }));
+  } catch {
+    /* the user simply lands on /events after the reset */
+  }
+}
+
+function takeRememberedNext(): string | null {
+  try {
+    const raw = window.localStorage.getItem(NEXT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { next?: unknown; at?: unknown };
+    if (typeof parsed.next !== "string" || typeof parsed.at !== "number") return null;
+    if (Date.now() - parsed.at > NEXT_TTL_MS) {
+      window.localStorage.removeItem(NEXT_STORAGE_KEY);
+      return null;
+    }
+    return parsed.next;
+  } catch {
+    return null;
+  }
+}
+
+function forgetNext() {
+  try {
+    window.localStorage.removeItem(NEXT_STORAGE_KEY);
+  } catch {
+    /* nothing to clean */
+  }
+}
+
 function friendlyAuthError(message: string): string {
   const lower = message.toLowerCase();
   if (lower.includes("invalid login credentials"))
@@ -42,7 +83,8 @@ function safeNext(raw: string | null): string {
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = safeNext(params.get("next"));
+  const [storedNext, setStoredNext] = useState<string | null>(null);
+  const next = params.get("next") ? safeNext(params.get("next")) : storedNext ?? "/events";
   const { user, loading } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");
@@ -57,8 +99,13 @@ export function LoginForm() {
   // PASSWORD_RECOVERY for it; switch to the new-password form instead of
   // bouncing the user straight into the app with the old password.
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
+    // Only a recovery landing consumes the remembered destination; an
+    // ordinary visit to /login must never be redirected by it.
+    const recovering = window.location.hash.includes("type=recovery");
+    if (recovering) {
       setMode("update");
+      const saved = takeRememberedNext();
+      if (saved && !params.get("next")) setStoredNext(safeNext(saved));
     }
     let supabase: ReturnType<typeof getSupabaseBrowser>;
     try {
@@ -67,7 +114,10 @@ export function LoginForm() {
       return;
     }
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setMode("update");
+      if (event !== "PASSWORD_RECOVERY") return;
+      setMode("update");
+      const saved = takeRememberedNext();
+      if (saved && !params.get("next")) setStoredNext(safeNext(saved));
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -118,6 +168,7 @@ export function LoginForm() {
         if (err) throw err;
         toast.success("Contraseña actualizada");
         setPassword("");
+        forgetNext();
         router.replace(next);
         return;
       }
@@ -126,6 +177,9 @@ export function LoginForm() {
         { redirectTo: `${window.location.origin}/login` },
       );
       if (err) throw err;
+      // Persist only once the request went through, so a failed attempt
+      // cannot leave a stale destination behind for a later login.
+      rememberNext(next);
       toast.success("Revisa tu correo para cambiar la contraseña.");
       setMode("login");
     } catch (err) {

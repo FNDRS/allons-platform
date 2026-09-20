@@ -41,7 +41,9 @@ export function ResourceMap({
             <ResourceGrid
               columns={group.columns}
               tiles={group.resources
-                .filter((unit) => unit.active)
+                // A retired unit stays on the map while a ticket holds it, so
+                // the organizer can still release or move that holder.
+                .filter((unit) => unit.active || unit.ticket)
                 .map((unit) => ({
                   id: unit.id,
                   label: unit.label,
