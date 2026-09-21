@@ -36,6 +36,9 @@ next-env.d.ts
 
 # generated QR codes
 qrs/
+
+# written by `next dev` on every start (next 16); CLAUDE.md just imports it
+AGENTS.md
 CLAUDE.md
 
 # claude worktrees
