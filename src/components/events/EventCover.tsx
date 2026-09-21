@@ -18,7 +18,7 @@ export function EventCover({
         src={src}
         alt={alt}
         loading="lazy"
-        className={`h-full w-full object-cover ${className}`}
+        className={`h-full w-full object-cover object-center ${className}`}
       />
     );
   }

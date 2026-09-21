@@ -43,10 +43,13 @@ export function EventsBrowser() {
       {isLoading ? (
         <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2">
           {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton
+            <div
               key={index}
-              className="aspect-[4/4.2] w-full rounded-[32px] border border-white/10"
-            />
+              className="overflow-hidden rounded-[32px] border border-white/10"
+            >
+              <Skeleton className="aspect-video w-full !rounded-none" />
+              <Skeleton className="h-36 w-full !rounded-none" />
+            </div>
           ))}
         </div>
       ) : error ? (

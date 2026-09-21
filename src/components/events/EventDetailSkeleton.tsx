@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/States";
 export function EventDetailSkeleton() {
   return (
     <div className="flex flex-col gap-4">
-      <Skeleton className="aspect-[16/10] rounded-[28px]" />
+      <Skeleton className="aspect-video rounded-[28px]" />
       <Skeleton className="h-16" />
       <Skeleton className="h-24" />
     </div>

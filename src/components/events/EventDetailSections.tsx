@@ -27,7 +27,7 @@ export function EventHero({ event }: { event: EventDetail }) {
   return (
     <header className="flex flex-col gap-5">
       <div className="overflow-hidden rounded-[28px] bg-black p-[5px] shadow-[0_24px_50px_rgba(0,0,0,0.35)]">
-        <div className="relative aspect-[16/10] overflow-hidden rounded-[23px] bg-[#1c1c1e]">
+        <div className="relative aspect-video overflow-hidden rounded-[23px] bg-[#1c1c1e]">
           {event.coverImageUrl ? (
             <EventCover
               src={event.coverImageUrl}

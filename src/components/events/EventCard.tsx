@@ -21,7 +21,7 @@ const HOVER_VIDEO_BY_HANDLE: Record<string, string> = {
   kinetix: "/providers/kinetix-hover.mp4",
 };
 
-/** Full-bleed photo card: overlay copy, icon facts, full-width Reservar. */
+/** Event card: 16:9 cover on top, facts and Reservar below. */
 export function EventCard({ event }: { event: EventListItem }) {
   const prefetchEvent = usePrefetchEvent();
   const warm = () => prefetchEvent(event.id);
@@ -43,8 +43,8 @@ export function EventCard({ event }: { event: EventListItem }) {
       onTouchStart={warm}
       onFocus={warm}
     >
-      <article className="event-phone relative flex aspect-[4/4.2] flex-col overflow-hidden rounded-[32px] border border-white/10 bg-black shadow-[0_24px_50px_rgba(0,0,0,0.38)]">
-        <div className="absolute inset-0">
+      <article className="event-phone relative flex h-full flex-col overflow-hidden rounded-[32px] border border-white/10 bg-black shadow-[0_24px_50px_rgba(0,0,0,0.38)]">
+        <div className="relative aspect-video shrink-0 overflow-hidden bg-black">
           {event.coverImageUrl ? (
             <EventCover
               src={event.coverImageUrl}
@@ -61,12 +61,7 @@ export function EventCard({ event }: { event: EventListItem }) {
           {hoverSrc ? <EventHoverVideo src={hoverSrc} /> : null}
         </div>
 
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[68%] bg-gradient-to-t from-black from-[16%] via-black/72 via-46% to-transparent"
-          aria-hidden
-        />
-
-        <div className="relative z-10 mt-auto flex flex-col px-5 pb-5 pt-12">
+        <div className="relative z-10 flex flex-1 flex-col px-5 pb-5 pt-4">
           <h3 className="line-clamp-2 text-[22px] font-semibold leading-[1.12] tracking-[-0.03em] text-white">
             {event.title}
           </h3>
@@ -100,7 +95,7 @@ export function EventCard({ event }: { event: EventListItem }) {
             ) : null}
           </div>
 
-          <div className="mt-4 flex items-center gap-3">
+          <div className="mt-auto flex items-center gap-3 pt-4">
             <p
               className={`min-w-0 shrink-0 text-[15px] font-semibold tracking-tight tabular-nums ${
                 soldOut ? "text-white/45" : "text-white"
