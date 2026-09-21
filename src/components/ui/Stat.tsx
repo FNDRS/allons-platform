@@ -1,5 +1,4 @@
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
-import { Card } from "./Card";
 
 /**
  * KPI tile: quiet label, big number, optional delta beside it. The delta is
@@ -22,7 +21,9 @@ export function Stat({
   const showDelta = typeof delta === "number" && Number.isFinite(delta);
   const positive = (delta ?? 0) >= 0;
   return (
-    <Card className={`flex flex-col gap-2 ${className}`}>
+    <div
+      className={`flex flex-col gap-2 rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-5 ${className}`}
+    >
       <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-muted">
         {label}
       </p>
@@ -46,8 +47,8 @@ export function Stat({
           </span>
         ) : null}
       </div>
-      {hint ? <p className="text-[13px] text-dim">{hint}</p> : null}
-    </Card>
+      {hint ? <p className="text-[13px] text-white/45">{hint}</p> : null}
+    </div>
   );
 }
 

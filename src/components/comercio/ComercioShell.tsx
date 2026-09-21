@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ArrowUpRight, LayoutDashboard, Smartphone, Users } from "lucide-react";
 import { AllonsLogo } from "@/components/AllonsLogo";
+import { useProviderRealtime } from "@/hooks/useProviderRealtime";
+import { isComercioUser } from "@/lib/role";
+import { useAuth } from "@/components/app/AuthProvider";
+import { ProviderLiveProvider } from "./ProviderLive";
 import { AccountButton, AccountSheet } from "@/components/app/AccountSheet";
 import { BottomTabs } from "@/components/app/BottomTabs";
 import { isActivePath } from "@/components/app/AppNav";
@@ -29,7 +33,7 @@ function isNavActive(pathname: string, href: string, exact: boolean) {
  * Dashboard frame for the comercio: a fixed sidebar on desktop, a frosted tab
  * bar on phones, and a header with the page title and account control.
  */
-export function ComercioShell({
+export function ComercioShellInner({
   title,
   subtitle,
   children,
@@ -115,5 +119,19 @@ export function ComercioShell({
       </div>
       <AccountSheet open={accountOpen} onClose={() => setAccountOpen(false)} />
     </div>
+  );
+}
+
+/**
+ * Every comercio page runs inside this, so the realtime channel is opened
+ * once per session and its state is shared with whatever is on screen.
+ */
+export function ComercioShell(props: Parameters<typeof ComercioShellInner>[0]) {
+  const { user } = useAuth();
+  const state = useProviderRealtime(isComercioUser(user));
+  return (
+    <ProviderLiveProvider state={state}>
+      <ComercioShellInner {...props} />
+    </ProviderLiveProvider>
   );
 }

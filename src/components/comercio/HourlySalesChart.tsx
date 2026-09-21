@@ -2,16 +2,15 @@
 
 import { useId, useState } from "react";
 import type { HourlySales } from "@/lib/api/provider";
-import { Card, SectionTitle } from "@/components/ui/Card";
+import { SectionTitle } from "@/components/ui/Card";
 
 const W = 640;
 const H = 200;
 const PAD = { top: 16, right: 12, bottom: 28, left: 30 };
 
 /**
- * Tickets sold per hour today as one area series: a 2px accent line over a
- * gradient fill on the dark surface, a crosshair with a tooltip card on
- * hover, and a quiet grid. Single series, so no legend: the title names it.
+ * Tickets sold per hour today as one area series: a 2px white line over a
+ * quiet fill, a crosshair with a tooltip card on hover, and a grid.
  */
 export function HourlySalesChart({ data }: { data: HourlySales }) {
   const gradientId = useId();
@@ -34,7 +33,7 @@ export function HourlySalesChart({ data }: { data: HourlySales }) {
   return (
     <section>
       <SectionTitle>Ventas por hora · hoy</SectionTitle>
-      <Card>
+      <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-5">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <p className="text-[30px] font-bold leading-none tracking-[-0.03em] tabular-nums sm:text-[34px]">
             {data.total}
