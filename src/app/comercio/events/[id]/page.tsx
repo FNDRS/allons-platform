@@ -16,7 +16,7 @@ export default async function ComercioEventPage({
   const { id } = await params;
   return (
     <ProviderGate>
-      <ComercioShell title="Evento" subtitle="Ventas, asistentes y unidades de este evento.">
+      <ComercioShell>
         <ComercioEventView eventId={id} />
       </ComercioShell>
     </ProviderGate>

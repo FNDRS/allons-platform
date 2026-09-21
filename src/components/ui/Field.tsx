@@ -1,11 +1,9 @@
 "use client";
 
-import type {
-  InputHTMLAttributes,
-  SelectHTMLAttributes,
-  TextareaHTMLAttributes,
-} from "react";
+import type { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { SmoothInput } from "./SmoothInput";
+
+export { Select, SelectItem } from "./Select";
 
 const BASE =
   "w-full rounded-[14px] border border-border bg-surface-2 px-4 text-[15px] text-white placeholder:text-dim outline-none transition focus:border-accent/60 focus:bg-white/[0.08] disabled:opacity-50";
@@ -41,18 +39,6 @@ export function Textarea({
   ...rest
 }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return <textarea {...rest} className={`${BASE} min-h-24 py-3 ${className}`} />;
-}
-
-export function Select({
-  className = "",
-  children,
-  ...rest
-}: SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select {...rest} className={`${BASE} h-12 appearance-none ${className}`}>
-      {children}
-    </select>
-  );
 }
 
 export function FieldError({ children }: { children?: React.ReactNode }) {

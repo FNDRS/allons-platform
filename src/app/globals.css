@@ -49,6 +49,8 @@
   a,
   button,
   [role="button"],
+  [role="combobox"],
+  [role="option"],
   input[type="submit"],
   input[type="button"],
   input[type="reset"] {

@@ -27,15 +27,15 @@ function isNavActive(pathname: string, href: string, exact: boolean) {
 
 /**
  * Dashboard frame for the comercio: a fixed sidebar on desktop, a frosted tab
- * bar on phones, and a header with the page title, a muted subtitle and one
- * accent action.
+ * bar on phones, and a header with the page title and account control.
  */
 export function ComercioShell({
   title,
   subtitle,
   children,
 }: {
-  title: React.ReactNode;
+  /** Omit on pages whose content opens with its own heading. */
+  title?: React.ReactNode;
   subtitle?: React.ReactNode;
   children: React.ReactNode;
 }) {
@@ -95,27 +95,19 @@ export function ComercioShell({
             <p className="hidden text-[13px] font-semibold text-dim lg:block">
               allonsapp.com/comercio
             </p>
-            <div className="flex items-center gap-2">
-              <Link
-                href="/events"
-                aria-label="Ver como cliente"
-                title="Ver como cliente"
-                className="flex size-10 items-center justify-center rounded-[12px] bg-accent text-black transition hover:bg-[#ff7d24]"
-              >
-                <ArrowUpRight className="size-[18px]" aria-hidden />
-              </Link>
-              <AccountButton onOpen={() => setAccountOpen(true)} />
-            </div>
+            <AccountButton onOpen={() => setAccountOpen(true)} />
           </div>
         </header>
 
         <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-32 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-          <div className="mb-8">
-            <h1 className="text-[30px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[38px]">
-              {title}
-            </h1>
-            {subtitle ? <p className="mt-2 text-[15px] text-muted">{subtitle}</p> : null}
-          </div>
+          {title ? (
+            <div className="mb-8">
+              <h1 className="text-[30px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[38px]">
+                {title}
+              </h1>
+              {subtitle ? <p className="mt-2 text-[15px] text-muted">{subtitle}</p> : null}
+            </div>
+          ) : null}
           {children}
         </main>
 

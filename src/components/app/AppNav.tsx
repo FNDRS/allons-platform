@@ -20,12 +20,18 @@ export const APP_LINKS = [
 
 const GUEST_HREFS = new Set(["/eventos", "/soporte"]);
 
-/** Guest keeps Soporte. Signed-in users drop it. Comercio only if the JWT says provider. */
+/**
+ * Guest keeps Soporte. Signed-in users drop it. Comercio only if the JWT
+ * says provider, and a comercio does not get "Mis tickets": it sells
+ * entradas, it does not hold them, same as the app's comercio tabs.
+ */
 export function customerLinksFor(user: User | null) {
   if (!user) return APP_LINKS.filter((link) => GUEST_HREFS.has(link.href));
+  const comercio = isComercioUser(user);
   return APP_LINKS.filter((link) => {
     if (link.href === "/soporte") return false;
-    if (link.href === "/comercio") return isComercioUser(user);
+    if (link.href === "/comercio") return comercio;
+    if (link.href === "/tickets") return !comercio;
     return true;
   });
 }
@@ -57,7 +63,7 @@ export function AppNav() {
   return (
     <>
       <header className="glass sticky top-0 z-40 border-b border-border">
-        <div className="mx-auto grid h-16 w-full max-w-[1120px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-6 lg:px-8">
+        <div className="grid h-16 w-full grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-5 lg:px-6">
           <Link href="/eventos" aria-label="Allons, ir a eventos" className="justify-self-start">
             <AllonsLogo className="h-auto w-[92px]" />
           </Link>

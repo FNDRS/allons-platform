@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Building2, CalendarDays, Car, Clock, Ticket, User } from "lucide-react";
 import type { TicketListItem } from "@/lib/api/tickets";
 import { EventPosterWash } from "@/components/events/EventCover";
+import { StatusPill } from "@/components/ui/Pill";
 
 /** Full-width pass with overlay facts, like a listing card. */
 export function TicketCard({
@@ -41,14 +42,8 @@ export function TicketCard({
           aria-hidden
         />
 
-        <span
-          className={`absolute left-4 top-4 z-10 rounded-full px-3 py-1 text-[11px] font-semibold tracking-tight ${
-            past
-              ? "bg-white/10 text-white/75 ring-1 ring-white/10"
-              : "bg-white/92 text-black shadow-[0_6px_18px_rgba(0,0,0,0.18)]"
-          }`}
-        >
-          {badge}
+        <span className="absolute left-4 top-4 z-10">
+          <StatusPill tone={past ? "mute" : "solid"}>{badge}</StatusPill>
         </span>
 
         <div className="relative z-10 mt-auto flex flex-col px-5 pb-5 pt-16 sm:px-6 sm:pb-6">

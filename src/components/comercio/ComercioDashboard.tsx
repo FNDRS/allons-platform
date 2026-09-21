@@ -12,7 +12,9 @@ import { KpiTile } from "./KpiTile";
 import { ProviderEventCard } from "./ProviderEventCard";
 
 export function ComercioDashboard() {
-  const { dashboard, ready } = useProviderAccess();
+  const { dashboard, dashboardLoading, ready } = useProviderAccess({
+    withDashboard: true,
+  });
   const events = useQuery({
     queryKey: providerKeys.events,
     queryFn: listProviderEvents,
@@ -31,7 +33,16 @@ export function ComercioDashboard() {
 
   return (
     <div className="flex flex-col gap-8">
-      {dashboard ? (
+      {dashboardLoading ? (
+        <section>
+          <SectionTitle>Totales</SectionTitle>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="h-28" />
+            ))}
+          </div>
+        </section>
+      ) : dashboard ? (
         <section>
           <SectionTitle>Totales</SectionTitle>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

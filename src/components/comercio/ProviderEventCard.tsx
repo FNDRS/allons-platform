@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { usePrefetchProviderEvent } from "@/hooks/usePrefetchProviderEvent";
 import { formatEventWhen } from "@/lib/allons-api";
 import type { ProviderEventListItem } from "@/lib/api/provider";
 import { formatHNL } from "@/lib/format";
@@ -15,9 +18,14 @@ const STATUS: Record<string, { label: string; tone: "neutral" | "accent" | "succ
 
 export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
   const status = STATUS[event.status] ?? { label: event.status, tone: "neutral" as const };
+  const prefetch = usePrefetchProviderEvent();
+  const warm = () => prefetch(event.id);
   return (
     <Link
       href={`/comercio/events/${encodeURIComponent(event.id)}`}
+      onMouseEnter={warm}
+      onFocus={warm}
+      onTouchStart={warm}
       className="flex flex-col gap-3 rounded-[22px] border border-white/[0.08] bg-white/[0.03] p-4 transition hover:bg-white/[0.06]"
     >
       <div className="flex items-start justify-between gap-3">

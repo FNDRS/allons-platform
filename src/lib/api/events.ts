@@ -8,12 +8,18 @@ export interface EventListItem {
   startsAt: string | null;
   endsAt: string | null;
   city: string | null;
+  venue?: string | null;
+  address?: string | null;
   coverImageUrl: string | null;
   themeColor: string | null;
   minPriceCents: number | null;
   status?: EventStatus;
   types?: string[];
   eventType?: string | null;
+  parkingAvailable?: boolean;
+  petFriendly?: boolean;
+  minAge?: number | null;
+  capacity?: number | null;
   provider?: EventProvider | null;
 }
 
@@ -83,7 +89,7 @@ export interface EventDetail extends EventListItem {
   latitude: number | null;
   longitude: number | null;
   ticketMode?: string;
-  capacity?: number;
+  capacity?: number | null;
   attendeeCount?: number;
   provider: EventProvider | null;
   gallery?: Array<{ id: string; url: string }>;

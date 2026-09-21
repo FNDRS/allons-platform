@@ -92,7 +92,7 @@ export function LoginForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"google" | "form" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -131,7 +131,7 @@ export function LoginForm() {
     event.preventDefault();
     setError(null);
     setNotice(null);
-    setBusy(true);
+    setBusy("form");
     try {
       const supabase = getSupabaseBrowser();
       if (mode === "login") {
@@ -186,14 +186,14 @@ export function LoginForm() {
     } catch (err) {
       setError(friendlyAuthError((err as Error).message ?? ""));
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
   async function onGoogle() {
     setError(null);
     setNotice(null);
-    setBusy(true);
+    setBusy("google");
     try {
       const supabase = getSupabaseBrowser();
       const redirect = new URL("/login", window.location.origin);
@@ -205,7 +205,7 @@ export function LoginForm() {
       if (err) throw err;
     } catch (err) {
       setError(friendlyAuthError((err as Error).message ?? ""));
-      setBusy(false);
+      setBusy(null);
     }
   }
 
@@ -247,7 +247,8 @@ export function LoginForm() {
             variant="secondary"
             size="lg"
             full
-            loading={busy}
+            loading={busy === "google"}
+            disabled={busy === "form"}
             onClick={() => void onGoogle()}
             className="!duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
           >
@@ -318,7 +319,8 @@ export function LoginForm() {
           type="submit"
           size="lg"
           full
-          loading={busy}
+          loading={busy === "form"}
+          disabled={busy === "google"}
           className="!duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-[0_12px_48px_rgba(246,112,16,0.32)] active:!duration-500 active:scale-[0.99]"
         >
           {mode === "login"

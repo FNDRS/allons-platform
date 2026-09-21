@@ -4,7 +4,8 @@ import { Check, Minus, Plus } from "lucide-react";
 import type { EventEntryType, EventQuestion } from "@/lib/api/events";
 import { formatCents, formatPriceCents } from "@/lib/format";
 import type { HolderDraft } from "@/hooks/useReserveForm";
-import { FieldError, Input, Label, Select, Textarea } from "@/components/ui/Field";
+import { FieldError, Input, Label, Select, SelectItem, Textarea } from "@/components/ui/Field";
+import { StatusPill } from "@/components/ui/Pill";
 
 export function StepHeading({
   n,
@@ -216,11 +217,7 @@ export function HolderCard({
             Ticket {index + 1}
             <span className="font-medium text-white/35"> · {typeName}</span>
           </p>
-          {isMe ? (
-            <span className="rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-accent">
-              Para mí
-            </span>
-          ) : null}
+          {isMe ? <StatusPill>Para mí</StatusPill> : null}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
@@ -312,18 +309,22 @@ function QuestionField({
   }
   if (kind === "select" || kind === "radio") {
     return (
-      <label className="block">
+      <div>
         <Label hint={hint}>{question.label}</Label>
-        <Select value={value} onChange={(event) => onChange(event.target.value)}>
-          <option value="">Elige una opción</option>
+        <Select
+          value={value}
+          onValueChange={onChange}
+          placeholder="Elige una opción"
+          aria-label={question.label}
+        >
           {(question.options ?? []).map((option) => (
-            <option key={option} value={option}>
+            <SelectItem key={option} value={option}>
               {option}
-            </option>
+            </SelectItem>
           ))}
         </Select>
         <FieldError>{error}</FieldError>
-      </label>
+      </div>
     );
   }
   if (kind === "textarea") {

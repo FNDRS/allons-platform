@@ -1,13 +1,49 @@
 const DEFAULT_API_URL =
   process.env.NODE_ENV === "development"
     ? "http://127.0.0.1:3000"
-    : "https://uabcpmxq39.us-east-2.awsapprunner.com";
+    : "https://api.allonsapp.com";
 
 /** Cuánto se reutiliza la respuesta antes de volver a pedirla. */
 const REVALIDATE_SECONDS = 300;
 
 /** Un evento que tarda en responder no debe colgar el render de la página. */
 const TIMEOUT_MS = 3500;
+
+import type { ComercioProfile } from "@/lib/api/comercios";
+
+/**
+ * Handles are short slugs; anything else (a file name, an odd path) is not
+ * worth a round trip to the API and can 404 right away.
+ */
+export const COMERCIO_HANDLE_RE = /^[a-z0-9][a-z0-9._-]{1,48}$/i;
+
+/**
+ * Public comercio profile for `allonsapp.com/<handle>`, fetched on the
+ * server so the page ships rendered and carries real metadata. `null` on
+ * any problem so the route can fall through to the 404 page.
+ */
+export async function getPublicComercio(
+  handle: string,
+): Promise<ComercioProfile | null> {
+  const key = handle.trim();
+  if (!COMERCIO_HANDLE_RE.test(key)) return null;
+  try {
+    const response = await fetch(
+      `${getApiUrl()}/providers/${encodeURIComponent(key)}`,
+      {
+        next: { revalidate: 120 },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      },
+    );
+    if (!response.ok) return null;
+    const data = (await response.json()) as ComercioProfile;
+    return data && typeof data === "object" && typeof data.id === "string"
+      ? data
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 export type PublicEvent = {
   id: string;

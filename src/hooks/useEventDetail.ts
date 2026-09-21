@@ -35,8 +35,8 @@ function detailFromListItem(item: EventListItem): EventDetail {
   return {
     ...item,
     description: null,
-    venue: null,
-    address: null,
+    venue: item.venue ?? null,
+    address: item.address ?? null,
     latitude: null,
     longitude: null,
     provider: item.provider ?? null,

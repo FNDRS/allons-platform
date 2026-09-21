@@ -5,7 +5,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 const DEFAULT_API_URL =
   process.env.NODE_ENV === "development"
     ? "http://127.0.0.1:3000"
-    : "https://uabcpmxq39.us-east-2.awsapprunner.com";
+    : "https://api.allonsapp.com";
 
 export function getApiBaseUrl(): string {
   return (

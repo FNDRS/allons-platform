@@ -7,7 +7,7 @@ import { useStaff } from "@/hooks/useStaff";
 import type { StaffRole } from "@/lib/api/provider";
 import { Button } from "@/components/ui/Button";
 import { Card, SectionTitle } from "@/components/ui/Card";
-import { FieldError, Input, Label, Select } from "@/components/ui/Field";
+import { FieldError, Input, Label, Select, SelectItem } from "@/components/ui/Field";
 import { Badge, EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 
 const ROLE_LABEL: Record<string, string> = { scanner: "Escáner", admin: "Administrador" };
@@ -57,13 +57,17 @@ export function StaffView() {
                 <Label>Correo</Label>
                 <Input type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.com" />
               </label>
-              <label className="block">
+              <div className="block">
                 <Label>Rol</Label>
-                <Select value={role} onChange={(e) => setRole(e.target.value as StaffRole)}>
-                  <option value="scanner">Escáner</option>
-                  <option value="admin">Administrador</option>
+                <Select
+                  value={role}
+                  onValueChange={(next) => setRole(next as StaffRole)}
+                  aria-label="Rol"
+                >
+                  <SelectItem value="scanner">Escáner</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
                 </Select>
-              </label>
+              </div>
             </div>
             <FieldError>{error}</FieldError>
             <Button type="submit" loading={staff.invite.isPending} className="self-start">

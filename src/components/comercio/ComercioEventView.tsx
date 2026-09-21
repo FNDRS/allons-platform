@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
-import { useProviderResources } from "@/hooks/useProviderResources";
 import { formatEventWhen } from "@/lib/allons-api";
 import {
   getHourlySales,
@@ -17,8 +16,6 @@ import { ErrorState, Skeleton } from "@/components/ui/States";
 import { PaymentsTable, TicketTypeTable } from "./EventTables";
 import { HourlySalesChart } from "./HourlySalesChart";
 import { KpiTile } from "./KpiTile";
-import { ResourceGroupEditor } from "./ResourceGroupEditor";
-import { ResourceMap } from "./ResourceMap";
 
 export function ComercioEventView({ eventId }: { eventId: string }) {
   const { ready } = useProviderAccess();
@@ -38,7 +35,6 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
     queryFn: () => getProviderPayments(eventId),
     enabled: ready,
   });
-  const resources = useProviderResources(eventId, ready);
 
   if (event.isLoading) {
     return (
@@ -97,29 +93,6 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
       ) : hourly.isLoading ? (
         <Skeleton className="h-56" />
       ) : null}
-
-      {resources.isLoading ? (
-        <Skeleton className="h-40" />
-      ) : resources.error ? (
-        <ErrorState
-          message={`Recursos asignables: ${(resources.error as Error).message}`}
-          onRetry={() => void resources.refetch()}
-        />
-      ) : (
-        <>
-          <ResourceMap
-            groups={resources.groups}
-            busy={resources.assign.isPending || resources.release.isPending}
-            onRelease={(resourceId) => resources.release.mutate(resourceId)}
-            onAssign={(resourceId, ticketId) => resources.assign.mutate({ resourceId, ticketId })}
-          />
-          <ResourceGroupEditor
-            groups={resources.groups}
-            saving={resources.sync.isPending}
-            onSave={(input) => resources.sync.mutate(input)}
-          />
-        </>
-      )}
 
       {payments.isLoading ? (
         <Skeleton className="h-48" />

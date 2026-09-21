@@ -2,12 +2,17 @@
 
 /* eslint-disable @next/next/no-img-element */
 
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { Building2, CalendarDays, Car, Clock, PawPrint, User, Users } from "lucide-react";
 import { usePrefetchEvent } from "@/hooks/usePrefetchEvent";
-import { formatEventWhen } from "@/lib/allons-api";
 import type { EventListItem } from "@/lib/api/events";
-import { formatPriceCents } from "@/lib/format";
+import {
+  formatCardDay,
+  formatCardTime,
+  formatNumber,
+  formatPriceCents,
+} from "@/lib/format";
 import { EventCover, EventPosterWash } from "./EventCover";
 import { EventHoverVideo } from "./EventHoverVideo";
 
@@ -15,15 +20,16 @@ const HOVER_VIDEO_BY_HANDLE: Record<string, string> = {
   kinetix: "/providers/kinetix-hover.mp4",
 };
 
-/** Full-bleed photo card: overlay copy, price pill, Reservar. */
+/** Full-bleed photo card: overlay copy, icon facts, price pill, Reservar. */
 export function EventCard({ event }: { event: EventListItem }) {
   const prefetchEvent = usePrefetchEvent();
   const warm = () => prefetchEvent(event.id);
-  const when = formatEventWhen(event.startsAt);
   const soldOut = event.status === "sold_out";
   const provider = event.provider;
   const price = soldOut ? "Agotado" : formatPriceCents(event.minPriceCents);
-  const place = event.city?.trim() || null;
+  const address = placeLine(event.venue, event.address, event.city);
+  const day = formatCardDay(event.startsAt);
+  const time = formatCardTime(event.startsAt);
   const hoverSrc = provider?.handle
     ? HOVER_VIDEO_BY_HANDLE[provider.handle.replace(/^@/, "")]
     : undefined;
@@ -55,29 +61,44 @@ export function EventCard({ event }: { event: EventListItem }) {
         </div>
 
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-black from-[12%] via-black/70 via-42% to-transparent"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[68%] bg-gradient-to-t from-black from-[16%] via-black/72 via-46% to-transparent"
           aria-hidden
         />
 
-        {badge ? (
-          <span className="absolute left-4 top-4 z-10 rounded-full bg-white/92 px-3 py-1 text-[11px] font-semibold tracking-tight text-black shadow-[0_6px_18px_rgba(0,0,0,0.18)]">
-            {badge}
-          </span>
-        ) : null}
-
-        <div className="relative z-10 mt-auto flex flex-col px-5 pb-5 pt-16">
+        <div className="relative z-10 mt-auto flex flex-col px-5 pb-5 pt-12">
           <h3 className="line-clamp-2 text-[22px] font-semibold leading-[1.12] tracking-[-0.03em] text-white">
             {event.title}
           </h3>
-          {when ? (
-            <p className="mt-2 line-clamp-1 text-[13px] text-white/72">{when}</p>
-          ) : null}
-          {place ? (
+          {address ? (
             <p className="mt-1.5 flex items-center gap-1.5 text-[13px] font-medium text-white/78">
-              <MapPin className="size-3.5 shrink-0" aria-hidden />
-              <span className="truncate">{place}</span>
+              <Building2 className="size-3.5 shrink-0" aria-hidden />
+              <span className="truncate">{address}</span>
             </p>
           ) : null}
+
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[13px] font-medium text-white/78">
+            {day ? (
+              <Stat icon={<CalendarDays className="size-3.5" />}>{day}</Stat>
+            ) : null}
+            {time ? (
+              <Stat icon={<Clock className="size-3.5" />}>{time}</Stat>
+            ) : null}
+            {event.capacity ? (
+              <Stat icon={<Users className="size-3.5" />}>
+                {formatNumber(event.capacity)} cupos
+              </Stat>
+            ) : null}
+            {event.parkingAvailable ? (
+              <Stat icon={<Car className="size-3.5" />}>Parqueo</Stat>
+            ) : null}
+            {event.petFriendly ? (
+              <Stat icon={<PawPrint className="size-3.5" />}>Mascotas</Stat>
+            ) : null}
+            {event.minAge ? (
+              <Stat icon={<User className="size-3.5" />}>+{event.minAge}</Stat>
+            ) : null}
+          </div>
+
           <div className="mt-4 flex items-center gap-2">
             <span
               className={`rounded-full px-4 py-2.5 text-[13px] font-semibold tracking-tight ${
@@ -98,4 +119,29 @@ export function EventCard({ event }: { event: EventListItem }) {
       </article>
     </Link>
   );
+}
+
+function Stat({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <span className="shrink-0 text-white/70">{icon}</span>
+      <span className="truncate">{children}</span>
+    </span>
+  );
+}
+
+function placeLine(
+  venue?: string | null,
+  address?: string | null,
+  city?: string | null,
+) {
+  const v = venue?.trim() || null;
+  const a = address?.trim() || null;
+  const c = city?.trim() || null;
+  const bits: string[] = [];
+  if (v) bits.push(v);
+  if (a && a !== v) bits.push(a);
+  const blob = bits.join(" ").toLowerCase();
+  if (c && !blob.includes(c.toLowerCase())) bits.push(c);
+  return bits.join(", ");
 }

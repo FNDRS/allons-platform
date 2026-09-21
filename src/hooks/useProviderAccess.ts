@@ -8,27 +8,35 @@ import { getProviderDashboard, providerKeys } from "@/lib/api/provider";
 import { isComercioUser } from "@/lib/role";
 
 /**
- * Comercio gate. JWT role is the same check the app uses. The dashboard
- * call is only for real comercios: hitting it as a client would auto-create
- * a provider on the API.
+ * Comercio gate. The JWT role is the same check the app uses and is enough
+ * to open the section: pages start their own requests as soon as the
+ * session is known instead of queueing behind a dashboard call.
+ *
+ * The dashboard itself is fetched only when asked for (`withDashboard`),
+ * because hitting it as a client would auto-create a provider on the API.
+ * A 403 from it still means the member was revoked, so it flips `forbidden`.
  */
-export function useProviderAccess() {
+export function useProviderAccess({
+  withDashboard = false,
+}: { withDashboard?: boolean } = {}) {
   const { user } = useAuth();
-  const { ready } = useRequireAuth();
+  const { ready: authReady } = useRequireAuth();
   const allowed = isComercioUser(user);
+  const ready = authReady && allowed;
   const query = useQuery({
     queryKey: providerKeys.dashboard,
     queryFn: getProviderDashboard,
-    enabled: ready && allowed,
+    enabled: ready && withDashboard,
     retry: false,
   });
   const forbidden =
-    (ready && !allowed) ||
+    (authReady && !allowed) ||
     (isApiError(query.error) && query.error.status === 403);
   return {
-    ready: ready && allowed && query.isSuccess,
+    ready,
     dashboard: query.data,
-    loading: !ready || (allowed && query.isLoading),
+    dashboardLoading: withDashboard && query.isLoading,
+    loading: !authReady,
     forbidden,
     error: !forbidden ? (query.error as Error | null) : null,
     refetch: query.refetch,

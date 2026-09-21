@@ -1,6 +1,6 @@
 "use client";
 
-import type { InputHTMLAttributes } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 import { ArrowRight, Search } from "lucide-react";
 import { SmoothInput } from "./SmoothInput";
 
@@ -53,7 +53,7 @@ export function Chip({
 }: {
   active: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button
@@ -68,5 +68,32 @@ export function Chip({
     >
       {children}
     </button>
+  );
+}
+
+const PILL = {
+  solid:
+    "bg-white text-black shadow-[0_6px_18px_rgba(0,0,0,0.18)]",
+  glass:
+    "bg-black/45 text-white ring-1 ring-white/15 backdrop-blur-md",
+  mute: "bg-white/10 text-white/50 ring-1 ring-white/10",
+} as const;
+
+/** Status chip: white, glass, or mute. Use this for every label pill. */
+export function StatusPill({
+  tone = "solid",
+  children,
+  className = "",
+}: {
+  tone?: keyof typeof PILL;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-semibold tracking-tight ${PILL[tone]} ${className}`}
+    >
+      {children}
+    </span>
   );
 }

@@ -2,6 +2,7 @@
 
 import { AlertCircle, Inbox } from "lucide-react";
 import { Button } from "./Button";
+import { StatusPill } from "./Pill";
 
 export function Skeleton({ className = "" }: { className?: string }) {
   return <div aria-hidden className={`shimmer rounded-[18px] ${className}`} />;
@@ -62,18 +63,12 @@ export function Badge({
   children: React.ReactNode;
   tone?: "neutral" | "accent" | "success" | "warn" | "danger";
 }) {
-  const tones = {
-    neutral: "bg-surface-2 text-muted",
-    accent: "bg-accent-soft text-accent",
-    success: "bg-emerald-500/15 text-emerald-300",
-    warn: "bg-amber-500/15 text-amber-300",
-    danger: "bg-danger/15 text-red-300",
+  const map = {
+    neutral: "mute",
+    accent: "solid",
+    success: "solid",
+    warn: "glass",
+    danger: "mute",
   } as const;
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[12px] font-semibold ${tones[tone]}`}
-    >
-      {children}
-    </span>
-  );
+  return <StatusPill tone={map[tone]}>{children}</StatusPill>;
 }
