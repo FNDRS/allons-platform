@@ -12,6 +12,7 @@ import { LiveIndicator, ProviderLiveProvider } from "./ProviderLive";
 import { AccountButton, AccountSheet } from "@/components/app/AccountSheet";
 import { BottomTabs } from "@/components/app/BottomTabs";
 import { isComercioNavActive } from "@/components/app/AppNav";
+import { PageTransition } from "@/components/app/PageTransition";
 
 const NAV = [
   { href: "/comercio", label: "Resumen", Icon: LayoutDashboard, exact: false },
@@ -108,15 +109,17 @@ export function ComercioShellInner({
         </header>
 
         <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-32 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-          {title ? (
-            <div className="mb-8">
-              <h1 className="text-[30px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[38px]">
-                {title}
-              </h1>
-              {subtitle ? <p className="mt-2 text-[15px] text-muted">{subtitle}</p> : null}
-            </div>
-          ) : null}
-          {children}
+          <PageTransition>
+            {title ? (
+              <div className="mb-8">
+                <h1 className="text-[30px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[38px]">
+                  {title}
+                </h1>
+                {subtitle ? <p className="mt-2 text-[15px] text-muted">{subtitle}</p> : null}
+              </div>
+            ) : null}
+            {children}
+          </PageTransition>
         </main>
 
         <BottomTabs tabs={TABS} />

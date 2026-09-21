@@ -1,5 +1,7 @@
 "use client";
 
+import { StatusPill } from "@/components/ui/Pill";
+
 export interface ResourceTile {
   id: string;
   label: string;
@@ -137,12 +139,10 @@ function UnitTile({
 
 function StudioFront({ label }: { label: string }) {
   return (
-    <div className="mb-1 flex w-full max-w-[min(100%,420px)] items-center gap-2">
-      <span className="h-px flex-1 bg-accent/35" aria-hidden />
-      <span className="rounded-full border border-accent/35 bg-accent/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-accent">
-        {label}
-      </span>
-      <span className="h-px flex-1 bg-accent/35" aria-hidden />
+    <div className="mb-1 flex w-full max-w-[min(100%,420px)] items-center gap-3">
+      <span className="h-px flex-1 bg-white/10" aria-hidden />
+      <StatusPill tone="glass">{label}</StatusPill>
+      <span className="h-px flex-1 bg-white/10" aria-hidden />
     </div>
   );
 }
@@ -178,9 +178,9 @@ function autoColumns(count: number) {
   return 7;
 }
 
-/** Frente del salón. Lockers no tienen instructora; bicis y asientos sí. */
+/** Frente del salón. Lockers no tienen coach; bicis y asientos sí. */
 export function studioFrontLabel(name: string): string | null {
   const n = name.toLowerCase();
   if (/(locker|casillero)/.test(n)) return null;
-  return "Instructora";
+  return "Coach";
 }

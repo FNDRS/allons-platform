@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function ComercioFinancePage() {
   return (
     <ProviderGate>
-      <ComercioShell title="Finanzas" subtitle="Tu saldo, tus retiros y lo que se retiene por venta.">
+      <ComercioShell title="Finanzas" subtitle="Tu saldo y lo que se retiene por venta.">
         <FinanceView />
       </ComercioShell>
     </ProviderGate>

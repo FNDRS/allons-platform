@@ -18,14 +18,14 @@ export function ComercioDashboard() {
   const { dashboard, dashboardLoading, ready } = useProviderAccess({
     withDashboard: true,
   });
+  // Realtime refreshes these as sales land; the interval covers a closed socket.
+  const { live } = useProviderLive();
   const events = useQuery({
     queryKey: providerKeys.events,
     queryFn: listProviderEvents,
     enabled: ready,
     refetchInterval: live ? false : 60_000,
   });
-
-  const { live } = useProviderLive();
   const activity = useProviderActivity(ready);
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();

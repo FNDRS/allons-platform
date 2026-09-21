@@ -3,7 +3,7 @@
 import {
   Banknote,
   CalendarDays,
-  QrCode,
+  ScanLine,
   Ticket,
   Users,
   type LucideIcon,
@@ -13,12 +13,12 @@ import { formatRelativeTime } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 
-const ICON: Record<string, { Icon: LucideIcon; tint: string }> = {
-  sale: { Icon: Ticket, tint: "text-accent" },
-  scan: { Icon: QrCode, tint: "text-success" },
-  payout: { Icon: Banknote, tint: "text-success" },
-  event: { Icon: CalendarDays, tint: "text-white/70" },
-  staff: { Icon: Users, tint: "text-white/70" },
+const ICON: Record<string, LucideIcon> = {
+  sale: Ticket,
+  scan: ScanLine,
+  payout: Banknote,
+  event: CalendarDays,
+  staff: Users,
 };
 
 /**
@@ -56,16 +56,11 @@ export function ActivityFeed({
         <Card padding="none">
           <ul className="divide-y divide-white/[0.06]">
             {rows.map((row) => {
-              const { Icon, tint } = ICON[row.type] ?? {
-                Icon: CalendarDays,
-                tint: "text-white/70",
-              };
+              const Icon = ICON[row.type] ?? CalendarDays;
               return (
                 <li key={row.id} className="flex items-center gap-3.5 px-5 py-3.5">
-                  <span
-                    className={`grid size-9 shrink-0 place-items-center rounded-[12px] bg-white/[0.05] ring-1 ring-white/[0.08] ${tint}`}
-                  >
-                    <Icon className="size-4" aria-hidden />
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/[0.05] text-white/50">
+                    <Icon className="size-3.5" strokeWidth={1.5} aria-hidden />
                   </span>
                   <p className="min-w-0 flex-1 truncate text-[14px] text-white/85">
                     {row.message}

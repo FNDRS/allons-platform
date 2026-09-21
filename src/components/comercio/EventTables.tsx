@@ -129,13 +129,13 @@ export function PaymentsTable({
 
                 <div className="mt-4 flex flex-col gap-1.5 text-[13px] text-white/50">
                   <p className="inline-flex items-center gap-1.5">
-                    <Ticket className="size-3.5 shrink-0 text-white/35" aria-hidden />
+                    <Ticket className="size-3.5 shrink-0 text-white/35" strokeWidth={1.5} aria-hidden />
                     {row.quantity} {row.quantity === 1 ? "ticket" : "tickets"}
                     {kind ? ` · ${kind}` : ""}
                   </p>
                   {names.length > 0 ? (
                     <p className="inline-flex items-start gap-1.5">
-                      <Users className="mt-0.5 size-3.5 shrink-0 text-white/35" aria-hidden />
+                      <Users className="mt-0.5 size-3.5 shrink-0 text-white/35" strokeWidth={1.5} aria-hidden />
                       <span className="min-w-0">{names.join(", ")}</span>
                     </p>
                   ) : null}

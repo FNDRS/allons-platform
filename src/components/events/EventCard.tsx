@@ -4,7 +4,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Building2, CalendarDays, Car, Clock, PawPrint, User, Users } from "lucide-react";
+import { ArrowUpRight, Building2, CalendarDays, Car, Clock, PawPrint, User, Users } from "lucide-react";
 import { usePrefetchEvent } from "@/hooks/usePrefetchEvent";
 import type { EventListItem } from "@/lib/api/events";
 import {
@@ -20,7 +20,7 @@ const HOVER_VIDEO_BY_HANDLE: Record<string, string> = {
   kinetix: "/providers/kinetix-hover.mp4",
 };
 
-/** Full-bleed photo card: overlay copy, icon facts, price pill, Reservar. */
+/** Full-bleed photo card: overlay copy, icon facts, full-width Reservar. */
 export function EventCard({ event }: { event: EventListItem }) {
   const prefetchEvent = usePrefetchEvent();
   const warm = () => prefetchEvent(event.id);
@@ -99,19 +99,22 @@ export function EventCard({ event }: { event: EventListItem }) {
             ) : null}
           </div>
 
-          <div className="mt-4 flex items-center gap-2">
-            <span
-              className={`rounded-full px-4 py-2.5 text-[13px] font-semibold tracking-tight ${
-                soldOut
-                  ? "bg-white/10 text-white/45"
-                  : "bg-black/45 text-white ring-1 ring-white/15 backdrop-blur-md"
+          <div className="mt-4 flex items-center gap-3">
+            <p
+              className={`shrink-0 text-[15px] font-semibold tracking-tight tabular-nums ${
+                soldOut ? "text-white/45" : "text-white"
               }`}
             >
               {price}
-            </span>
+            </p>
             {soldOut ? null : (
-              <span className="rounded-full bg-white px-4 py-2.5 text-[13px] font-semibold tracking-tight text-black">
+              <span className="inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-white text-[13px] font-semibold tracking-tight text-black">
                 Reservar
+                <ArrowUpRight
+                  className="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
               </span>
             )}
           </div>

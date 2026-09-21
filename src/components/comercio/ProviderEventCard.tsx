@@ -58,15 +58,17 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
 
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-white/55">
           {event.city ? (
-            <Stat icon={<Building2 className="size-3.5" />}>{event.city}</Stat>
+            <Stat icon={<Building2 className="size-3.5" strokeWidth={1.5} />}>
+              {event.city}
+            </Stat>
           ) : null}
-          <Stat icon={<CalendarDays className="size-3.5" />}>
+          <Stat icon={<CalendarDays className="size-3.5" strokeWidth={1.5} />}>
             {day ?? "Sin fecha"}
           </Stat>
           {time ? (
-            <Stat icon={<Clock className="size-3.5" />}>{time}</Stat>
+            <Stat icon={<Clock className="size-3.5" strokeWidth={1.5} />}>{time}</Stat>
           ) : null}
-          <Stat icon={<Ticket className="size-3.5" />}>{sold} vendidos</Stat>
+          <Stat icon={<Ticket className="size-3.5" strokeWidth={1.5} />}>{sold} vendidos</Stat>
         </div>
 
         {event.capacity > 0 ? (
@@ -91,6 +93,7 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
             Abrir
             <ArrowUpRight
               className="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              strokeWidth={1.75}
               aria-hidden
             />
           </span>

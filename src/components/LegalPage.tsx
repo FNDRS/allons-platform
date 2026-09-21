@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppNav } from "./app/AppNav";
+import { PageTransition } from "./app/PageTransition";
 
 interface Props {
   title: string;
@@ -17,31 +18,33 @@ export function LegalPage({ title, updated, children }: Props) {
     <div className="app-canvas min-h-dvh text-white">
       <AppNav />
       <main className="relative z-10 mx-auto w-full max-w-2xl px-6 pb-24 pt-8">
-        <h1 className="text-3xl font-extrabold leading-tight">{title}</h1>
-        {updated ? (
-          <p className="mt-2 text-sm text-muted">{updated}</p>
-        ) : null}
+        <PageTransition>
+          <h1 className="text-3xl font-extrabold leading-tight">{title}</h1>
+          {updated ? (
+            <p className="mt-2 text-sm text-muted">{updated}</p>
+          ) : null}
 
-        <div className="legal-prose mt-8">{children}</div>
+          <div className="legal-prose mt-8">{children}</div>
 
-        <footer className="mt-14 border-t border-border pt-6 text-sm text-muted">
-          © 2026 Allons ·{" "}
-          <Link href="/privacidad" className="text-muted hover:text-fg">
-            Privacidad
-          </Link>{" "}
-          ·{" "}
-          <Link href="/terminos" className="text-muted hover:text-fg">
-            Términos
-          </Link>{" "}
-          ·{" "}
-          <Link href="/soporte" className="text-muted hover:text-fg">
-            Soporte
-          </Link>{" "}
-          ·{" "}
-          <Link href="/eliminar-cuenta" className="text-muted hover:text-fg">
-            Eliminar cuenta
-          </Link>
-        </footer>
+          <footer className="mt-14 border-t border-border pt-6 text-sm text-muted">
+            © 2026 Allons ·{" "}
+            <Link href="/privacidad" className="text-muted hover:text-fg">
+              Privacidad
+            </Link>{" "}
+            ·{" "}
+            <Link href="/terminos" className="text-muted hover:text-fg">
+              Términos
+            </Link>{" "}
+            ·{" "}
+            <Link href="/soporte" className="text-muted hover:text-fg">
+              Soporte
+            </Link>{" "}
+            ·{" "}
+            <Link href="/eliminar-cuenta" className="text-muted hover:text-fg">
+              Eliminar cuenta
+            </Link>
+          </footer>
+        </PageTransition>
       </main>
     </div>
   );

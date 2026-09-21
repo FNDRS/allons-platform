@@ -1,5 +1,6 @@
 import { AppNav } from "./AppNav";
 import { BottomTabs } from "./BottomTabs";
+import { PageTransition } from "./PageTransition";
 import { SpaceAtmosphere } from "./SpaceAtmosphere";
 import { StairsCoverProvider } from "./StairsCover";
 
@@ -61,7 +62,7 @@ function ShellFrame({
       <main
         className={`relative z-10 mx-auto w-full flex-1 px-4 pb-32 pt-6 sm:px-6 sm:pt-8 lg:px-8 ${max}`}
       >
-        {children}
+        <PageTransition>{children}</PageTransition>
       </main>
       <BottomTabs hidden={!bottomTabs} />
     </div>

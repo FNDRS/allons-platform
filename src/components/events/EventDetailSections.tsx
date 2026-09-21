@@ -206,7 +206,7 @@ export function ResourcePreviewCard({ groups }: { groups: PublicResourceGroup[] 
                     {group.available} de {group.total} libres
                   </p>
                 </div>
-                <StatusPill tone={open ? "solid" : "mute"}>
+                <StatusPill tone={open ? "glass" : "mute"}>
                   {open ? "Hay lugar" : "Sin lugar"}
                 </StatusPill>
               </div>

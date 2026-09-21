@@ -12,17 +12,16 @@ import {
   providerKeys,
 } from "@/lib/api/provider";
 import { formatCardDay, formatCardTime, formatHNL, formatNumber } from "@/lib/format";
-import { StatusPill } from "@/components/ui/Pill";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { PaymentsTable, TicketTypeTable } from "./EventTables";
 import { HourlySalesChart } from "./HourlySalesChart";
 import { KpiTile } from "./KpiTile";
 
-const STATUS: Record<string, { label: string; tone: "solid" | "glass" | "mute" }> = {
-  published: { label: "Publicado", tone: "solid" },
-  draft: { label: "Borrador", tone: "glass" },
-  sold_out: { label: "Agotado", tone: "mute" },
-  ended: { label: "Finalizado", tone: "mute" },
+const STATUS: Record<string, string> = {
+  published: "Publicado",
+  draft: "Borrador",
+  sold_out: "Agotado",
+  ended: "Finalizado",
 };
 
 export function ComercioEventView({ eventId }: { eventId: string }) {
@@ -67,7 +66,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
     );
   }
   const data = event.data;
-  const status = STATUS[data.status] ?? { label: data.status, tone: "mute" as const };
+  const status = STATUS[data.status] ?? data.status;
   const day = formatCardDay(data.startsAt);
   const time = formatCardTime(data.startsAt);
   const place = [data.venue, data.city].filter(Boolean).join(", ");
@@ -84,26 +83,24 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
 
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-[26px] font-bold leading-[1.1] tracking-[-0.03em] sm:text-[32px]">
-                {data.title}
-              </h1>
-              <StatusPill tone={status.tone}>{status.label}</StatusPill>
-            </div>
+            <h1 className="text-[26px] font-bold leading-[1.1] tracking-[-0.03em] sm:text-[32px]">
+              {data.title}
+            </h1>
+            <p className="mt-2 text-[13px] text-white/40">{status}</p>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-white/50">
               <span className="inline-flex items-center gap-1.5">
-                <CalendarDays className="size-3.5 text-white/35" aria-hidden />
+                <CalendarDays className="size-3.5 text-white/35" strokeWidth={1.5} aria-hidden />
                 {day ?? "Sin fecha"}
               </span>
               {time ? (
                 <span className="inline-flex items-center gap-1.5">
-                  <Clock className="size-3.5 text-white/35" aria-hidden />
+                  <Clock className="size-3.5 text-white/35" strokeWidth={1.5} aria-hidden />
                   {time}
                 </span>
               ) : null}
               {place ? (
                 <span className="inline-flex items-center gap-1.5">
-                  <Building2 className="size-3.5 text-white/35" aria-hidden />
+                  <Building2 className="size-3.5 text-white/35" strokeWidth={1.5} aria-hidden />
                   {place}
                 </span>
               ) : null}
