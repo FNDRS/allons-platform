@@ -84,6 +84,7 @@ export function reserveFreeTickets(input: {
   ticketTypeId?: string;
   holders: HolderInput[];
   answers: AnswerInput[];
+  resourceIds?: string[];
 }) {
   return apiFetch<{ createdCount: number; ticketIds: string[] }>(
     "/me/tickets",

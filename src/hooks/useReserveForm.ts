@@ -6,12 +6,16 @@ import { displayNameOf, useAuth } from "@/components/app/AuthProvider";
 import { deriveReserveState, useEventDetail } from "@/hooks/useEventDetail";
 import { isApiError } from "@/lib/api/client";
 import {
+  eventKeys,
+  getEventResources,
   isEntryTypeOnSale,
   type EventEntryType,
   type EventQuestion,
 } from "@/lib/api/events";
 import { initiatePayment, paymentLinkStorageKey } from "@/lib/api/payments";
 import { reserveFreeTickets, type AnswerInput } from "@/lib/api/tickets";
+import { useReserveResourceSelection } from "@/hooks/useReserveResourceSelection";
+import { useQuery } from "@tanstack/react-query";
 
 export interface HolderDraft {
   name: string;
@@ -157,6 +161,20 @@ export function useReserveForm(eventId: string) {
   }, [hasPaidSelection]);
   const restartHold = () => setHoldExpiresAt(holdDeadline());
 
+  const resourceQuery = useQuery({
+    queryKey: eventKeys.resources(eventId),
+    queryFn: () => getEventResources(eventId).then((res) => res.groups),
+    enabled: Boolean(eventId),
+    refetchInterval: 10_000,
+    staleTime: 5_000,
+  });
+  const resourceGroups =
+    resourceQuery.data ?? event?.resourceGroups ?? [];
+  const resources = useReserveResourceSelection({
+    groups: resourceGroups,
+    quantity,
+  });
+
   const holderErrors = useMemo(
     () =>
       holders.map((holder) => {
@@ -184,6 +202,7 @@ export function useReserveForm(eventId: string) {
   const valid =
     Boolean(entryType) &&
     !duplicateEmail &&
+    resources.resourcesReady &&
     holderErrors.every(
       (errors) => !errors.name && !errors.email && errors.answers.length === 0,
     );
@@ -213,7 +232,11 @@ export function useReserveForm(eventId: string) {
       return;
     }
     if (!valid) {
-      setError("Revisa los datos marcados antes de continuar.");
+      setError(
+        resources.missingGroupName
+          ? `Elige tu ${resources.missingGroupName.toLowerCase()} antes de continuar.`
+          : "Revisa los datos marcados antes de continuar.",
+      );
       return;
     }
     setSubmitting(true);
@@ -232,6 +255,7 @@ export function useReserveForm(eventId: string) {
           ticketTypeId: entryType.id,
           holders: holderPayload,
           answers: firstAnswers,
+          resourceIds: resources.selectedIds,
         });
         const ticketId = result.ticketIds?.[0];
         router.replace(
@@ -247,6 +271,9 @@ export function useReserveForm(eventId: string) {
         holders: holderPayload.map((holder) => ({ ...holder, invite: false })),
         answers: firstAnswers,
         ...(donationAllowed && donationCents > 0 ? { donationCents } : {}),
+        resourceIds: resources.selectedIds.length
+          ? resources.selectedIds
+          : null,
       });
       try {
         window.sessionStorage.setItem(
@@ -298,6 +325,11 @@ export function useReserveForm(eventId: string) {
     totalCents,
     holdExpiresAt,
     restartHold,
+    resourceGroups,
+    selectedResourceByGroup: resources.selected,
+    onToggleResource: resources.toggle,
+    hasResourceGroups: resources.hasGroups,
+    missingGroupName: resources.missingGroupName,
     submit,
     submitting,
     error,

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { EventCover, EventPosterWash } from "@/components/events/EventCover";
 import { HoldCountdown } from "./HoldCountdown";
+import { ReserveBikePicker } from "./ReserveBikePicker";
 import {
   DonationField,
   EntryTypePicker,
@@ -114,8 +115,25 @@ export function ReserveView({ eventId }: { eventId: string }) {
         onChange={form.setQuantity}
       />
 
+      {form.hasResourceGroups ? (
+        <ReserveBikePicker
+          groups={form.resourceGroups}
+          selectedByGroup={form.selectedResourceByGroup}
+          quantity={form.quantity}
+          step={3}
+          error={
+            form.touched && form.missingGroupName
+              ? `Elige tu ${form.missingGroupName.toLowerCase()} antes de continuar.`
+              : null
+          }
+          onToggle={form.onToggleResource}
+        />
+      ) : null}
+
       <section>
-        <StepHeading n={3}>Asistentes</StepHeading>
+        <StepHeading n={3 + (form.hasResourceGroups ? 1 : 0)}>
+          Asistentes
+        </StepHeading>
         <div className="flex flex-col gap-3">
           {form.holders.map((holder, index) => (
             <HolderCard
@@ -143,11 +161,21 @@ export function ReserveView({ eventId }: { eventId: string }) {
       </section>
 
       {form.donationAllowed ? (
-        <DonationField value={form.donation} onChange={form.setDonation} />
+        <DonationField
+          value={form.donation}
+          onChange={form.setDonation}
+          step={4 + (form.hasResourceGroups ? 1 : 0)}
+        />
       ) : null}
 
       <section>
-        <StepHeading n={form.donationAllowed ? 5 : 4}>Tu compra</StepHeading>
+        <StepHeading
+          n={
+            (form.donationAllowed ? 5 : 4) + (form.hasResourceGroups ? 1 : 0)
+          }
+        >
+          Tu compra
+        </StepHeading>
         <ReserveSummary
           quantity={form.quantity}
           typeName={form.entryType?.name ?? ""}
@@ -190,25 +218,6 @@ export function ReserveView({ eventId }: { eventId: string }) {
           </p>
         ) : null}
       </div>
-    </div>
-  );
-}
-
-function StepHeading({
-  n,
-  children,
-}: {
-  n: number;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="mb-4 flex items-center gap-3">
-      <span className="flex size-7 items-center justify-center rounded-full border border-white/10 text-[10px] font-bold tabular-nums tracking-[0.08em] text-white/40">
-        {String(n).padStart(2, "0")}
-      </span>
-      <h2 className="text-[15px] font-semibold tracking-tight text-white/90">
-        {children}
-      </h2>
     </div>
   );
 }

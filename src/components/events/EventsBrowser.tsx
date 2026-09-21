@@ -47,7 +47,7 @@ export function EventsBrowser() {
           {Array.from({ length: 4 }).map((_, index) => (
             <Skeleton
               key={index}
-              className="aspect-[4/5] w-full rounded-[32px] border border-white/10"
+              className="aspect-[4/4.2] w-full rounded-[32px] border border-white/10"
             />
           ))}
         </div>

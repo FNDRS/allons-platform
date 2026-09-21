@@ -22,15 +22,11 @@ export function EventCard({ event }: { event: EventListItem }) {
   const when = formatEventWhen(event.startsAt);
   const soldOut = event.status === "sold_out";
   const provider = event.provider;
-  const handle = provider?.handle
-    ? `@${provider.handle.replace(/^@/, "")}`
-    : null;
   const price = soldOut ? "Agotado" : formatPriceCents(event.minPriceCents);
   const place = event.city?.trim() || null;
   const hoverSrc = provider?.handle
     ? HOVER_VIDEO_BY_HANDLE[provider.handle.replace(/^@/, "")]
     : undefined;
-  const badge = handle ?? provider?.name ?? null;
 
   return (
     <Link
@@ -40,7 +36,7 @@ export function EventCard({ event }: { event: EventListItem }) {
       onTouchStart={warm}
       onFocus={warm}
     >
-      <article className="event-phone relative flex aspect-[4/5] flex-col overflow-hidden rounded-[32px] border border-white/10 bg-black shadow-[0_24px_50px_rgba(0,0,0,0.38)]">
+      <article className="event-phone relative flex aspect-[4/4.2] flex-col overflow-hidden rounded-[32px] border border-white/10 bg-black shadow-[0_24px_50px_rgba(0,0,0,0.38)]">
         <div className="absolute inset-0">
           {event.coverImageUrl ? (
             <EventCover

@@ -22,6 +22,7 @@ export interface InitiatePaymentInput {
   holders: PaymentHolderInput[];
   answers: AnswerInput[];
   donationCents?: number;
+  resourceIds?: string[] | null;
 }
 
 export interface InitiatePaymentResponse {

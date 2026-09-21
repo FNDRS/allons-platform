@@ -352,13 +352,15 @@ function QuestionField({
 export function DonationField({
   value,
   onChange,
+  step = 4,
 }: {
   value: string;
   onChange: (value: string) => void;
+  step?: number;
 }) {
   return (
     <section>
-      <StepHeading n={4} hint="opcional">
+      <StepHeading n={step} hint="opcional">
         Aporte
       </StepHeading>
       <Shell>

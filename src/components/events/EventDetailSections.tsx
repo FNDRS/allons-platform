@@ -8,13 +8,10 @@ import {
   isEntryTypeOnSale,
   type EventDetail,
   type EventEntryType,
-  type PublicResourceGroup,
 } from "@/lib/api/events";
 import { formatDateTime, formatPriceCents } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { CalendarMark, MetaTile, PinMark } from "@/components/ui/MetaTile";
-import { Badge } from "@/components/ui/States";
-import { ResourceGrid, studioFrontLabel } from "@/components/tickets/ResourceGrid";
 import { EventCover, EventPosterWash } from "./EventCover";
 
 export function EventHero({ event }: { event: EventDetail }) {
@@ -178,50 +175,6 @@ export function EntryTypesCard({ types }: { types: EventEntryType[] }) {
           );
         })}
       </Card>
-    </section>
-  );
-}
-
-export function ResourcePreviewCard({ groups }: { groups: PublicResourceGroup[] }) {
-  if (groups.length === 0) return null;
-  return (
-    <section>
-      <SectionTitle>Al comprar eliges</SectionTitle>
-      <div className="flex flex-col gap-3">
-        {groups.map((group) => (
-          <Card key={group.id}>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[16px] font-bold tracking-tight">
-                  Tu {group.name.toLowerCase()}
-                </p>
-                <p className="mt-0.5 text-[13px] text-muted">
-                  {group.available} de {group.total} libres ·{" "}
-                  {group.required ? "se elige después de comprar" : "opcional, se elige después de comprar"}
-                </p>
-                {group.description ? (
-                  <p className="mt-2 text-sm text-white/70">{group.description}</p>
-                ) : null}
-              </div>
-              <Badge tone={group.available > 0 ? "accent" : "danger"}>
-                {group.available > 0 ? "Hay lugar" : "Sin lugar"}
-              </Badge>
-            </div>
-            <div className="mt-4">
-              <ResourceGrid
-                compact
-                columns={group.columns}
-                frontLabel={studioFrontLabel(group.name)}
-                tiles={group.resources.map((unit) => ({
-                  id: unit.id,
-                  label: unit.label,
-                  taken: unit.taken,
-                }))}
-              />
-            </div>
-          </Card>
-        ))}
-      </div>
     </section>
   );
 }
