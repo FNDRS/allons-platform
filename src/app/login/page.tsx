@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <AppShell width="wide" bottomTabs={false}>
+    <AppShell bottomTabs={false}>
       <div className="grid items-center gap-10 pt-4 lg:min-h-[70vh] lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:pt-8">
         <section className="relative">
           <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-accent">Allons</p>

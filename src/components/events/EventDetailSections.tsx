@@ -64,7 +64,7 @@ export function EventMeta({ event }: { event: EventDetail }) {
       {when ? <MetaPill icon={<Calendar className="size-4" aria-hidden />}>{when}</MetaPill> : null}
       {place ? (
         <MetaPill icon={<MapPin className="size-4" aria-hidden />} href={mapsUrl ?? undefined}>
-          {[place, event.venue ? event.city : null].filter(Boolean).join(" · ")}
+          {[place, place !== event.city ? event.city : null].filter(Boolean).join(" · ")}
         </MetaPill>
       ) : null}
       {typeof event.attendeeCount === "number" && event.attendeeCount > 0 ? (
@@ -159,7 +159,8 @@ export function ResourcePreviewCard({ groups }: { groups: PublicResourceGroup[] 
                   Tu {group.name.toLowerCase()}
                 </p>
                 <p className="mt-0.5 text-[13px] text-muted">
-                  {group.available} de {group.total} libres · se elige después de comprar
+                  {group.available} de {group.total} libres ·{" "}
+                  {group.required ? "se elige después de comprar" : "opcional, se elige después de comprar"}
                 </p>
                 {group.description ? (
                   <p className="mt-2 text-sm text-white/70">{group.description}</p>

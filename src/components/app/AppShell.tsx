@@ -11,12 +11,11 @@ export function AppShell({
   bottomTabs = true,
 }: {
   children: React.ReactNode;
-  width?: "default" | "narrow" | "wide";
+  width?: "default" | "narrow";
   /** Off on flows with their own sticky action bar. */
   bottomTabs?: boolean;
 }) {
-  const max =
-    width === "narrow" ? "max-w-2xl" : width === "wide" ? "max-w-[1120px]" : "max-w-[1120px]";
+  const max = width === "narrow" ? "max-w-2xl" : "max-w-[1120px]";
   return (
     <div className="app-canvas flex min-h-dvh flex-col text-white">
       <AppNav />
