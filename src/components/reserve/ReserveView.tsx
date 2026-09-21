@@ -95,9 +95,14 @@ export function ReserveView({ eventId }: { eventId: string }) {
         </Link>
 
         <div className="mt-6 flex items-start gap-4 sm:gap-5">
-          <div className="relative size-[72px] shrink-0 overflow-hidden rounded-[20px] bg-black ring-1 ring-white/10 sm:size-[88px]">
+          <div className="relative h-[72px] w-[128px] shrink-0 overflow-hidden rounded-[18px] bg-black ring-1 ring-white/10 sm:h-[88px] sm:w-[156px]">
             {event.coverImageUrl ? (
-              <EventCover src={event.coverImageUrl} alt="" themeColor={event.themeColor} />
+              <EventCover
+                src={event.coverImageUrl}
+                alt=""
+                themeColor={event.themeColor}
+                fit="contain"
+              />
             ) : (
               <EventPosterWash themeColor={event.themeColor} />
             )}

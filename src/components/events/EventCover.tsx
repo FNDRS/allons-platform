@@ -6,11 +6,13 @@ export function EventCover({
   alt,
   themeColor,
   className = "",
+  fit = "cover",
 }: {
   src: string | null | undefined;
   alt: string;
   themeColor?: string | null;
   className?: string;
+  fit?: "cover" | "contain";
 }) {
   if (src) {
     return (
@@ -18,7 +20,9 @@ export function EventCover({
         src={src}
         alt={alt}
         loading="lazy"
-        className={`h-full w-full object-cover object-center ${className}`}
+        className={`absolute inset-0 size-full object-center ${
+          fit === "contain" ? "object-contain" : "object-cover"
+        } ${className}`}
       />
     );
   }
