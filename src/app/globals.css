@@ -779,23 +779,12 @@
   color: var(--normal-text) !important;
 }
 
-@keyframes edge-light-lap {
-  to {
-    stroke-dashoffset: -1;
-  }
-}
-.edge-light-spark {
-  animation: edge-light-lap 6s linear infinite;
-  animation-delay: var(--edge-delay, 0s);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .rise,
   .fade-up,
   .shimmer,
   .modal-card,
-  .modal-overlay,
-  .edge-light-spark {
+  .modal-overlay {
     animation: none !important;
     opacity: 1 !important;
   }
