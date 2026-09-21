@@ -45,8 +45,31 @@ export interface PaymentOrderDetail {
   expiresAt: string | null;
 }
 
+export interface ChargeSavedCardInput extends InitiatePaymentInput {
+  paymentMethodId: string;
+}
+
+export interface ChargeSavedCardResponse {
+  orderId: string;
+  /** Terminal already: a stored-card charge settles synchronously. */
+  status: "paid" | "failed";
+  /** False when the charge went through but the tickets are still being issued. */
+  fulfilled: boolean;
+  amountCents: number;
+  currency: string;
+  discount: { cents: number } | null;
+}
+
 export function initiatePayment(input: InitiatePaymentInput) {
   return apiFetch<InitiatePaymentResponse>("/me/payments/initiate", {
+    method: "POST",
+    body: input,
+  });
+}
+
+/** Pays with a card already in Paygate's vault. Only the card id travels. */
+export function chargeWithSavedCard(input: ChargeSavedCardInput) {
+  return apiFetch<ChargeSavedCardResponse>("/me/payments/charge", {
     method: "POST",
     body: input,
   });
