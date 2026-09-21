@@ -92,12 +92,12 @@ export function StaffView() {
         ) : (
           <div className="flex flex-col gap-2.5">
             {staff.members.map((member) => (
-              <Card key={member.userId} className="flex items-center justify-between gap-4 py-4">
+              <Card key={member.userId} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="min-w-0">
                   <p className="truncate font-semibold tracking-tight">{member.name ?? member.email ?? "Sin nombre"}</p>
                   <p className="truncate text-sm text-white/50">{member.email ?? "—"}</p>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
                   <Badge tone={member.active ? "accent" : "neutral"}>
                     {ROLE_LABEL[member.role] ?? member.role}
                     {member.active ? "" : " · inactivo"}

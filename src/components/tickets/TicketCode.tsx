@@ -43,11 +43,11 @@ export function TicketCode({ code }: { code: string }) {
             : { borderColor: "rgba(255, 255, 255, 0.08)", backgroundColor: "rgba(255, 255, 255, 0.06)" }
         }
         transition={reduced ? { duration: 0 } : { duration: 0.3, ease: "easeOut" }}
-        className="flex h-14 items-center gap-3 rounded-full border pl-6 pr-3 text-[26px] font-bold tracking-[0.12em] hover:border-border-strong"
+        className="flex h-12 max-w-full items-center gap-2 rounded-full border pl-4 pr-2 text-[20px] font-bold tracking-[0.08em] hover:border-border-strong sm:h-14 sm:gap-3 sm:pl-6 sm:pr-3 sm:text-[26px] sm:tracking-[0.12em]"
         aria-label={copied ? "Código copiado" : `Copiar código ${code}`}
         aria-live="polite"
       >
-        <span className="tabular-nums">{code}</span>
+        <span className="min-w-0 truncate tabular-nums">{code}</span>
         <motion.span
           className="flex size-9 items-center justify-center rounded-full bg-white/[0.08]"
           animate={copied ? { backgroundColor: "rgba(52, 211, 153, 0.18)" } : { backgroundColor: "rgba(255, 255, 255, 0.08)" }}

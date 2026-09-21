@@ -102,7 +102,7 @@ export function PaymentView({ orderId }: { orderId: string }) {
     return (
       <Card className="flex flex-col items-center py-10 text-center">
         <CheckCircle2 className="size-14 text-accent" aria-hidden />
-        <h1 className="mt-5 text-[30px] font-bold tracking-[-0.03em]">¡Pago confirmado!</h1>
+        <h1 className="mt-5 break-words text-[26px] font-bold tracking-[-0.03em] sm:text-[30px]">¡Pago confirmado!</h1>
         <p className="mt-2 text-sm text-muted">
           Pagaste {formatCents(order.amountCents)}. Tu ticket ya está en tu cuenta.
         </p>
@@ -120,7 +120,7 @@ export function PaymentView({ orderId }: { orderId: string }) {
     return (
       <Card className="flex flex-col items-center py-10 text-center">
         <XCircle className="size-14 text-red-300" aria-hidden />
-        <h1 className="mt-5 text-[30px] font-bold tracking-[-0.03em]">
+        <h1 className="mt-5 break-words text-[26px] font-bold tracking-[-0.03em] sm:text-[30px]">
           {order?.status === "cancelled" ? "Pago cancelado" : "El pago no se completó"}
         </h1>
         <p className="mt-2 max-w-sm text-sm text-muted">
@@ -137,7 +137,7 @@ export function PaymentView({ orderId }: { orderId: string }) {
     return (
       <Card className="flex flex-col items-center py-10 text-center">
         <Loader2 className="size-12 animate-spin text-accent" aria-hidden />
-        <h1 className="mt-5 text-[26px] font-bold tracking-[-0.03em]">Estamos emitiendo tu ticket</h1>
+        <h1 className="mt-5 break-words text-[24px] font-bold tracking-[-0.03em] sm:text-[26px]">Estamos emitiendo tu ticket</h1>
         <p className="mt-2 max-w-sm text-sm text-muted">
           El pago entró. En unos segundos aparecerá en Mis tickets; si tarda, revisa ahí en un momento.
         </p>
@@ -152,7 +152,7 @@ export function PaymentView({ orderId }: { orderId: string }) {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-[32px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[40px]">
+        <h1 className="break-words text-[28px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[40px]">
           {phase === "still_pending" ? "Tu pago sigue pendiente" : "Completa tu pago"}
         </h1>
         <p className="mt-2 text-sm text-muted">
@@ -191,7 +191,7 @@ export function PaymentView({ orderId }: { orderId: string }) {
         ) : null}
       </Card>
 
-      <Card className="flex items-center gap-3 py-4">
+      <Card className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
         {phase === "waiting" ? (
           <>
             <Loader2 className="size-5 shrink-0 animate-spin text-accent" aria-hidden />
@@ -199,10 +199,10 @@ export function PaymentView({ orderId }: { orderId: string }) {
           </>
         ) : (
           <>
-            <p className="flex-1 text-sm text-muted">
+            <p className="min-w-0 flex-1 text-sm text-muted">
               Dejamos de revisar automáticamente. Si ya pagaste, vuelve a revisar.
             </p>
-            <Button variant="secondary" size="sm" onClick={resume}>
+            <Button variant="secondary" size="sm" onClick={resume} className="self-start sm:self-auto">
               Volver a revisar
             </Button>
           </>

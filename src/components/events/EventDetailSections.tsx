@@ -40,7 +40,7 @@ export function EventHero({ event }: { event: EventDetail }) {
         </div>
       </div>
       <div>
-        <h1 className="text-[28px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[36px]">
+        <h1 className="break-words text-[28px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[36px]">
           {event.title}
         </h1>
         {provider?.name ? (
@@ -247,8 +247,8 @@ export function RefundPolicyNote({ event }: { event: EventDetail }) {
         ? `Reembolso completo si cancelas${event.refundDeadlineDays ? ` hasta ${event.refundDeadlineDays} día(s) antes` : ""}.`
         : `Reembolso del ${event.refundPartialPct ?? 0}% si cancelas${event.refundDeadlineDays ? ` hasta ${event.refundDeadlineDays} día(s) antes` : ""}.`;
   return (
-    <p className="flex items-center gap-2 text-[13px] text-dim">
-      <Undo2 className="size-4" aria-hidden /> {text}
+    <p className="flex items-start gap-2 text-[13px] text-dim">
+      <Undo2 className="mt-0.5 size-4 shrink-0" aria-hidden /> {text}
     </p>
   );
 }

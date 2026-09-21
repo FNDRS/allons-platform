@@ -49,7 +49,7 @@ export function BottomTabs({
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className={`flex min-w-[72px] flex-col items-center gap-1 rounded-2xl px-3 py-1.5 text-[11px] font-semibold transition ${
+              className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-2 py-1.5 text-[11px] font-semibold transition ${
                 active ? "text-white" : "text-dim hover:text-muted"
               }`}
             >

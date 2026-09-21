@@ -22,9 +22,9 @@ export function Stat({
   const positive = (delta ?? 0) >= 0;
   return (
     <div
-      className={`flex flex-col gap-2 rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5 ${className}`}
+      className={`flex min-w-0 flex-col gap-2 rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5 ${className}`}
     >
-      <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-muted">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted sm:text-[12px] sm:tracking-[0.18em]">
         {label}
       </p>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">

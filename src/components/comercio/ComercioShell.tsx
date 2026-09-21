@@ -86,14 +86,14 @@ export function ComercioShellInner({ children }: { children: React.ReactNode }) 
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="glass sticky top-0 z-40 border-b border-border pt-[env(safe-area-inset-top)]">
-          <div className="mx-auto flex h-16 w-full max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-            <Link href="/events" aria-label="Allons, ir a eventos" className="shrink-0 lg:hidden">
-              <AllonsLogo className="h-auto w-[84px]" variant="orange" />
+          <div className="mx-auto flex h-16 w-full max-w-[1200px] items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
+            <Link href="/events" aria-label="Allons, ir a eventos" className="min-w-0 shrink-0 lg:hidden">
+              <AllonsLogo className="h-auto w-[72px] sm:w-[84px]" variant="orange" />
             </Link>
-            <p className="hidden text-[13px] font-semibold text-dim lg:block">
+            <p className="hidden min-w-0 truncate text-[13px] font-semibold text-dim lg:block">
               allonsapp.com/comercio
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
               <LiveIndicator />
               <AccountButton onOpen={() => setAccountOpen(true)} />
             </div>

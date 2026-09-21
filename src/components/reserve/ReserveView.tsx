@@ -82,7 +82,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
             )}
           </div>
           <div className="min-w-0 pt-0.5">
-            <h1 className="text-[28px] font-bold leading-[1.05] tracking-[-0.04em] sm:text-[36px]">
+            <h1 className="break-words text-[24px] font-bold leading-[1.05] tracking-[-0.04em] sm:text-[36px]">
               {event.title}
             </h1>
             {when || place ? (
@@ -193,7 +193,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
       ) : null}
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(14px,env(safe-area-inset-bottom))] sm:px-6">
-        <div className="pointer-events-auto mx-auto flex max-w-2xl items-center gap-3 rounded-[28px] border border-white/10 bg-[#0a0a0b]/80 p-2.5 pl-5 shadow-[0_-20px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+        <div className="pointer-events-auto mx-auto flex max-w-2xl items-center gap-2 rounded-[28px] border border-white/10 bg-[#0a0a0b]/80 p-2 pl-4 shadow-[0_-20px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:gap-3 sm:p-2.5 sm:pl-5">
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/40">
               Total

@@ -60,7 +60,7 @@ export function ComercioHero({
             <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-white/45">
               Comercio en Allons
             </p>
-            <h1 className="mt-2 text-[34px] font-bold leading-[1.02] tracking-[-0.04em] sm:text-[48px]">
+            <h1 className="mt-2 break-words text-[28px] font-bold leading-[1.02] tracking-[-0.04em] sm:text-[48px]">
               {profile.name}
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[14px] text-white/65">

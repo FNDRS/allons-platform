@@ -28,7 +28,7 @@ export function Hero({
   return (
     <section className="mb-8 flex flex-col gap-6">
       <div>
-        <h1 className="text-[36px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[52px]">
+        <h1 className="text-[32px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[52px]">
           {loading ? (
             <span className="inline-block h-[1em] w-64 rounded-xl bg-surface-2" aria-hidden />
           ) : user && name ? (

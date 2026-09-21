@@ -16,11 +16,11 @@ export function TicketQr({ payload }: { payload: string }) {
     });
   }, [payload]);
   return (
-    <div className="mx-auto w-fit rounded-[32px] bg-[#111113] p-[6px] shadow-[0_28px_70px_rgba(0,0,0,0.55)] ring-1 ring-white/10">
-      <div className="overflow-hidden rounded-[26px] bg-white p-5">
+    <div className="mx-auto w-full max-w-[min(100%,292px)] rounded-[32px] bg-[#111113] p-[6px] shadow-[0_28px_70px_rgba(0,0,0,0.55)] ring-1 ring-white/10">
+      <div className="overflow-hidden rounded-[26px] bg-white p-4 sm:p-5">
         <canvas
           ref={canvas}
-          className="block size-[240px] sm:size-[280px]"
+          className="block h-auto w-full"
           aria-label="Código QR del ticket"
         />
       </div>

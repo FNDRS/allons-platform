@@ -72,7 +72,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/38">
           Tu pase
         </p>
-        <h1 className="mt-2 text-[30px] font-bold leading-[1.05] tracking-[-0.035em] sm:text-[36px]">
+        <h1 className="mt-2 break-words text-[26px] font-bold leading-[1.05] tracking-[-0.035em] sm:text-[36px]">
           {ticket.event?.title ?? ticket.title}
         </h1>
         {ticket.holderName ? (
