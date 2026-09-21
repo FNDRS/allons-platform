@@ -83,7 +83,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
         </Link>
 
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="text-[26px] font-bold leading-[1.1] tracking-[-0.03em] sm:text-[32px]">
               {data.title}
             </h1>
@@ -109,7 +109,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
           </div>
           <Link
             href={`/events/${encodeURIComponent(eventId)}`}
-            className={`inline-flex h-10 shrink-0 items-center gap-1.5 px-4 text-[13px] ${glassCtaClass}`}
+            className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-1.5 px-4 text-[13px] sm:w-auto ${glassCtaClass}`}
           >
             Ver página pública
             <ArrowUpRight className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />

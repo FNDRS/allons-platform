@@ -74,7 +74,7 @@ export function TicketCard({
             ) : null}
           </div>
 
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-black/45 px-4 py-2.5 text-[13px] font-semibold tracking-tight text-white ring-1 ring-white/15 backdrop-blur-md">
               {typeLabel ?? ticket.holderName ?? ticketsLabel}
             </span>

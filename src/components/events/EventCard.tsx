@@ -102,7 +102,7 @@ export function EventCard({ event }: { event: EventListItem }) {
 
           <div className="mt-4 flex items-center gap-3">
             <p
-              className={`shrink-0 text-[15px] font-semibold tracking-tight tabular-nums ${
+              className={`min-w-0 shrink-0 text-[15px] font-semibold tracking-tight tabular-nums ${
                 soldOut ? "text-white/45" : "text-white"
               }`}
             >

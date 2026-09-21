@@ -21,7 +21,7 @@ export function MetaTile({
         <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-white/38">
           {label}
         </span>
-        <span className="mt-0.5 block text-[15px] font-medium tracking-tight text-white/88">
+        <span className="mt-0.5 block break-words text-[15px] font-medium tracking-tight text-white/88">
           {children}
         </span>
       </span>

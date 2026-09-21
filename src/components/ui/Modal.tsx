@@ -64,7 +64,7 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         onClick={(event) => event.stopPropagation()}
-        className="modal-card flex max-h-[92dvh] w-full flex-col rounded-t-[24px] border border-border-strong bg-[#0c0c0e] sm:max-w-lg sm:rounded-[24px]"
+        className="modal-card flex max-h-[92dvh] w-full flex-col rounded-t-[24px] border border-border-strong bg-[#0c0c0e] pb-[env(safe-area-inset-bottom)] sm:max-w-lg sm:rounded-[24px] sm:pb-0"
       >
         <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-white/20 sm:hidden" aria-hidden />
         <div className="flex items-center justify-between px-5 pt-4 pb-3 sm:pt-5">

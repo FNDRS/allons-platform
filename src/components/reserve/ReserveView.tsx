@@ -206,7 +206,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
             size="lg"
             loading={form.submitting}
             onClick={() => void form.submit()}
-            className="min-w-[11.5rem] shadow-[0_10px_40px_rgba(246,112,16,0.28)]"
+            className="min-w-0 shrink-0 shadow-[0_10px_40px_rgba(246,112,16,0.28)] sm:min-w-[11.5rem]"
           >
             {form.isFree ? "Confirmar" : "Ir a pagar"}
           </Button>

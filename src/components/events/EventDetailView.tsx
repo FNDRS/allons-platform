@@ -88,23 +88,25 @@ export function EventDetailView({
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-2 sm:px-6">
-        <div className="glass mx-auto flex max-w-[720px] items-center justify-between gap-3 rounded-full border border-white/10 py-2 pl-5 pr-2">
-          <div className="min-w-0">
+        <div className="glass mx-auto flex max-w-[720px] items-center gap-2 rounded-[22px] border border-white/10 py-2 pl-4 pr-2 sm:gap-3 sm:rounded-full sm:pl-5">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-[14px] font-bold tracking-tight">{event.title}</p>
-            <p className="text-[12px] text-muted">
+            <p className="truncate text-[12px] text-muted">
               {cheapest != null ? `Desde ${formatPriceCents(cheapest)}` : ""}
             </p>
           </div>
           {partial ? (
-            <Button size="lg" loading>
+            <Button size="md" className="shrink-0 sm:!h-13 sm:!px-6 sm:!text-[15px]" loading>
               Reservar
             </Button>
           ) : reserve?.kind === "open" ? (
             <Link href={`/events/${encodeURIComponent(id)}/reservar`} className="shrink-0">
-              <Button size="lg">{reserve.label}</Button>
+              <Button size="md" className="sm:!h-13 sm:!px-6 sm:!text-[15px]">
+                {reserve.label}
+              </Button>
             </Link>
           ) : (
-            <Button size="lg" disabled>
+            <Button size="md" className="shrink-0 sm:!h-13 sm:!px-6 sm:!text-[15px]" disabled>
               {reserve?.label ?? "Reservar"}
             </Button>
           )}
