@@ -8,8 +8,11 @@ import {
   cvvLength,
   detectBrand,
   digitsOnly,
+  formatCardholderName,
   formatCardNumber,
   formatExpiry,
+  formatIdNumber,
+  formattedNumberMaxLength,
   maxDigits,
   type CardBrand,
   type CardDraft,
@@ -74,7 +77,7 @@ export function CardForm({
             placeholder="0000 0000 0000 0000"
             value={draft.number}
             disabled={disabled}
-            maxLength={maxDigits(brand) + 5}
+            maxLength={formattedNumberMaxLength(brand)}
             aria-invalid={Boolean(error("number"))}
             prefix={<CardBrandMark brand={brand} framed />}
             onChange={(event) => {
@@ -99,7 +102,7 @@ export function CardForm({
             disabled={disabled}
             maxLength={80}
             aria-invalid={Boolean(error("name"))}
-            onChange={(event) => onChange({ name: event.target.value })}
+            onChange={(event) => onChange({ name: formatCardholderName(event.target.value) })}
           />
           <FieldError>{error("name")}</FieldError>
         </label>
@@ -121,11 +124,12 @@ export function CardForm({
           </label>
           <label className="block">
             <Label>CVV</Label>
-            <Input
+            <SmoothInput
               type="password"
+              revealable={false}
+              maskDots="heavy"
               inputMode="numeric"
               autoComplete="cc-csc"
-              placeholder={"•".repeat(cvvLength(brand))}
               value={draft.cvv}
               disabled={disabled}
               maxLength={cvvLength(brand)}
@@ -151,9 +155,7 @@ export function CardForm({
               disabled={disabled}
               maxLength={20}
               aria-invalid={Boolean(error("idNumber"))}
-              onChange={(event) =>
-                onChange({ idNumber: event.target.value.replace(/[^0-9A-Za-z-]/g, "") })
-              }
+              onChange={(event) => onChange({ idNumber: formatIdNumber(event.target.value) })}
             />
             <FieldError>{error("idNumber")}</FieldError>
             <p className="mt-1.5 text-[12px] leading-relaxed text-dim">

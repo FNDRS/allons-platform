@@ -15,20 +15,20 @@ const WHITE_PLATE =
   "bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] ring-black/10";
 
 const PLATE: Record<CardBrand, string> = {
-  visa: WHITE_PLATE,
-  mastercard: WHITE_PLATE,
-  amex: "bg-transparent ring-black/10",
-  diners: WHITE_PLATE,
-  discover: WHITE_PLATE,
-  unknown: "bg-white/6 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-white/10",
+  visa: `h-8 w-[3.6rem] ${WHITE_PLATE}`,
+  mastercard: `h-10 w-14 ${WHITE_PLATE}`,
+  amex: "h-10 w-14 bg-transparent ring-black/10",
+  diners: `h-8 w-[3.6rem] ${WHITE_PLATE}`,
+  discover: `h-8 w-[3.6rem] ${WHITE_PLATE}`,
+  unknown: "h-10 w-14 bg-white/6 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-white/10",
 };
 
 const FRAMED_IMG: Record<CardBrand, string> = {
-  visa: "h-[14px] w-[44px] object-contain",
+  visa: "h-[22px] w-[50px] object-contain",
   mastercard: "h-[22px] w-9 object-contain",
   amex: "absolute inset-0 size-full object-cover",
-  diners: "h-[18px] w-[44px] object-contain object-left",
-  discover: "h-[12px] w-[44px] object-contain",
+  diners: "h-[18px] w-[48px] object-contain",
+  discover: "h-[14px] w-[48px] object-contain",
   unknown: "h-5 w-5 object-contain",
 };
 
@@ -59,7 +59,7 @@ export function CardBrandMark({
   if (!framed) return mark;
   return (
     <span
-      className={`relative flex h-10 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[9px] ring-1 ${PLATE[brand]}`}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-[9px] ring-1 ${PLATE[brand]}`}
       aria-label={brand === "unknown" ? undefined : brand}
       role="img"
     >

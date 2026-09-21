@@ -24,8 +24,10 @@ import {
 
 const SPRING = { stiffness: 500, damping: 30, mass: 0.5 };
 const SPRING_SNAP = { stiffness: 10000, damping: 100, mass: 0.1 };
-const DOT_PX = 8;
-const DOT_GAP_PX = 7;
+const DOT = {
+  default: { px: 8, gap: 7 },
+  heavy: { px: 14, gap: 10 },
+} as const;
 /** Native pickers and toggles have no text selection to follow. */
 const CARETLESS_TYPES = new Set([
   "date",
@@ -48,6 +50,10 @@ const FIELD =
 type SmoothInputProps = Omit<ComponentProps<"input">, "prefix"> & {
   wrapperClassName?: string;
   prefix?: ReactNode;
+  /** Password fields show an eye unless this is false (CVV). */
+  revealable?: boolean;
+  /** Fat discs for short secrets like CVV. */
+  maskDots?: keyof typeof DOT;
 };
 
 export function SmoothInput({
@@ -63,6 +69,8 @@ export function SmoothInput({
   type = "text",
   placeholder,
   style,
+  revealable = true,
+  maskDots = "default",
   ...props
 }: SmoothInputProps) {
   const [internalValue, setInternalValue] = useState(
@@ -78,6 +86,8 @@ export function SmoothInput({
   const isControlled = value !== undefined;
   const inputValue = isControlled ? String(value) : String(internalValue);
   const isPassword = type === "password";
+  const showEye = isPassword && revealable;
+  const { px: dotPx, gap: dotGap } = DOT[maskDots];
   const maskPassword = isPassword && !revealed;
   const caretless = CARETLESS_TYPES.has(type);
 
@@ -169,7 +179,7 @@ export function SmoothInput({
     const styles = window.getComputedStyle(target);
     const paddingLeft = parseFloat(styles.paddingLeft) || 0;
     const paddingRight = parseFloat(styles.paddingRight) || 0;
-    const stride = DOT_PX + DOT_GAP_PX;
+    const stride = dotPx + dotGap;
     const absoluteWidth = maskPassword
       ? paddingLeft + caretIndex * stride
       : measurePrefixWidth(
@@ -242,7 +252,7 @@ export function SmoothInput({
 
   return (
     <div
-      className={`${WRAPPER} ${prefix || isPassword ? "flex items-center gap-3" : ""} ${wrapperClassName}`}
+      className={`${WRAPPER} ${prefix || showEye ? "flex items-center gap-3" : ""} ${wrapperClassName}`}
     >
       {prefix ? (
         <span className="shrink-0 text-dim" aria-hidden>
@@ -294,13 +304,13 @@ export function SmoothInput({
           <div
             aria-hidden
             className="pointer-events-none col-start-1 col-end-2 row-start-1 row-end-2 flex items-center"
-            style={{ gap: DOT_GAP_PX }}
+            style={{ gap: dotGap }}
           >
             {Array.from({ length: inputValue.length }).map((_, index) => (
               <span
                 key={index}
-                className="block shrink-0 rounded-full bg-white/88"
-                style={{ width: DOT_PX, height: DOT_PX }}
+                className="block shrink-0 rounded-full bg-white/90"
+                style={{ width: dotPx, height: dotPx }}
               />
             ))}
           </div>
@@ -315,7 +325,7 @@ export function SmoothInput({
           style={{ x: springCaretX, opacity: caretOpacity }}
         />
       </div>
-      {isPassword ? (
+      {showEye ? (
         <button
           type="button"
           aria-label={revealed ? "Ocultar contraseña" : "Mostrar contraseña"}

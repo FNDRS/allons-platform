@@ -37,6 +37,13 @@ export function detectBrand(digits: string): CardBrand {
 export function maxDigits(brand: CardBrand): number {
   if (brand === "amex") return 15;
   if (brand === "diners") return 14;
+  return 16;
+}
+
+/** Character cap of the formatted value, spaces included. */
+export function formattedNumberMaxLength(brand: CardBrand): number {
+  if (brand === "amex") return 17;
+  if (brand === "diners") return 17;
   return 19;
 }
 
@@ -76,6 +83,17 @@ export function formatExpiry(value: string): string {
   if (digits.length === 1 && Number(digits) > 1) digits = `0${digits}`;
   if (digits.length >= 3) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
   return digits;
+}
+
+const CARDHOLDER_ALLOWED = /[^\p{L}\p{M}' .-]/gu;
+
+/** Letters, spaces, apostrophes, dots, hyphens. Digits never land in the field. */
+export function formatCardholderName(value: string): string {
+  return value.replace(CARDHOLDER_ALLOWED, "").slice(0, 80);
+}
+
+export function formatIdNumber(value: string): string {
+  return value.replace(/[^0-9A-Za-z-]/g, "").slice(0, 20);
 }
 
 export function parseExpiry(
@@ -120,7 +138,11 @@ export function validateCardDraft(
   const errors: CardDraftErrors = {};
   const digits = digitsOnly(draft.number);
   const brand = detectBrand(digits);
-  if (!passesLuhn(digits)) errors.number = "Revisa el número de tarjeta";
+  const panMax = maxDigits(brand);
+  if (digits.length < panMax) errors.number = "El número está incompleto";
+  else if (digits.length > panMax || !passesLuhn(digits)) {
+    errors.number = "Revisa el número de tarjeta";
+  }
   if (!CARDHOLDER_NAME_RE.test(draft.name.trim())) {
     errors.name = "Escribe el nombre como aparece en la tarjeta";
   }
