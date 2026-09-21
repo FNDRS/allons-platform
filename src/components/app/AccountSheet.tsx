@@ -21,7 +21,7 @@ export function AccountButton({ onOpen }: { onOpen: () => void }) {
   const { user, loading } = useAuth();
   const avatar = useAccountAvatar();
   if (loading) {
-    return <span className="size-11 rounded-full bg-surface-2" aria-hidden />;
+    return <span className="size-7 rounded-full bg-surface-2 md:size-8" aria-hidden />;
   }
   if (!user) {
     return (
@@ -40,7 +40,7 @@ export function AccountButton({ onOpen }: { onOpen: () => void }) {
       type="button"
       onClick={onOpen}
       aria-label="Tu cuenta"
-      className="flex size-11 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-2 transition hover:bg-white/[0.1]"
+      className="flex size-7 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-2 transition hover:bg-white/[0.1] md:size-8"
     >
       <ProfileAvatar
         src={avatar.src}
