@@ -5,6 +5,17 @@ import { useSearchParams } from "next/navigation";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { WAITLIST_BASE_SUBSCRIBERS } from "@/lib/waitlist-count";
+import { SmoothInput } from "@/components/ui/SmoothInput";
+
+/** The pill draws its own border and fill; the input inside stays bare. */
+const BARE_WRAPPER =
+  "!rounded-none !border-0 !bg-transparent !px-0 focus-within:!bg-transparent";
+const bareField = (dark: boolean) =>
+  "!h-full text-base font-medium tracking-tight " +
+  (dark
+    ? "placeholder:!text-white/35"
+    : "!text-black placeholder:!text-black/35");
+
 
 type Status = "idle" | "loading" | "success" | "error";
 type InputStep = "email" | "phone";
@@ -311,7 +322,7 @@ export function WaitlistForm({
               pointerEvents: inputStep === "email" ? "auto" : "none",
             }}
           >
-            <input
+            <SmoothInput
               ref={inputRef}
               type="email"
               inputMode="email"
@@ -326,12 +337,8 @@ export function WaitlistForm({
                   setErrorMsg(null);
                 }
               }}
-              className={
-                "w-full h-full bg-transparent text-base font-medium outline-none tracking-tight " +
-                (isDark
-                  ? "text-white placeholder:text-white/35"
-                  : "text-black placeholder:text-black/35")
-              }
+              wrapperClassName={BARE_WRAPPER}
+              className={bareField(isDark)}
             />
           </div>
 
@@ -344,7 +351,7 @@ export function WaitlistForm({
               pointerEvents: inputStep === "phone" ? "auto" : "none",
             }}
           >
-            <input
+            <SmoothInput
               ref={phoneRef}
               type="tel"
               inputMode="tel"
@@ -365,12 +372,8 @@ export function WaitlistForm({
                   setErrorMsg(null);
                 }
               }}
-              className={
-                "w-full h-full bg-transparent text-base font-medium outline-none tracking-tight " +
-                (isDark
-                  ? "text-white placeholder:text-white/35"
-                  : "text-black placeholder:text-black/35")
-              }
+              wrapperClassName={BARE_WRAPPER}
+              className={bareField(isDark)}
             />
           </div>
         </div>

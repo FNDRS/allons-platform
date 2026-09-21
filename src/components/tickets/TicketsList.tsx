@@ -28,9 +28,12 @@ export function TicketsList() {
       />
 
       {!ready || isLoading ? (
-        <div className="flex flex-col gap-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className="h-28" />
+        <div className="flex flex-col gap-5">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <Skeleton
+              key={index}
+              className="min-h-[210px] w-full rounded-[32px] border border-white/10 sm:min-h-[240px]"
+            />
           ))}
         </div>
       ) : error ? (
@@ -46,13 +49,17 @@ export function TicketsList() {
           }
         />
       ) : (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-10">
           {upcoming.length > 0 ? (
             <section>
               <SectionTitle>Próximos</SectionTitle>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex flex-col gap-5">
                 {upcoming.map((ticket, index) => (
-                  <div key={ticket.id} className="rise" style={{ "--i": index } as React.CSSProperties}>
+                  <div
+                    key={ticket.id}
+                    className="rise w-full"
+                    style={{ "--i": index } as React.CSSProperties}
+                  >
                     <TicketCard ticket={ticket} />
                   </div>
                 ))}
@@ -60,11 +67,17 @@ export function TicketsList() {
             </section>
           ) : null}
           {past.length > 0 ? (
-            <section className="opacity-70">
+            <section>
               <SectionTitle>Pasados</SectionTitle>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {past.map((ticket) => (
-                  <TicketCard key={ticket.id} ticket={ticket} />
+              <div className="flex flex-col gap-5">
+                {past.map((ticket, index) => (
+                  <div
+                    key={ticket.id}
+                    className="rise w-full"
+                    style={{ "--i": index } as React.CSSProperties}
+                  >
+                    <TicketCard ticket={ticket} past />
+                  </div>
                 ))}
               </div>
             </section>

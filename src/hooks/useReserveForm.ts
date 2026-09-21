@@ -21,6 +21,12 @@ export interface HolderDraft {
 
 const MAX_QUANTITY = 10;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Local countdown length until the order returns a real `expiresAt`. */
+const HOLD_COUNTDOWN_MS = 30 * 60 * 1000;
+
+function holdDeadline(): string {
+  return new Date(Date.now() + HOLD_COUNTDOWN_MS).toISOString();
+}
 
 function emptyHolder(): HolderDraft {
   return { name: "", email: "", answers: {} };
@@ -137,6 +143,19 @@ export function useReserveForm(eventId: string) {
   const donationAllowed = Boolean(entryType?.donationEnabled) && !isFree;
   const ticketsCents = (entryType?.priceCents ?? 0) * quantity;
   const totalCents = ticketsCents + (donationAllowed ? donationCents : 0);
+
+  // The clock starts as soon as a paid ticket is selected and is not reset by
+  // changing quantity or tier; it only clears when nothing paid is selected.
+  const [holdExpiresAt, setHoldExpiresAt] = useState<string | null>(null);
+  const hasPaidSelection = Boolean(entryType) && !isFree;
+  useEffect(() => {
+    if (!hasPaidSelection) {
+      setHoldExpiresAt(null);
+      return;
+    }
+    setHoldExpiresAt((current) => current ?? holdDeadline());
+  }, [hasPaidSelection]);
+  const restartHold = () => setHoldExpiresAt(holdDeadline());
 
   const holderErrors = useMemo(
     () =>
@@ -275,6 +294,8 @@ export function useReserveForm(eventId: string) {
     ticketsCents,
     donationCents,
     totalCents,
+    holdExpiresAt,
+    restartHold,
     submit,
     submitting,
     error,

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function TicketsPage() {
   return (
-    <AppShell width="narrow">
+    <AppShell width="listing" tone="space">
       <TicketsList />
     </AppShell>
   );

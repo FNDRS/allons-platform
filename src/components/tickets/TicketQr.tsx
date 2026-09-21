@@ -16,8 +16,14 @@ export function TicketQr({ payload }: { payload: string }) {
     });
   }, [payload]);
   return (
-    <div className="mx-auto w-fit rounded-[24px] bg-white p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_40px_100px_rgba(0,0,0,0.6)]">
-      <canvas ref={canvas} className="block size-[240px] sm:size-[280px]" aria-label="Código QR del ticket" />
+    <div className="mx-auto w-fit rounded-[32px] bg-[#111113] p-[6px] shadow-[0_28px_70px_rgba(0,0,0,0.55)] ring-1 ring-white/10">
+      <div className="overflow-hidden rounded-[26px] bg-white p-5">
+        <canvas
+          ref={canvas}
+          className="block size-[240px] sm:size-[280px]"
+          aria-label="Código QR del ticket"
+        />
+      </div>
     </div>
   );
 }

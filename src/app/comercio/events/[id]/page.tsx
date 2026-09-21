@@ -15,10 +15,10 @@ export default async function ComercioEventPage({
 }) {
   const { id } = await params;
   return (
-    <ComercioShell title="Evento" subtitle="Ventas, asistentes y unidades de este evento.">
-      <ProviderGate>
+    <ProviderGate>
+      <ComercioShell title="Evento" subtitle="Ventas, asistentes y unidades de este evento.">
         <ComercioEventView eventId={id} />
-      </ProviderGate>
-    </ComercioShell>
+      </ComercioShell>
+    </ProviderGate>
   );
 }

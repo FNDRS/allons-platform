@@ -15,7 +15,7 @@ import {
 } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import {
-  type ComponentPropsWithoutRef,
+  type ComponentProps,
   type ReactNode,
   useEffect,
   useRef,
@@ -26,18 +26,32 @@ const SPRING = { stiffness: 500, damping: 30, mass: 0.5 };
 const SPRING_SNAP = { stiffness: 10000, damping: 100, mass: 0.1 };
 const DOT_PX = 8;
 const DOT_GAP_PX = 7;
+/** Native pickers and toggles have no text selection to follow. */
+const CARETLESS_TYPES = new Set([
+  "date",
+  "time",
+  "datetime-local",
+  "month",
+  "week",
+  "color",
+  "range",
+  "file",
+  "checkbox",
+  "radio",
+]);
 
 const WRAPPER =
   "relative w-full rounded-[14px] border border-border bg-surface-2 px-4 transition focus-within:border-accent/60 focus-within:bg-white/[0.08]";
 const FIELD =
   "h-12 w-full bg-transparent text-[15px] text-white outline-none placeholder:text-dim disabled:opacity-50";
 
-type SmoothInputProps = Omit<ComponentPropsWithoutRef<"input">, "prefix"> & {
+type SmoothInputProps = Omit<ComponentProps<"input">, "prefix"> & {
   wrapperClassName?: string;
   prefix?: ReactNode;
 };
 
 export function SmoothInput({
+  ref,
   className = "",
   wrapperClassName = "",
   prefix,
@@ -65,6 +79,13 @@ export function SmoothInput({
   const inputValue = isControlled ? String(value) : String(internalValue);
   const isPassword = type === "password";
   const maskPassword = isPassword && !revealed;
+  const caretless = CARETLESS_TYPES.has(type);
+
+  const setInputRef = (node: HTMLInputElement | null) => {
+    inputRef.current = node;
+    if (typeof ref === "function") ref(node);
+    else if (ref) ref.current = node;
+  };
   // Chrome/Safari leave selectionStart null on email/number, so the caret
   // would stick at 0. Keep the keyboard via inputMode. Password stays text
   // so we can draw our own dots instead of the native discs.
@@ -137,6 +158,10 @@ export function SmoothInput({
 
   const updateCaretFromInput = (target: HTMLInputElement | null) => {
     if (!target) return;
+    if (caretless) {
+      caretOpacity.set(0);
+      return;
+    }
     const selectionStart = target.selectionStart ?? 0;
     const selectionEnd = target.selectionEnd ?? 0;
     const hasSelection = selectionStart !== selectionEnd;
@@ -227,18 +252,18 @@ export function SmoothInput({
       <div
         ref={containerRef}
         className="relative grid min-w-0 flex-1 grid-cols-1 overflow-hidden p-0"
-        style={{ caretColor: "transparent" }}
+        style={{ caretColor: caretless ? undefined : "transparent" }}
       >
         <input
           {...props}
-          ref={inputRef}
+          ref={setInputRef}
           type={nativeType}
           inputMode={nativeInputMode}
           placeholder={placeholder}
           autoCapitalize={isPassword ? "off" : props.autoCapitalize}
           autoCorrect={isPassword ? "off" : props.autoCorrect}
           spellCheck={isPassword ? false : props.spellCheck}
-          className={`${FIELD} col-start-1 col-end-2 row-start-1 row-end-2 caret-transparent ${
+          className={`${FIELD} col-start-1 col-end-2 row-start-1 row-end-2 ${caretless ? "" : "caret-transparent"} ${
             maskPassword
               ? "text-transparent [-webkit-text-fill-color:transparent] placeholder:[-webkit-text-fill-color:rgba(255,255,255,0.32)]"
               : ""

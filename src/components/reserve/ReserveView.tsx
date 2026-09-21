@@ -7,6 +7,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/Button";
 import { StepTitle } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
+import { HoldCountdown } from "./HoldCountdown";
 import {
   DonationField,
   EntryTypePicker,
@@ -66,6 +67,10 @@ export function ReserveView({ eventId }: { eventId: string }) {
         value={form.entryTypeId}
         onChange={form.setEntryTypeId}
       />
+
+      {form.holdExpiresAt ? (
+        <HoldCountdown expiresAt={form.holdExpiresAt} onRestart={form.restartHold} />
+      ) : null}
 
       <QuantityStepper value={form.quantity} max={form.maxQuantity} onChange={form.setQuantity} />
 

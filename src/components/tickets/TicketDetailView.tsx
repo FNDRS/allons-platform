@@ -3,15 +3,14 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, MapPin, Package, Undo2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { formatEventWhen } from "@/lib/allons-api";
 import { getMyTicket, ticketKeys } from "@/lib/api/tickets";
-import { Card } from "@/components/ui/Card";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { ResourcePicker } from "./ResourcePicker";
 import { TicketCode } from "./TicketCode";
+import { TicketMeta } from "./TicketMeta";
 import { TicketQr } from "./TicketQr";
 import { TicketResourceCard } from "./TicketResourceCard";
 
@@ -29,7 +28,6 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [autoOpened, setAutoOpened] = useState(false);
 
-  // Fresh purchase with a pending required pick: open the picker right away.
   useEffect(() => {
     if (!isNew || autoOpened || !ticket) return;
     const pending = ticket.resourceGroups?.find((group) => group.required && !group.assigned);
@@ -44,7 +42,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
     return (
       <div className="flex flex-col items-center gap-4">
         <Skeleton className="h-8 w-1/2" />
-        <Skeleton className="size-72 rounded-[24px]" />
+        <Skeleton className="size-72 rounded-[28px]" />
         <Skeleton className="h-16 w-2/3" />
       </div>
     );
@@ -54,28 +52,32 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   }
 
   const when = formatEventWhen(ticket.event?.startsAt ?? null);
-  const place = [ticket.event?.venue, ticket.event?.address, ticket.event?.city]
-    .filter(Boolean)
-    .join(" · ");
+  const refund = ticket.refundPolicy?.eligible
+    ? "Puedes cancelar desde la app y recibir reembolso según la política del evento."
+    : ticket.refundPolicy?.reason || "Este ticket no admite reembolso.";
 
   return (
-    <div className="flex flex-col gap-7">
-      <Link href="/tickets" className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-muted hover:text-white">
-        <ArrowLeft className="size-4" aria-hidden /> Mis tickets
+    <div className="flex flex-col gap-8">
+      <Link
+        href="/tickets"
+        className="inline-flex w-fit items-center gap-1.5 text-[13px] font-semibold text-white/45 transition hover:text-white"
+      >
+        <BackMark />
+        Mis tickets
       </Link>
 
-      {isNew ? (
-        <p className="rounded-[14px] border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-center text-sm font-semibold text-emerald-200">
-          Listo. Este es tu ticket.
-        </p>
-      ) : null}
+      {isNew ? <ReadyChip /> : null}
 
       <div className="text-center">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-accent">Ticket</p>
-        <h1 className="mt-2 text-[30px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[36px]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/38">
+          Tu pase
+        </p>
+        <h1 className="mt-2 text-[30px] font-bold leading-[1.05] tracking-[-0.035em] sm:text-[36px]">
           {ticket.event?.title ?? ticket.title}
         </h1>
-        {ticket.holderName ? <p className="mt-2 text-[15px] text-muted">{ticket.holderName}</p> : null}
+        {ticket.holderName ? (
+          <p className="mt-2 text-[15px] text-white/50">{ticket.holderName}</p>
+        ) : null}
       </div>
 
       <TicketQr payload={ticket.qrPayload} />
@@ -92,24 +94,16 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         />
       ))}
 
-      <Card className="flex flex-col gap-3.5">
-        {when ? <Row icon={<Calendar className="size-4" />}>{when}</Row> : null}
-        {place ? <Row icon={<MapPin className="size-4" />}>{place}</Row> : null}
-        {ticket.kitPickupInfo ? (
-          <Row icon={<Package className="size-4" />}>
-            <span className="whitespace-pre-line">{ticket.kitPickupInfo}</span>
-          </Row>
-        ) : null}
-        <Row icon={<Undo2 className="size-4" />}>
-          <span className="text-muted">
-            {ticket.refundPolicy?.eligible
-              ? "Puedes cancelar desde la app y recibir reembolso según la política del evento."
-              : ticket.refundPolicy?.reason || "Este ticket no admite reembolso."}
-          </span>
-        </Row>
-      </Card>
+      <TicketMeta
+        when={when}
+        venue={ticket.event?.venue}
+        address={ticket.event?.address}
+        city={ticket.event?.city}
+        kitPickupInfo={ticket.kitPickupInfo}
+        refund={refund}
+      />
 
-      <p className="text-center text-[13px] text-dim">
+      <p className="text-center text-[13px] leading-relaxed text-white/32">
         Este ticket también está en la app de Allons con la misma cuenta.
       </p>
 
@@ -123,11 +117,44 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   );
 }
 
-function Row({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+function ReadyChip() {
   return (
-    <div className="flex gap-3 text-[15px]">
-      <span className="mt-0.5 shrink-0 text-accent">{icon}</span>
-      <div className="min-w-0 flex-1 leading-6">{children}</div>
-    </div>
+    <p
+      role="status"
+      className="mx-auto flex w-fit items-center gap-2 rounded-full bg-white/6 px-2 py-1.5 pr-3.5 text-[13px] font-medium tracking-tight text-white/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/10"
+    >
+      <span className="grid size-6 place-items-center rounded-full bg-white text-black">
+        <CheckMark />
+      </span>
+      Listo. Este es tu ticket.
+    </p>
+  );
+}
+
+function CheckMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-3.5" fill="none" aria-hidden>
+      <path
+        d="M6.5 12.2 10.2 16l7.3-8"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function BackMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden>
+      <path
+        d="M14 5.5 7.5 12 14 18.5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

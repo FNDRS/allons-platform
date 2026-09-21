@@ -1,11 +1,26 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+
+function subscribeNoop() {
+  return () => {};
+}
+
+function useBrowser() {
+  return useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
+  );
+}
 
 /**
  * Bottom sheet on phones (with a drag handle), centered dialog on wider
- * screens. Closes on backdrop click and Escape.
+ * screens. Always portaled to document.body so a parent with
+ * backdrop-filter (the glass header) cannot trap position:fixed.
+ * Closes on backdrop click and Escape.
  */
 export function Modal({
   open,
@@ -20,6 +35,8 @@ export function Modal({
   children: React.ReactNode;
   footer?: React.ReactNode;
 }) {
+  const browser = useBrowser();
+
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
@@ -34,11 +51,11 @@ export function Modal({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !browser) return null;
 
-  return (
+  return createPortal(
     <div
-      className="modal-overlay fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:p-6"
+      className="modal-overlay fixed inset-0 z-[80] flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:p-6"
       onClick={onClose}
       role="presentation"
     >
@@ -56,7 +73,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="flex size-10 items-center justify-center rounded-full bg-surface-2 text-muted hover:bg-white/[0.12] hover:text-white"
+            className="flex size-10 items-center justify-center rounded-full bg-surface-2 text-muted hover:bg-white/10 hover:text-white"
           >
             <X className="size-4" />
           </button>
@@ -64,6 +81,7 @@ export function Modal({
         <div className="flex-1 overflow-y-auto px-5 pb-5">{children}</div>
         {footer ? <div className="border-t border-border px-5 py-4">{footer}</div> : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

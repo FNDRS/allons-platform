@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Compass, HelpCircle, Store, Ticket, type LucideIcon } from "lucide-react";
-import { isActivePath } from "./AppNav";
+import { isActivePath, customerLinksFor } from "./AppNav";
 import { useAuth } from "./AuthProvider";
 
 export type BottomTab = { href: string; label: string; Icon: LucideIcon };
@@ -14,8 +14,6 @@ const TABS: BottomTab[] = [
   { href: "/comercio", label: "Comercio", Icon: Store },
   { href: "/soporte", label: "Soporte", Icon: HelpCircle },
 ];
-
-const GUEST_HREFS = new Set(["/eventos", "/soporte"]);
 
 /** Phone navigation: a fixed frosted tab bar. Hidden from md up. */
 export function BottomTabs({
@@ -31,9 +29,11 @@ export function BottomTabs({
   const visible =
     tabs !== TABS
       ? tabs
-      : loading || !user
-        ? TABS.filter((tab) => GUEST_HREFS.has(tab.href))
-        : TABS;
+      : TABS.filter((tab) =>
+          (loading ? customerLinksFor(null) : customerLinksFor(user)).some(
+            (link) => link.href === tab.href,
+          ),
+        );
   return (
     <nav
       aria-label="Secciones"

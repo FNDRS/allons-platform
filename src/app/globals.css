@@ -583,6 +583,14 @@
   filter: blur(40px);
 }
 
+/* Space listing: flat void, no orange wash and no particles. */
+.app-canvas.space {
+  background-color: #050505;
+}
+.app-canvas.space::before {
+  display: none;
+}
+
 /* Events listing: flat orange canvas so the phone cards match the reference. */
 .events-brand {
   --color-app: #ff4c1a;

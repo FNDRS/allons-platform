@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import type { User } from "@supabase/supabase-js";
 import { AllonsLogo } from "@/components/AllonsLogo";
+import { isComercioUser } from "@/lib/role";
 import { AccountButton, AccountSheet } from "./AccountSheet";
 import { useAuth } from "./AuthProvider";
 
@@ -16,6 +18,16 @@ export const APP_LINKS = [
 ];
 
 const GUEST_HREFS = new Set(["/eventos", "/soporte"]);
+
+/** Guest keeps Soporte. Signed-in users drop it. Comercio only if the JWT says provider. */
+export function customerLinksFor(user: User | null) {
+  if (!user) return APP_LINKS.filter((link) => GUEST_HREFS.has(link.href));
+  return APP_LINKS.filter((link) => {
+    if (link.href === "/soporte") return false;
+    if (link.href === "/comercio") return isComercioUser(user);
+    return true;
+  });
+}
 
 export function isActivePath(pathname: string, href: string) {
   if (href === "/eventos" || href === "/events") {
@@ -36,26 +48,25 @@ const navDot = { x: 0, seeded: false };
 export function AppNav() {
   const { user, loading } = useAuth();
   const [accountOpen, setAccountOpen] = useState(false);
-  const links =
-    loading || !user
-      ? APP_LINKS.filter((link) => GUEST_HREFS.has(link.href))
-      : APP_LINKS;
+  const links = loading ? customerLinksFor(null) : customerLinksFor(user);
 
   return (
-    <header className="glass sticky top-0 z-40 border-b border-border">
-      <div className="mx-auto grid h-16 w-full max-w-[1120px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-6 lg:px-8">
-        <Link href="/eventos" aria-label="Allons, ir a eventos" className="justify-self-start">
-          <AllonsLogo className="h-auto w-[92px]" />
-        </Link>
+    <>
+      <header className="glass sticky top-0 z-40 border-b border-border">
+        <div className="mx-auto grid h-16 w-full max-w-[1120px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-6 lg:px-8">
+          <Link href="/eventos" aria-label="Allons, ir a eventos" className="justify-self-start">
+            <AllonsLogo className="h-auto w-[92px]" />
+          </Link>
 
-        <NavLinks links={links} />
+          <NavLinks links={links} />
 
-        <div className="justify-self-end">
-          <AccountButton onOpen={() => setAccountOpen(true)} />
+          <div className="justify-self-end">
+            <AccountButton onOpen={() => setAccountOpen(true)} />
+          </div>
         </div>
-      </div>
+      </header>
       <AccountSheet open={accountOpen} onClose={() => setAccountOpen(false)} />
-    </header>
+    </>
   );
 }
 

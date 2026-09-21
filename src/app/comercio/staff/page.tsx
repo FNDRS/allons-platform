@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 
 export default function StaffPage() {
   return (
-    <ComercioShell title="Personal" subtitle="Quién puede escanear y administrar tus eventos.">
-      <ProviderGate>
+    <ProviderGate>
+      <ComercioShell title="Personal" subtitle="Quién puede escanear y administrar tus eventos.">
         <StaffView />
-      </ProviderGate>
-    </ComercioShell>
+      </ComercioShell>
+    </ProviderGate>
   );
 }

@@ -2,6 +2,7 @@
 
 import type { InputHTMLAttributes } from "react";
 import { ArrowRight, Search } from "lucide-react";
+import { SmoothInput } from "./SmoothInput";
 
 /**
  * Rounded pill input with an inline circular icon button, the search field of
@@ -21,7 +22,7 @@ export function SearchPill({
       className={`flex h-14 items-center gap-2 rounded-full border border-border bg-surface-2 pl-5 pr-2 transition focus-within:border-border-strong focus-within:bg-white/[0.08] ${className}`}
     >
       <Search className="size-4 shrink-0 text-dim" aria-hidden />
-      <input
+      <SmoothInput
         {...rest}
         type="search"
         enterKeyHint="search"
@@ -29,7 +30,8 @@ export function SearchPill({
           if (event.key === "Enter") onAction?.();
           rest.onKeyDown?.(event);
         }}
-        className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-white outline-none placeholder:text-dim [&::-webkit-search-cancel-button]:hidden"
+        wrapperClassName="min-w-0 flex-1 !rounded-none !border-0 !bg-transparent !px-0 focus-within:!bg-transparent"
+        className="!h-full [&::-webkit-search-cancel-button]:hidden"
       />
       <button
         type="button"

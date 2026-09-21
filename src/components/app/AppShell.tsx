@@ -1,5 +1,6 @@
 import { AppNav } from "./AppNav";
 import { BottomTabs } from "./BottomTabs";
+import { SpaceAtmosphere } from "./SpaceAtmosphere";
 
 /**
  * Frame for every customer page (events, tickets, login). The landing keeps
@@ -15,8 +16,8 @@ export function AppShell({
   width?: "default" | "narrow" | "listing" | "detail";
   /** Off on flows with their own sticky action bar. */
   bottomTabs?: boolean;
-  /** Brand fill, used on the public events listing so the cards sit on orange. */
-  tone?: "default" | "brand";
+  /** `space` is the eventos listing. `brand` is unused orange canvas. */
+  tone?: "default" | "brand" | "space";
 }) {
   const max =
     width === "narrow"
@@ -29,11 +30,14 @@ export function AppShell({
   return (
     <div
       className={`app-canvas flex min-h-dvh flex-col text-white ${
-        tone === "brand" ? "events-brand" : ""
+        tone === "brand" ? "events-brand" : tone === "space" ? "space" : ""
       }`}
     >
+      {tone === "space" ? <SpaceAtmosphere /> : null}
       <AppNav />
-      <main className={`mx-auto w-full flex-1 px-4 pb-32 pt-6 sm:px-6 sm:pt-8 lg:px-8 ${max}`}>
+      <main
+        className={`relative z-10 mx-auto w-full flex-1 px-4 pb-32 pt-6 sm:px-6 sm:pt-8 lg:px-8 ${max}`}
+      >
         {children}
       </main>
       <BottomTabs hidden={!bottomTabs} />
