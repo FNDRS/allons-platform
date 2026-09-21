@@ -1,5 +1,5 @@
 {
-  "name": "allons-waitlist",
+  "name": "allons-platform",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,24 +11,25 @@
   },
   "dependencies": {
     "@radix-ui/react-select": "^2.3.7",
+    "@sentry/nextjs": "^10.75.0",
     "@supabase/supabase-js": "^2.45.0",
     "@tanstack/react-query": "^5.103.1",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^13.4.0",
     "lucide-react": "^1.47.0",
-    "next": "15.1.11",
+    "next": "16.3.5",
     "qrcode": "^1.5.4",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
     "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
     "@types/canvas-confetti": "^1.9.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^25.9.8",
     "@types/qrcode": "^1.5.6",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "tailwindcss": "^4.0.0",
