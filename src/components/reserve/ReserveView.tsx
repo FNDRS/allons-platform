@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { ArrowLeft, Lock } from "lucide-react";
+import { useCardCheckout } from "@/hooks/useCardCheckout";
 import { useReserveForm } from "@/hooks/useReserveForm";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { formatEventWhen } from "@/lib/allons-api";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { EventCover, EventPosterWash } from "@/components/events/EventCover";
+import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
 import { HoldCountdown } from "./HoldCountdown";
 import { ReserveBikePicker } from "./ReserveBikePicker";
 import {
@@ -23,6 +25,20 @@ import { formatCents } from "@/lib/format";
 export function ReserveView({ eventId }: { eventId: string }) {
   const { ready, user } = useRequireAuth();
   const form = useReserveForm(eventId);
+  // Saved cards load only for a paid ticket; a free one never shows the step.
+  const checkout = useCardCheckout({ enabled: ready && !form.isFree && Boolean(form.entryType) });
+  const payInApp = !form.isFree && checkout.available && checkout.method === "card";
+  const submitting = form.submitting || checkout.submitting;
+  const error = form.error ?? checkout.error;
+
+  function onPay() {
+    if (!payInApp) {
+      void form.submit();
+      return;
+    }
+    const input = form.preparePaidOrder();
+    if (input) void checkout.pay(input);
+  }
 
   if (!ready || form.isLoading) {
     return (
@@ -186,7 +202,14 @@ export function ReserveView({ eventId }: { eventId: string }) {
         />
       </section>
 
-      {form.error ? <ErrorState message={form.error} /> : null}
+      {!form.isFree ? (
+        <PaymentMethodStep
+          step={(form.donationAllowed ? 6 : 5) + (form.hasResourceGroups ? 1 : 0)}
+          checkout={checkout}
+        />
+      ) : null}
+
+      {error ? <ErrorState message={error} /> : null}
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(14px,env(safe-area-inset-bottom))] sm:px-6">
         <div className="pointer-events-auto mx-auto flex max-w-2xl items-center gap-2 rounded-[28px] border border-white/10 bg-[#0a0a0b]/80 p-2 pl-4 shadow-[0_-20px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:gap-3 sm:p-2.5 sm:pl-5">
@@ -200,17 +223,23 @@ export function ReserveView({ eventId }: { eventId: string }) {
           </div>
           <Button
             size="lg"
-            loading={form.submitting}
-            onClick={() => void form.submit()}
+            loading={submitting}
+            onClick={onPay}
             className="min-w-0 shrink-0 shadow-[0_10px_40px_rgba(246,112,16,0.28)] sm:min-w-[11.5rem]"
           >
-            {form.isFree ? "Confirmar" : "Ir a pagar"}
+            {form.isFree
+              ? "Confirmar"
+              : payInApp
+                ? `Pagar ${formatCents(form.totalCents)}`
+                : "Ir a pagar"}
           </Button>
         </div>
         {!form.isFree ? (
           <p className="mx-auto mt-2 flex max-w-2xl items-center justify-center gap-1.5 text-[11px] text-white/30">
             <Lock className="size-3" strokeWidth={1.75} />
-            Pago seguro en Paygate
+            {payInApp
+              ? "Cifrado y procesado por Paygate (Clinpays)"
+              : "Pago seguro en Paygate"}
           </p>
         ) : null}
       </div>

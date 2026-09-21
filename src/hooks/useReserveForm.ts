@@ -12,7 +12,11 @@ import {
   type EventEntryType,
   type EventQuestion,
 } from "@/lib/api/events";
-import { initiatePayment, paymentLinkStorageKey } from "@/lib/api/payments";
+import {
+  initiatePayment,
+  paymentLinkStorageKey,
+  type InitiatePaymentInput,
+} from "@/lib/api/payments";
 import { reserveFreeTickets, type AnswerInput } from "@/lib/api/tickets";
 import { useReserveResourceSelection } from "@/hooks/useReserveResourceSelection";
 import { useQuery } from "@tanstack/react-query";
@@ -223,13 +227,17 @@ export function useReserveForm(eventId: string) {
     );
   }
 
-  async function submit() {
+  /**
+   * Marks the form as touched and returns the holders payload when every
+   * field checks out, or null after setting the error to show.
+   */
+  function validateDraft() {
     setTouched(true);
     setError(null);
-    if (!event || !entryType) return;
+    if (!event || !entryType) return null;
     if (duplicateEmail) {
       setError("Cada ticket necesita un correo distinto.");
-      return;
+      return null;
     }
     if (!valid) {
       setError(
@@ -237,16 +245,48 @@ export function useReserveForm(eventId: string) {
           ? `Elige tu ${resources.missingGroupName.toLowerCase()} antes de continuar.`
           : "Revisa los datos marcados antes de continuar.",
       );
-      return;
+      return null;
     }
+    const holderPayload = holders.map((holder) => ({
+      name: holder.name.trim(),
+      email: holder.email.trim(),
+      answers: answersToList(questions, holder.answers),
+    }));
+    return { holderPayload, firstAnswers: holderPayload[0]?.answers ?? [] };
+  }
+
+  function paidOrderInput(
+    draft: NonNullable<ReturnType<typeof validateDraft>>,
+  ): InitiatePaymentInput | null {
+    if (!event || !entryType) return null;
+    return {
+      eventId: event.id,
+      entryTypeId: entryType.id,
+      quantity,
+      holders: draft.holderPayload.map((holder) => ({ ...holder, invite: false })),
+      answers: draft.firstAnswers,
+      ...(donationAllowed && donationCents > 0 ? { donationCents } : {}),
+      resourceIds: resources.selectedIds.length ? resources.selectedIds : null,
+    };
+  }
+
+  /**
+   * The paid order as the API wants it, for a settle path other than the
+   * hosted link (the in-app card). Null when the form is not valid yet or
+   * the ticket is free; the error state is set in the first case.
+   */
+  function preparePaidOrder(): InitiatePaymentInput | null {
+    const draft = validateDraft();
+    if (!draft || isFree) return null;
+    return paidOrderInput(draft);
+  }
+
+  async function submit() {
+    const draft = validateDraft();
+    if (!draft || !event || !entryType) return;
     setSubmitting(true);
     try {
-      const holderPayload = holders.map((holder) => ({
-        name: holder.name.trim(),
-        email: holder.email.trim(),
-        answers: answersToList(questions, holder.answers),
-      }));
-      const firstAnswers = holderPayload[0]?.answers ?? [];
+      const { holderPayload, firstAnswers } = draft;
 
       if (isFree) {
         const result = await reserveFreeTickets({
@@ -264,17 +304,9 @@ export function useReserveForm(eventId: string) {
         return;
       }
 
-      const order = await initiatePayment({
-        eventId: event.id,
-        entryTypeId: entryType.id,
-        quantity,
-        holders: holderPayload.map((holder) => ({ ...holder, invite: false })),
-        answers: firstAnswers,
-        ...(donationAllowed && donationCents > 0 ? { donationCents } : {}),
-        resourceIds: resources.selectedIds.length
-          ? resources.selectedIds
-          : null,
-      });
+      const input = paidOrderInput(draft);
+      if (!input) return;
+      const order = await initiatePayment(input);
       try {
         window.sessionStorage.setItem(
           paymentLinkStorageKey(order.orderId),
@@ -331,6 +363,7 @@ export function useReserveForm(eventId: string) {
     hasResourceGroups: resources.hasGroups,
     missingGroupName: resources.missingGroupName,
     submit,
+    preparePaidOrder,
     submitting,
     error,
     valid,
