@@ -84,7 +84,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
 
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <h1 className="text-[26px] font-bold leading-[1.1] tracking-[-0.03em] sm:text-[32px]">
+            <h1 className="break-words text-[24px] font-bold leading-[1.1] tracking-[-0.03em] sm:text-[32px]">
               {data.title}
             </h1>
             <p className="mt-2 text-[13px] text-white/40">{status}</p>

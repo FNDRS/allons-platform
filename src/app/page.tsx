@@ -46,7 +46,7 @@ export default function HomePage() {
 
       <div className="relative z-10 flex flex-col pt-16 sm:pt-20">
         <main className="mx-auto flex w-full max-w-6xl flex-col items-center px-5 pb-0 pt-10 text-center sm:px-8 sm:pb-0 sm:pt-14">
-          <h1 className="fade-up delay-2 mt-7 max-w-5xl bg-gradient-to-b from-white via-white/95 to-white/60 bg-clip-text text-[48px] font-semibold leading-[0.9] tracking-[-0.075em] text-transparent sm:text-[72px] lg:text-[96px]">
+          <h1 className="fade-up delay-2 mt-7 max-w-5xl bg-gradient-to-b from-white via-white/95 to-white/60 bg-clip-text text-[40px] font-semibold leading-[0.95] tracking-[-0.075em] text-transparent sm:text-[72px] lg:text-[96px]">
             La próxima forma de vivir eventos.
           </h1>
 

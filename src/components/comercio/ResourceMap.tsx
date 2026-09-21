@@ -32,9 +32,9 @@ export function ResourceMap({
       <div className="flex flex-col gap-3">
         {groups.map((group) => (
           <Card key={group.id}>
-            <div className="mb-4 flex items-baseline justify-between gap-3">
-              <p className="font-semibold tracking-tight">{group.name}</p>
-              <p className="text-sm text-white/55">
+            <div className="mb-4 flex min-w-0 items-baseline justify-between gap-3">
+              <p className="min-w-0 truncate font-semibold tracking-tight">{group.name}</p>
+              <p className="shrink-0 text-sm text-white/55">
                 <span className="font-semibold text-white">{group.assigned}</span> / {group.total} asignadas
               </p>
             </div>

@@ -1,4 +1,4 @@
-import { Bell, Smartphone } from "lucide-react";
+import { Smartphone } from "lucide-react";
 import { glassCtaClass } from "@/components/ui/cta";
 
 /** Nudge to follow the comercio in the app, where alerts and class bookings live. */
@@ -18,8 +18,8 @@ export function ComercioAppCard({
         aria-hidden
       />
       <div className="relative">
-        <span className="grid size-10 place-items-center rounded-[13px] bg-accent text-black">
-          <Bell className="size-4" aria-hidden />
+        <span className="grid size-10 place-items-center rounded-[13px] bg-white/[0.06] text-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] ring-1 ring-white/15">
+          <BellMark />
         </span>
         <p className="mt-4 text-[17px] font-bold leading-tight tracking-tight">
           Entérate primero de lo nuevo de {name}
@@ -32,7 +32,7 @@ export function ComercioAppCard({
             href={appDeepLink}
             className={`inline-flex h-10 items-center justify-center gap-2 text-[13px] ${glassCtaClass}`}
           >
-            <Smartphone className="size-4" aria-hidden />
+            <Smartphone className="size-4" strokeWidth={1.5} aria-hidden />
             Abrir en la app
           </a>
           <a
@@ -46,5 +46,24 @@ export function ComercioAppCard({
         </div>
       </div>
     </aside>
+  );
+}
+
+function BellMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" aria-hidden>
+      <path
+        d="M6.8 16.6h10.4M8.2 16.6V10.8a3.8 3.8 0 1 1 7.6 0v5.8"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12 4.6v1.2M10.4 16.6a1.6 1.6 0 0 0 3.2 0"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }

@@ -17,11 +17,11 @@ export function StepHeading({
   hint?: string;
 }) {
   return (
-    <div className="mb-4 flex items-center gap-3">
-      <span className="flex size-7 items-center justify-center rounded-full border border-white/10 text-[10px] font-bold tabular-nums tracking-[0.08em] text-white/40">
+    <div className="mb-4 flex min-w-0 flex-wrap items-center gap-3">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-white/10 text-[10px] font-bold tabular-nums tracking-[0.08em] text-white/40">
         {String(n).padStart(2, "0")}
       </span>
-      <h2 className="text-[15px] font-semibold tracking-tight text-white/90">
+      <h2 className="min-w-0 text-[15px] font-semibold tracking-tight text-white/90">
         {children}
       </h2>
       {hint ? <span className="text-[12px] text-white/35">{hint}</span> : null}

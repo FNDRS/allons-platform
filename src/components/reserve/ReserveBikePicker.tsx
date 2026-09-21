@@ -53,7 +53,7 @@ export function ReserveBikePicker({
                     onToggle(group.id, tile.id);
                   }}
                 />
-                <div className="mt-4 flex gap-4 text-[11px] text-white/40">
+                <div className="mt-4 flex flex-wrap gap-3 text-[11px] text-white/40 sm:gap-4">
                   <Legend className="border-white/12 bg-white/[0.07]" label="Libre" />
                   <Legend className="border-transparent bg-white/[0.03]" label="Ocupada" />
                   <Legend className="border-accent bg-accent" label="Tuya" />

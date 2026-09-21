@@ -33,7 +33,7 @@ export function HourlySalesChart({ data }: { data: HourlySales }) {
   return (
     <section>
       <SectionTitle>Ventas por hora · hoy</SectionTitle>
-      <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-5">
+      <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <p className="text-[30px] font-bold leading-none tracking-[-0.03em] tabular-nums sm:text-[34px]">
             {data.total}

@@ -40,7 +40,7 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
       onTouchStart={warm}
       className="group block h-full w-full"
     >
-      <article className="flex h-full flex-col rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.14] hover:bg-white/[0.05]">
+      <article className="flex h-full flex-col rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.14] hover:bg-white/[0.05] sm:p-5">
         <div className="flex min-w-0 items-start gap-3">
           {event.coverImageUrl ? (
             <img

@@ -236,7 +236,7 @@ export function LoginForm() {
         </p>
       ) : null}
       <h1
-        className={`text-4xl font-semibold leading-none tracking-[-0.05em] ${
+        className={`break-words text-[28px] font-semibold leading-none tracking-[-0.05em] sm:text-4xl ${
           mode === "signup" ? "mt-2" : ""
         }`}
       >

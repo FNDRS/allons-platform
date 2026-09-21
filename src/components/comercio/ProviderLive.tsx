@@ -34,11 +34,12 @@ export function LiveIndicator() {
 
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] font-semibold tracking-tight transition ${
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1.5 text-[12px] font-semibold tracking-tight transition sm:gap-2 sm:px-3 ${
         live
           ? "border-success/25 bg-success/[0.08] text-success"
           : "border-white/10 bg-white/[0.04] text-white/45"
       }`}
+      aria-label={label}
       title={
         live
           ? "Las ventas se actualizan solas, sin recargar."
@@ -59,7 +60,7 @@ export function LiveIndicator() {
           aria-hidden
         />
       </span>
-      {label}
+      <span className="hidden min-[380px]:inline">{label}</span>
     </span>
   );
 }

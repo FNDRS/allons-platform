@@ -28,7 +28,7 @@ export function ComercioReviews({ profile }: { profile: ComercioProfile }) {
       <SectionTitle>Reseñas</SectionTitle>
       <Card className="flex flex-col gap-5">
         <div className="flex items-end gap-4">
-          <p className="text-[44px] font-bold leading-none tracking-[-0.04em] tabular-nums">
+          <p className="text-[36px] font-bold leading-none tracking-[-0.04em] tabular-nums sm:text-[44px]">
             {profile.rating.toFixed(1)}
           </p>
           <div className="pb-1">
@@ -42,8 +42,8 @@ export function ComercioReviews({ profile }: { profile: ComercioProfile }) {
           <ul className="flex flex-col divide-y divide-white/[0.08] border-t border-white/[0.08]">
             {reviews.slice(0, 4).map((review) => (
               <li key={review.id} className="flex flex-col gap-1.5 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-[14px] font-semibold tracking-tight">
+                <div className="flex min-w-0 items-center justify-between gap-3">
+                  <p className="min-w-0 truncate text-[14px] font-semibold tracking-tight">
                     {review.authorName?.trim() || "Cliente de Allons"}
                   </p>
                   {review.rating != null ? <Stars value={review.rating} /> : null}

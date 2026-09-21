@@ -14,7 +14,7 @@ export default function LoginPage() {
     <AppShell bottomTabs={false}>
       <div className="grid items-center gap-10 pt-4 lg:min-h-[70vh] lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:pt-8">
         <section className="relative">
-          <h1 className="text-[32px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[56px] lg:text-[64px]">
+          <h1 className="text-[28px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[56px] lg:text-[64px]">
             Tus eventos,
             <br />
             sin fricción.

@@ -22,11 +22,8 @@ export function ComercioStats({ profile }: { profile: ComercioProfile }) {
   }
   return (
     <ul className="flex flex-wrap items-center gap-x-5 gap-y-2">
-      {items.map((item, index) => (
+      {items.map((item) => (
         <li key={item.label} className="flex items-center gap-2">
-          {index > 0 ? (
-            <span className="h-3 w-px bg-white/15" aria-hidden />
-          ) : null}
           <span className="text-[17px] font-bold tabular-nums tracking-tight text-white">
             {item.value}
           </span>
