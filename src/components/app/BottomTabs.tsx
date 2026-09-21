@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Compass, HelpCircle, Store, Ticket, type LucideIcon } from "lucide-react";
-import { isActivePath, customerLinksFor } from "./AppNav";
+import { isActivePath, isComercioNavActive, customerLinksFor } from "./AppNav";
 import { useAuth } from "./AuthProvider";
 import { useStairsCovering } from "./StairsCover";
 
@@ -43,10 +43,7 @@ export function BottomTabs({
     >
       <div className="mx-auto flex max-w-md items-stretch justify-around px-2 pt-2">
         {visible.map(({ href, label, Icon }) => {
-          const active =
-            href === "/comercio"
-              ? isActivePath(pathname, href) && !pathname.startsWith("/comercio/staff")
-              : isActivePath(pathname, href);
+          const active = isComercioNavActive(pathname, href);
           return (
             <Link
               key={href}

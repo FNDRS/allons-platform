@@ -36,6 +36,21 @@ export function customerLinksFor(user: User | null) {
   });
 }
 
+/**
+ * Comercio sections that own their own URL branch. "/comercio" is the
+ * summary and also covers the event pages, so it is active for anything
+ * under /comercio that is not one of these.
+ */
+const COMERCIO_BRANCHES = ["/comercio/finanzas", "/comercio/staff"];
+
+export function isComercioNavActive(pathname: string, href: string): boolean {
+  if (href !== "/comercio") return isActivePath(pathname, href);
+  return (
+    isActivePath(pathname, href) &&
+    !COMERCIO_BRANCHES.some((branch) => pathname.startsWith(branch))
+  );
+}
+
 export function isActivePath(pathname: string, href: string) {
   if (href === "/eventos" || href === "/events") {
     return (

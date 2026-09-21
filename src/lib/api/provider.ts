@@ -93,6 +93,9 @@ export interface ProviderPaymentRow {
   quantity: number;
   buyerUserId: string;
   createdAt: string;
+  entryTypeId?: string | null;
+  donationCents?: number;
+  holders?: Array<{ name: string }>;
 }
 
 export interface ProviderPayments {

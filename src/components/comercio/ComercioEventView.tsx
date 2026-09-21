@@ -159,7 +159,10 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
           onRetry={() => void payments.refetch()}
         />
       ) : (
-        <PaymentsTable rows={payments.data?.data ?? []} />
+        <PaymentsTable
+          rows={payments.data?.data ?? []}
+          types={data.ticketTypes ?? []}
+        />
       )}
     </div>
   );

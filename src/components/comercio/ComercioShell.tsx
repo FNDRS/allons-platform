@@ -11,7 +11,7 @@ import { useAuth } from "@/components/app/AuthProvider";
 import { LiveIndicator, ProviderLiveProvider } from "./ProviderLive";
 import { AccountButton, AccountSheet } from "@/components/app/AccountSheet";
 import { BottomTabs } from "@/components/app/BottomTabs";
-import { isActivePath } from "@/components/app/AppNav";
+import { isComercioNavActive } from "@/components/app/AppNav";
 
 const NAV = [
   { href: "/comercio", label: "Resumen", Icon: LayoutDashboard, exact: false },
@@ -27,8 +27,7 @@ const TABS = [
 
 function isNavActive(pathname: string, href: string, exact: boolean) {
   if (exact) return pathname === href;
-  // Resumen owns the event pages too; Personal is its own branch.
-  return isActivePath(pathname, href) && !pathname.startsWith("/comercio/staff");
+  return isComercioNavActive(pathname, href);
 }
 
 /**
