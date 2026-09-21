@@ -15,9 +15,9 @@ export default function LoginPage() {
       <div className="grid items-center gap-10 pt-4 lg:min-h-[70vh] lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:pt-8">
         <section className="relative">
           <h1 className="text-[28px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[56px] lg:text-[64px]">
-            Tus eventos,
+            Todos tus eventos
             <br />
-            sin fricción.
+            en un solo lugar.
           </h1>
           <p className="mt-5 max-w-md text-[16px] leading-relaxed text-muted">
             Compra tus entradas, guarda tu QR y elige tu lugar desde cualquier navegador. La misma
