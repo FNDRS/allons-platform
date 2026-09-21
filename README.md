@@ -1,7 +1,10 @@
-# allons-waitlist
+# allons-platform
 
-Landing page super minimalista para Allons.
-Negro, logo + un solo CTA → captura email → guarda en Supabase con atribución por QR.
+El sitio de Allons en `allonsapp.com`: la landing con captura de correo por QR,
+el cliente web de eventos y tickets, y el panel del comercio.
+
+Se llamaba `allons-waitlist` cuando sólo era la landing. El nombre viejo sigue
+redirigiendo en GitHub, pero el remoto es `FNDRS/allons-platform`.
 
 ## Plataforma web (allonsapp.com/events)
 
@@ -26,15 +29,16 @@ navegador y, opcionalmente, `NEXT_PUBLIC_ALLONS_API_URL`.
 
 ## Stack
 
-- Next.js 15 (App Router)
+- Next.js 16 (App Router, Turbopack)
 - React 19
 - Tailwind 4
 - Supabase (tabla `waitlist`)
+- Sentry para errores (sin DSN queda apagado)
 
 ## Setup rápido
 
 ```bash
-cd allons-waitlist
+cd allons-platform
 pnpm install
 cp .env.example .env.local   # llena las 3 variables
 pnpm dev
