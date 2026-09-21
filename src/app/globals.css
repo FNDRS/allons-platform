@@ -544,6 +544,36 @@
   animation: modal-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes select-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes select-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+.select-content {
+  transform-origin: var(--radix-select-content-transform-origin);
+}
+.select-content[data-state="open"] {
+  animation: select-in 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.select-content[data-state="closed"] {
+  animation: select-out 0.24s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 /* Subtle highlight sweep on the CTA */
 @keyframes sweep {
   0% {

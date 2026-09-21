@@ -77,9 +77,12 @@ export function ComercioDashboard() {
           actionLabel="Filtrar"
         />
         {events.isLoading ? (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={index} className="h-32" />
+              <Skeleton
+                key={index}
+                className="h-[168px] w-full rounded-[24px] border border-white/10"
+              />
             ))}
           </div>
         ) : events.error ? (
@@ -94,7 +97,7 @@ export function ComercioDashboard() {
             }
           />
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             {sorted.map((event) => (
               <ProviderEventCard key={event.id} event={event} />
             ))}

@@ -210,8 +210,23 @@ export function removeStaff(userId: string) {
   });
 }
 
+/** One line of the comercio's activity feed, newest first from the API. */
+export interface ProviderActivityRow {
+  id: string;
+  /** "sale" | "scan" | "event" | "staff" | "payout" … */
+  type: string;
+  message: string;
+  meta: string | null;
+  date: string;
+}
+
+export function getProviderActivity(limit = 20) {
+  return apiFetch<ProviderActivityRow[]>(`/provider/activity?limit=${limit}`);
+}
+
 export const providerKeys = {
   dashboard: ["provider", "dashboard"] as const,
+  activity: ["provider", "activity"] as const,
   events: ["provider", "events"] as const,
   event: (id: string) => ["provider", "events", id] as const,
   hourly: (id: string) => ["provider", "events", id, "hourly"] as const,

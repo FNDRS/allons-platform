@@ -40,14 +40,14 @@ function Shell({
 }) {
   return (
     <div
-      className={`rounded-[26px] p-[1px] ${
+      className={`rounded-[26px] p-[1px] transition-[background] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
         active
           ? "bg-gradient-to-br from-accent/70 via-accent/20 to-white/10"
           : "bg-white/[0.08]"
       } ${className}`}
     >
       <div
-        className={`rounded-[25px] px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${
+        className={`rounded-[25px] px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           active ? "bg-[#14110e]" : "bg-[#0c0c0e]"
         }`}
       >

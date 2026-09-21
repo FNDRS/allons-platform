@@ -148,7 +148,7 @@ function NavLinks({
           transition={
             prefersReducedMotion
               ? { duration: 0 }
-              : { type: "spring", stiffness: 420, damping: 30, mass: 0.6 }
+              : { type: "spring", stiffness: 220, damping: 28, mass: 0.9 }
           }
         />
       ) : null}

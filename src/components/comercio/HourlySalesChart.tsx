@@ -54,9 +54,8 @@ export function HourlySalesChart({ data }: { data: HourlySales }) {
           >
             <defs>
               <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#f67010" stopOpacity="0.45" />
-                <stop offset="70%" stopColor="#f67010" stopOpacity="0.06" />
-                <stop offset="100%" stopColor="#f67010" stopOpacity="0" />
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.18" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
               </linearGradient>
             </defs>
             {ticks.map((tick) => (
@@ -80,7 +79,7 @@ export function HourlySalesChart({ data }: { data: HourlySales }) {
               </g>
             ))}
             <path d={area} fill={`url(#${gradientId})`} />
-            <path d={line} fill="none" stroke="#f67010" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+            <path d={line} fill="none" stroke="rgba(255,255,255,0.72)" strokeWidth="1.75" strokeLinejoin="round" strokeLinecap="round" />
             {hover !== null ? (
               <g pointerEvents="none">
                 <line
@@ -91,7 +90,7 @@ export function HourlySalesChart({ data }: { data: HourlySales }) {
                   stroke="rgba(255,255,255,0.22)"
                   strokeDasharray="2 3"
                 />
-                <circle cx={x(hover)} cy={y(hours[hover])} r="5" fill="#f67010" stroke="#070708" strokeWidth="2" />
+                <circle cx={x(hover)} cy={y(hours[hover])} r="4" fill="#ffffff" stroke="#070708" strokeWidth="2" />
               </g>
             ) : null}
             {hours.map((_, hour) => (
@@ -131,7 +130,7 @@ export function HourlySalesChart({ data }: { data: HourlySales }) {
                 {String(hover).padStart(2, "0")}:00 a {String(hover + 1).padStart(2, "0")}:00
               </p>
               <p className="mt-0.5 flex items-center gap-1.5 font-semibold text-white">
-                <span className="size-1.5 rounded-full bg-accent" aria-hidden />
+                <span className="size-1.5 rounded-full bg-white" aria-hidden />
                 {hours[hover]} {hours[hover] === 1 ? "ticket" : "tickets"}
               </p>
             </div>

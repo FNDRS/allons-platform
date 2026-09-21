@@ -82,7 +82,7 @@ function UnitTile({
   disabled: boolean;
 }) {
   const interactive = Boolean(onSelect) && !disabled && !(tile.taken && !tile.mine);
-  const className = `flex aspect-[1/1.18] w-full flex-col items-center justify-center rounded-[16px] border text-center transition duration-150 select-none ${
+  const className = `flex aspect-[1/1.18] w-full flex-col items-center justify-center rounded-[16px] border text-center transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] select-none ${
     tile.mine
       ? "border-accent bg-accent text-black shadow-[0_8px_30px_rgba(246,112,16,0.35)]"
       : tile.taken

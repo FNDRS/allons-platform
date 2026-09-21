@@ -60,11 +60,14 @@ export function Select({
       >
         <SelectPrimitive.Trigger
           aria-label={ariaLabel}
-          className="flex h-12 w-full cursor-pointer items-center justify-between gap-2 rounded-[14px] border border-border bg-surface-2 px-4 text-left text-[15px] text-white outline-none transition focus-visible:border-accent/60 focus-visible:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-dim"
+          className="group flex h-12 w-full cursor-pointer items-center justify-between gap-2 rounded-[14px] border border-border bg-surface-2 px-4 text-left text-[15px] text-white outline-none transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:border-accent/60 focus-visible:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-dim data-[state=open]:border-white/20 data-[state=open]:bg-white/[0.08]"
         >
           <SelectPrimitive.Value placeholder={placeholder} />
           <SelectPrimitive.Icon asChild>
-            <ChevronDown className="size-4 shrink-0 text-dim" aria-hidden />
+            <ChevronDown
+              className="size-4 shrink-0 text-dim transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-data-[state=open]:rotate-180"
+              aria-hidden
+            />
           </SelectPrimitive.Icon>
         </SelectPrimitive.Trigger>
         <SelectPrimitive.Portal>
@@ -72,7 +75,7 @@ export function Select({
             position="popper"
             sideOffset={6}
             collisionPadding={8}
-            className="z-[90] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[14px] border border-border-strong bg-[#0c0c0e] shadow-[0_16px_48px_rgba(0,0,0,0.55)]"
+            className="select-content z-[90] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[14px] border border-border-strong bg-[#0c0c0e] shadow-[0_16px_48px_rgba(0,0,0,0.55)]"
           >
             <SelectPrimitive.Viewport className="p-1.5">
               {children}
@@ -99,7 +102,7 @@ export function SelectItem({
     <SelectPrimitive.Item
       value={toRadixValue(value)}
       disabled={disabled}
-      className={`relative flex cursor-pointer select-none items-center rounded-[10px] py-2.5 pl-8 pr-3 text-[15px] text-white outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[highlighted]:bg-white/[0.08] data-[state=checked]:font-semibold ${className}`}
+      className={`relative flex cursor-pointer select-none items-center rounded-[10px] py-2.5 pl-8 pr-3 text-[15px] text-white outline-none transition-colors duration-200 ease-out data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[highlighted]:bg-white/[0.08] data-[state=checked]:font-semibold ${className}`}
     >
       <SelectPrimitive.ItemIndicator className="absolute left-2.5 inline-flex">
         <Check className="size-3.5 text-accent" aria-hidden />

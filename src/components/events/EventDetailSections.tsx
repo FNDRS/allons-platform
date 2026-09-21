@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
+import Link from "next/link";
 import { Package, Undo2 } from "lucide-react";
 import { formatEventWhen } from "@/lib/allons-api";
 import {
@@ -44,17 +45,21 @@ export function EventHero({ event }: { event: EventDetail }) {
           {event.title}
         </h1>
         {provider?.name ? (
-          <div className="mt-4 flex items-center gap-3">
+          <Link
+            href={`/${encodeURIComponent(provider.handle?.replace(/^@/, "") || provider.id)}`}
+            className="mt-4 inline-flex max-w-full items-center gap-3 rounded-full pr-4 transition hover:bg-white/[0.04]"
+            aria-label={`Ver el perfil de ${provider.name}`}
+          >
             <HostMark src={provider.logoUrl} name={avatarName} />
             <div className="min-w-0">
               <p className="truncate text-[15px] font-semibold tracking-tight">
                 {provider.name}
               </p>
-              {handle ? (
-                <p className="truncate text-[13px] text-white/45">{handle}</p>
-              ) : null}
+              <p className="truncate text-[13px] text-white/45">
+                {handle ?? "Ver perfil"}
+              </p>
             </div>
-          </div>
+          </Link>
         ) : null}
       </div>
     </header>
