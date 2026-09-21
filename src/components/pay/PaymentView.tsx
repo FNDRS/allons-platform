@@ -148,8 +148,7 @@ export function PaymentView({ orderId }: { orderId: string }) {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-accent">Pago</p>
-        <h1 className="mt-2 text-[32px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[40px]">
+        <h1 className="text-[32px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[40px]">
           {phase === "still_pending" ? "Tu pago sigue pendiente" : "Completa tu pago"}
         </h1>
         <p className="mt-2 text-sm text-muted">
