@@ -71,14 +71,27 @@ export function useAuth(): AuthState {
   return ctx;
 }
 
+function metadataString(meta: Record<string, unknown>, key: string) {
+  const value = meta[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
 /** Display name from Supabase metadata, falling back to the email prefix. */
 export function displayNameOf(user: User | null): string {
   if (!user) return "";
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
   const name =
-    (typeof meta.full_name === "string" && meta.full_name) ||
-    (typeof meta.name === "string" && meta.name) ||
-    "";
-  if (name.trim()) return name.trim();
+    metadataString(meta, "full_name") ?? metadataString(meta, "name") ?? "";
+  if (name) return name;
   return user.email?.split("@")[0] ?? "";
+}
+
+/**
+ * Instant photo from the session (Google picture / stored avatar_url).
+ * /me still wins once it returns, because that is the Pixabot source.
+ */
+export function avatarUrlOf(user: User | null): string | null {
+  if (!user) return null;
+  const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+  return metadataString(meta, "avatar_url") ?? metadataString(meta, "picture");
 }

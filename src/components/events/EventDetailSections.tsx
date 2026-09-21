@@ -2,7 +2,8 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { Calendar, ExternalLink, MapPin, Package, Undo2, Users } from "lucide-react";
+import { Package, Undo2 } from "lucide-react";
+import type { ReactNode } from "react";
 import { formatEventWhen } from "@/lib/allons-api";
 import {
   isEntryTypeOnSale,
@@ -14,38 +15,63 @@ import { formatDateTime, formatPriceCents } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/States";
 import { ResourceGrid } from "@/components/tickets/ResourceGrid";
-import { EventCover } from "./EventCover";
+import { EventCover, EventPosterWash } from "./EventCover";
 
 export function EventHero({ event }: { event: EventDetail }) {
+  const provider = event.provider;
+  const handle = provider?.handle
+    ? `@${provider.handle.replace(/^@/, "")}`
+    : null;
+  const avatarName = (provider?.name ?? event.title).trim();
+
   return (
-    <div className="relative -mx-4 aspect-[4/3] overflow-hidden sm:mx-0 sm:aspect-[21/9] sm:rounded-[24px] sm:border sm:border-border">
-      <EventCover src={event.coverImageUrl} alt="" themeColor={event.themeColor} />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#070708] via-[#070708]/40 to-transparent" aria-hidden />
-      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8">
-        <h1 className="max-w-3xl text-[34px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[52px]">
+    <header className="flex flex-col gap-5">
+      <div className="overflow-hidden rounded-[28px] bg-black p-[5px] shadow-[0_24px_50px_rgba(0,0,0,0.35)]">
+        <div className="relative aspect-[16/10] overflow-hidden rounded-[23px] bg-[#1c1c1e]">
+          {event.coverImageUrl ? (
+            <EventCover
+              src={event.coverImageUrl}
+              alt=""
+              themeColor={event.themeColor}
+            />
+          ) : (
+            <EventPosterWash themeColor={event.themeColor} />
+          )}
+        </div>
+      </div>
+      <div>
+        <h1 className="text-[28px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[36px]">
           {event.title}
         </h1>
+        {provider?.name ? (
+          <div className="mt-4 flex items-center gap-3">
+            <HostMark src={provider.logoUrl} name={avatarName} />
+            <div className="min-w-0">
+              <p className="truncate text-[15px] font-semibold tracking-tight">
+                {provider.name}
+              </p>
+              {handle ? (
+                <p className="truncate text-[13px] text-white/45">{handle}</p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
       </div>
-    </div>
+    </header>
   );
 }
 
-function MetaPill({ icon, children, href }: { icon: React.ReactNode; children: React.ReactNode; href?: string }) {
-  const className =
-    "inline-flex h-11 max-w-full items-center gap-2 rounded-full border border-border bg-surface px-4 text-[14px] font-semibold";
-  if (href) {
-    return (
-      <a href={href} target="_blank" rel="noreferrer" className={`${className} transition hover:border-border-strong hover:bg-surface-2`}>
-        <span className="text-accent">{icon}</span>
-        <span className="truncate">{children}</span>
-        <ExternalLink className="size-3.5 text-dim" aria-hidden />
-      </a>
-    );
-  }
+function HostMark({ src, name }: { src?: string | null; name: string }) {
+  const initial = name.charAt(0).toUpperCase() || "A";
   return (
-    <span className={className}>
-      <span className="text-accent">{icon}</span>
-      <span className="truncate">{children}</span>
+    <span className="relative size-11 shrink-0 overflow-hidden rounded-[12px] bg-black ring-1 ring-white/12">
+      {src ? (
+        <img src={src} alt="" className="h-full w-full object-cover" />
+      ) : (
+        <span className="grid h-full w-full place-items-center text-sm font-bold text-accent">
+          {initial}
+        </span>
+      )}
     </span>
   );
 }
@@ -59,43 +85,135 @@ export function EventMeta({ event }: { event: EventDetail }) {
         ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([event.venue, event.address, event.city].filter(Boolean).join(", "))}`
         : null;
   const place = event.venue ?? event.address ?? event.city;
+  const placeLabel = [place, place !== event.city ? event.city : null]
+    .filter(Boolean)
+    .join(" · ");
+
+  if (!when && !place && !(event.attendeeCount && event.attendeeCount > 0)) {
+    return null;
+  }
+
   return (
-    <div className="flex flex-wrap gap-2">
-      {when ? <MetaPill icon={<Calendar className="size-4" aria-hidden />}>{when}</MetaPill> : null}
+    <ul className="flex flex-col gap-2">
+      {when ? (
+        <MetaRow icon={<CalendarMark />} label="Cuándo">
+          {when}
+        </MetaRow>
+      ) : null}
       {place ? (
-        <MetaPill icon={<MapPin className="size-4" aria-hidden />} href={mapsUrl ?? undefined}>
-          {[place, place !== event.city ? event.city : null].filter(Boolean).join(" · ")}
-        </MetaPill>
+        <MetaRow icon={<PinMark />} label="Dónde" href={mapsUrl}>
+          {placeLabel}
+        </MetaRow>
       ) : null}
       {typeof event.attendeeCount === "number" && event.attendeeCount > 0 ? (
-        <MetaPill icon={<Users className="size-4" aria-hidden />}>
-          {event.attendeeCount} {event.attendeeCount === 1 ? "persona va" : "personas van"}
-        </MetaPill>
+        <MetaRow icon={<PeopleMark />} label="Asistencia">
+          {event.attendeeCount}{" "}
+          {event.attendeeCount === 1 ? "persona va" : "personas van"}
+        </MetaRow>
       ) : null}
-    </div>
+    </ul>
   );
 }
 
-export function OrganizerCard({ event }: { event: EventDetail }) {
-  const provider = event.provider;
-  if (!provider?.name) return null;
+function MetaRow({
+  icon,
+  label,
+  href,
+  children,
+}: {
+  icon: ReactNode;
+  label: string;
+  href?: string | null;
+  children: ReactNode;
+}) {
+  const inner = (
+    <>
+      <span className="grid size-10 shrink-0 place-items-center rounded-[13px] bg-white/[0.045] text-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/[0.08]">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-white/38">
+          {label}
+        </span>
+        <span className="mt-0.5 block truncate text-[15px] font-medium tracking-tight text-white/88">
+          {children}
+        </span>
+      </span>
+    </>
+  );
+  const className =
+    "flex items-center gap-3.5 rounded-[16px] px-1 py-1.5";
+  if (href) {
+    return (
+      <li>
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className={`${className} transition hover:bg-white/[0.03]`}
+        >
+          {inner}
+        </a>
+      </li>
+    );
+  }
+  return <li className={className}>{inner}</li>;
+}
+
+function CalendarMark() {
   return (
-    <section>
-      <SectionTitle>Organiza</SectionTitle>
-      <Card className="flex items-center gap-4">
-        {provider.logoUrl ? (
-          <img src={provider.logoUrl} alt="" className="size-12 rounded-full object-cover" />
-        ) : (
-          <span className="flex size-12 items-center justify-center rounded-full bg-accent-soft text-[15px] font-bold text-accent">
-            {provider.name.charAt(0).toUpperCase()}
-          </span>
-        )}
-        <div className="min-w-0">
-          <p className="truncate text-[16px] font-bold tracking-tight">{provider.name}</p>
-          {provider.handle ? <p className="truncate text-sm text-muted">@{provider.handle}</p> : null}
-        </div>
-      </Card>
-    </section>
+    <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" aria-hidden>
+      <rect
+        x="4.25"
+        y="6.25"
+        width="15.5"
+        height="13.5"
+        rx="3"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <path
+        d="M8 4.5v3.5M16 4.5v3.5M4.5 11h15"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function PinMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" aria-hidden>
+      <path
+        d="M12 21s6.5-5.2 6.5-10.2A6.5 6.5 0 0 0 5.5 10.8C5.5 15.8 12 21 12 21Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="10.6" r="2.1" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
+function PeopleMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" aria-hidden>
+      <circle cx="9.2" cy="8.4" r="2.4" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M4.5 18.2c.4-2.8 2.4-4.4 4.7-4.4s4.3 1.6 4.7 4.4"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <circle cx="16.2" cy="9" r="2" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M15.2 13.9c1.9.2 3.5 1.5 3.9 4.3"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 

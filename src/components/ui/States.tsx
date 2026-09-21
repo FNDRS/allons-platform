@@ -11,13 +11,17 @@ export function EmptyState({
   title,
   body,
   action,
+  className = "",
 }: {
   title: string;
   body?: string;
   action?: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="flex flex-col items-center rounded-[18px] border border-dashed border-border-strong px-6 py-14 text-center">
+    <div
+      className={`flex flex-col items-center rounded-[18px] border border-dashed border-border-strong px-6 py-14 text-center ${className}`}
+    >
       <span className="flex size-12 items-center justify-center rounded-full bg-surface-2">
         <Inbox className="size-5 text-dim" aria-hidden />
       </span>

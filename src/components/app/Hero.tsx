@@ -1,6 +1,5 @@
 "use client";
 
-import { DateLine } from "@/components/ui/Header";
 import { displayNameOf, useAuth } from "./AuthProvider";
 
 function firstName(full: string) {
@@ -8,8 +7,8 @@ function firstName(full: string) {
 }
 
 /**
- * The greeting block at the top of the customer pages: date line, a big two
- * line headline that names the person when signed in, and an optional slot
+ * The greeting block at the top of the customer pages: a big two line
+ * headline that names the person when signed in, and an optional slot
  * for the search pill.
  */
 export function Hero({
@@ -28,7 +27,6 @@ export function Hero({
   const name = user ? firstName(displayNameOf(user)) : "";
   return (
     <section className="mb-8 flex flex-col gap-6">
-      <DateLine />
       <div>
         <h1 className="text-[36px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[52px]">
           {loading ? (

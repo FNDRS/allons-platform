@@ -14,6 +14,7 @@ export interface EventListItem {
   status?: EventStatus;
   types?: string[];
   eventType?: string | null;
+  provider?: EventProvider | null;
 }
 
 export interface EventEntryType {
@@ -72,6 +73,7 @@ export interface EventProvider {
   handle?: string | null;
   logoUrl?: string | null;
   description?: string | null;
+  websiteUrl?: string | null;
 }
 
 export interface EventDetail extends EventListItem {

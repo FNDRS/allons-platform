@@ -1,32 +1,3 @@
-/**
- * The hero line: "Sábado 20 ·" with a small red dot, and the month muted
- * below. Honduras time, since that is where the events are.
- */
-export function DateLine({ date = new Date() }: { date?: Date }) {
-  const weekday = date.toLocaleDateString("es-HN", {
-    weekday: "long",
-    timeZone: "America/Tegucigalpa",
-  });
-  const day = date.toLocaleDateString("es-HN", {
-    day: "numeric",
-    timeZone: "America/Tegucigalpa",
-  });
-  const month = date.toLocaleDateString("es-HN", {
-    month: "long",
-    timeZone: "America/Tegucigalpa",
-  });
-  const cap = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
-  return (
-    <div className="leading-tight">
-      <p className="flex items-center gap-1.5 text-[17px] font-bold tracking-tight">
-        {cap(weekday)} {day}
-        <span className="size-1.5 rounded-full bg-[#ff4d4d]" aria-hidden />
-      </p>
-      <p className="text-[15px] font-semibold text-dim">{cap(month)}</p>
-    </div>
-  );
-}
-
 /** Display headline with an optional muted subtitle and a right slot. */
 export function PageHeader({
   eyebrow,

@@ -1,17 +1,26 @@
 "use client";
 
+import { AnimatePresence } from "framer-motion";
+import { Search } from "lucide-react";
 import { useEvents } from "@/hooks/useEvents";
+import { useStairsPreload } from "@/hooks/useStairsPreload";
 import { Hero } from "@/components/app/Hero";
-import { Chip, SearchPill } from "@/components/ui/Pill";
+import { SmoothInput } from "@/components/ui/SmoothInput";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
+import { StairsPreloader } from "@/components/ui/StairsPreloader";
 import { EventCard } from "./EventCard";
 
 export function EventsBrowser() {
-  const { events, cities, search, setSearch, city, setCity, isLoading, error, refetch } =
-    useEvents();
+  const { events, search, setSearch, isLoading, error, refetch } = useEvents();
+  const showPreloader = useStairsPreload(!isLoading);
 
   return (
     <div>
+      <AnimatePresence>
+        {showPreloader ? (
+          <StairsPreloader key="stairs" label="Cargando eventos" />
+        ) : null}
+      </AnimatePresence>
       <Hero
         signedInTitle={(name) => (
           <>
@@ -28,32 +37,25 @@ export function EventsBrowser() {
           </>
         }
       >
-        <SearchPill
+        <SmoothInput
+          type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="¿Qué plan buscas?"
           aria-label="Buscar eventos"
-          className="max-w-xl"
+          prefix={<Search className="size-4" />}
+          wrapperClassName="max-w-xl !bg-[#070708] !border-white/10 focus-within:!bg-[#070708] focus-within:!border-white/20"
+          className="[&::-webkit-search-cancel-button]:hidden"
         />
       </Hero>
 
-      {cities.length > 1 ? (
-        <div className="no-scrollbar -mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-          <Chip active={city === null} onClick={() => setCity(null)}>
-            Todas
-          </Chip>
-          {cities.map((name) => (
-            <Chip key={name} active={city === name} onClick={() => setCity(name)}>
-              {name}
-            </Chip>
-          ))}
-        </div>
-      ) : null}
-
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="aspect-[4/5]" />
+        <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton
+              key={index}
+              className="aspect-square w-full rounded-[38px]"
+            />
           ))}
         </div>
       ) : error ? (
@@ -62,15 +64,19 @@ export function EventsBrowser() {
         <EmptyState
           title="No hay eventos por ahora"
           body={
-            search || city
-              ? "Prueba con otra búsqueda o quita el filtro."
+            search
+              ? "Prueba con otra búsqueda."
               : "Cuando un comercio publique algo lo verás aquí."
           }
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2">
           {events.map((event, index) => (
-            <div key={event.id} className="rise" style={{ "--i": index } as React.CSSProperties}>
+            <div
+              key={event.id}
+              className="rise h-full w-full"
+              style={{ "--i": index } as React.CSSProperties}
+            >
               <EventCard event={event} />
             </div>
           ))}

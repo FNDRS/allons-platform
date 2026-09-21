@@ -6,8 +6,6 @@ import { formatEventWhen, getPublicEvent } from "@/lib/allons-api";
 const SITE_URL = "https://allonsapp.com";
 const DEFAULT_APP_STORE_LINK =
   "https://apps.apple.com/us/app/allons-eventos-honduras/id6780532182?uo=4";
-const DEFAULT_PLAY_STORE_LINK =
-  "https://play.google.com/store/apps/details?id=com.fndrs.allons";
 
 /** Copia de respaldo cuando no se pudo resolver el evento. */
 const GENERIC_TITLE = "Evento en Allons";
@@ -23,10 +21,6 @@ function buildEventDeepLink(eventId: string) {
 
 function getAppStoreLink() {
   return process.env.APP_STORE_LINK?.trim() || DEFAULT_APP_STORE_LINK;
-}
-
-function getPlayStoreLink() {
-  return process.env.PLAY_STORE_LINK?.trim() || DEFAULT_PLAY_STORE_LINK;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -77,12 +71,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function EventPage({ params }: Props) {
   const { id } = await params;
   return (
-    <AppShell>
+    <AppShell width="detail" bottomTabs={false}>
       <EventDetailView
         id={id}
         appDeepLink={buildEventDeepLink(id)}
         appStoreLink={getAppStoreLink()}
-        playStoreLink={getPlayStoreLink()}
       />
     </AppShell>
   );

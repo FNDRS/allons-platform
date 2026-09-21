@@ -28,7 +28,11 @@ export function Input({
   className = "",
   ...rest
 }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...rest} className={`${BASE} h-12 ${className}`} />;
+  const password =
+    rest.type === "password"
+      ? "text-[18px] leading-[48px] tracking-[0.4em] text-white caret-white [-webkit-text-security:disc] [text-security:disc] placeholder:font-sans placeholder:text-[15px] placeholder:tracking-normal placeholder:[-webkit-text-security:none] placeholder:[text-security:none]"
+      : "";
+  return <input {...rest} className={`${BASE} h-12 ${password} ${className}`} />;
 }
 
 export function Textarea({

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 
-const CONTACT = "marlon.castro@allonsapp.com";
+const CONTACT = "soporte@allonsapp.com";
 
 export const metadata: Metadata = {
   title: "Política de Privacidad",

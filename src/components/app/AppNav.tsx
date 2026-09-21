@@ -2,55 +2,135 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { AllonsLogo } from "@/components/AllonsLogo";
 import { AccountButton, AccountSheet } from "./AccountSheet";
+import { useAuth } from "./AuthProvider";
 
 export const APP_LINKS = [
-  { href: "/events", label: "Eventos" },
+  { href: "/eventos", label: "Eventos" },
   { href: "/tickets", label: "Mis tickets" },
   { href: "/comercio", label: "Comercio" },
+  { href: "/soporte", label: "Soporte" },
 ];
 
+const GUEST_HREFS = new Set(["/eventos", "/soporte"]);
+
 export function isActivePath(pathname: string, href: string) {
+  if (href === "/eventos" || href === "/events") {
+    return (
+      pathname === "/eventos" ||
+      pathname === "/events" ||
+      pathname.startsWith("/eventos/") ||
+      pathname.startsWith("/events/")
+    );
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** Top bar: logo, links (desktop) and the account circle. */
+/** Survives AppShell remounts so the dot can travel between pages. */
+const navDot = { x: 0, seeded: false };
+
+/** Top bar: logo, links and the account circle. */
 export function AppNav() {
-  const pathname = usePathname();
+  const { user, loading } = useAuth();
   const [accountOpen, setAccountOpen] = useState(false);
+  const links =
+    loading || !user
+      ? APP_LINKS.filter((link) => GUEST_HREFS.has(link.href))
+      : APP_LINKS;
 
   return (
     <header className="glass sticky top-0 z-40 border-b border-border">
-      <div className="mx-auto flex h-16 w-full max-w-[1120px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link href="/events" aria-label="Allons, ir a eventos" className="shrink-0">
+      <div className="mx-auto grid h-16 w-full max-w-[1120px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-6 lg:px-8">
+        <Link href="/eventos" aria-label="Allons, ir a eventos" className="justify-self-start">
           <AllonsLogo className="h-auto w-[92px]" />
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Principal">
-          {APP_LINKS.map((link) => {
-            const active = isActivePath(pathname, link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-current={active ? "page" : undefined}
-                className={`rounded-full px-4 py-2 text-[14px] font-semibold transition ${
-                  active
-                    ? "border border-border-strong bg-surface-2 text-white"
-                    : "text-muted hover:text-white"
-                }`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <NavLinks links={links} />
 
-        <AccountButton onOpen={() => setAccountOpen(true)} />
+        <div className="justify-self-end">
+          <AccountButton onOpen={() => setAccountOpen(true)} />
+        </div>
       </div>
       <AccountSheet open={accountOpen} onClose={() => setAccountOpen(false)} />
     </header>
+  );
+}
+
+function NavLinks({
+  links,
+}: {
+  links: { href: string; label: string }[];
+}) {
+  const pathname = usePathname();
+  const prefersReducedMotion = useReducedMotion();
+  const navRef = useRef<HTMLElement>(null);
+  const itemRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+  const [dotX, setDotX] = useState(navDot.x);
+  const [dotOn, setDotOn] = useState(navDot.seeded);
+  const activeIndex = links.findIndex((link) => isActivePath(pathname, link.href));
+
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    const item = itemRefs.current[activeIndex];
+    if (!nav || !item || activeIndex < 0) {
+      setDotOn(false);
+      return;
+    }
+    const navBox = nav.getBoundingClientRect();
+    const box = item.getBoundingClientRect();
+    const x = box.left - navBox.left + box.width / 2 - 3;
+    if (!navDot.seeded) {
+      navDot.seeded = true;
+      navDot.x = x;
+      setDotX(x);
+      setDotOn(true);
+      return;
+    }
+    setDotOn(true);
+    setDotX(x);
+    navDot.x = x;
+  }, [activeIndex, links, pathname]);
+
+  return (
+    <nav
+      ref={navRef}
+      aria-label="Principal"
+      className="relative flex min-w-0 items-center justify-center gap-0.5"
+    >
+      {links.map((link, index) => {
+        const active = index === activeIndex;
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            ref={(node) => {
+              itemRefs.current[index] = node;
+            }}
+            aria-current={active ? "page" : undefined}
+            className={`relative px-2.5 py-2 text-[13px] font-semibold transition sm:px-4 sm:text-[14px] ${
+              active ? "text-white" : "text-muted hover:text-white"
+            }`}
+          >
+            {link.label}
+          </Link>
+        );
+      })}
+      {dotOn && activeIndex >= 0 ? (
+        <motion.span
+          aria-hidden
+          className="pointer-events-none absolute bottom-0.5 left-0 h-1.5 w-1.5 rounded-full bg-accent"
+          initial={false}
+          animate={{ x: dotX, opacity: 1 }}
+          transition={
+            prefersReducedMotion
+              ? { duration: 0 }
+              : { type: "spring", stiffness: 420, damping: 30, mass: 0.6 }
+          }
+        />
+      ) : null}
+    </nav>
   );
 }

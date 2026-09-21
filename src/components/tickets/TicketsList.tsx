@@ -40,7 +40,7 @@ export function TicketsList() {
           title="Aún no tienes tickets"
           body="Cuando compres una entrada aparecerá aquí, y también en la app."
           action={
-            <Link href="/events">
+            <Link href="/eventos">
               <Button>Explorar eventos</Button>
             </Link>
           }
