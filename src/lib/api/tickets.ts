@@ -9,6 +9,9 @@ export interface TicketEventInfo {
   venue: string | null;
   address: string | null;
   themeColor: string | null;
+  parkingAvailable?: boolean;
+  minAge?: number | null;
+  provider?: { name?: string | null; handle?: string | null } | null;
 }
 
 export interface TicketListItem {

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function EventsPage() {
   return (
-    <AppShell width="listing" tone="space">
+    <AppShell width="listing" tone="space" cover>
       <EventsBrowser />
     </AppShell>
   );

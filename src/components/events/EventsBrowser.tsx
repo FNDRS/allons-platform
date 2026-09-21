@@ -1,26 +1,19 @@
 "use client";
 
-import { AnimatePresence } from "framer-motion";
 import { Search } from "lucide-react";
 import { useEvents } from "@/hooks/useEvents";
-import { useStairsPreload } from "@/hooks/useStairsPreload";
+import { useStairsCoverReady } from "@/components/app/StairsCover";
 import { Hero } from "@/components/app/Hero";
 import { SmoothInput } from "@/components/ui/SmoothInput";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
-import { StairsPreloader } from "@/components/ui/StairsPreloader";
 import { EventCard } from "./EventCard";
 
 export function EventsBrowser() {
   const { events, search, setSearch, isLoading, error, refetch } = useEvents();
-  const showPreloader = useStairsPreload(!isLoading);
+  useStairsCoverReady(!isLoading);
 
   return (
     <div>
-      <AnimatePresence>
-        {showPreloader ? (
-          <StairsPreloader key="stairs" label="Cargando eventos" />
-        ) : null}
-      </AnimatePresence>
       <Hero
         signedInTitle={(name) => (
           <>

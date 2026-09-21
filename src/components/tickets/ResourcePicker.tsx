@@ -4,7 +4,7 @@ import { useTicketResources } from "@/hooks/useTicketResources";
 import type { TicketResourceGroup } from "@/lib/api/tickets";
 import { Modal } from "@/components/ui/Modal";
 import { ErrorState, Skeleton } from "@/components/ui/States";
-import { ResourceGrid } from "./ResourceGrid";
+import { ResourceGrid, studioFrontLabel } from "./ResourceGrid";
 
 /**
  * Sheet where the attendee picks (or changes) their unit. Refreshes every
@@ -44,6 +44,7 @@ export function ResourcePicker({
           <div className={assign.isPending ? "pointer-events-none opacity-60" : ""}>
             <ResourceGrid
               columns={group.columns}
+              frontLabel={studioFrontLabel(group.name)}
               tiles={group.resources.map((unit) => ({
                 id: unit.id,
                 label: unit.label,

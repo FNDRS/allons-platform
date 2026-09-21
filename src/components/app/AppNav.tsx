@@ -9,6 +9,7 @@ import { AllonsLogo } from "@/components/AllonsLogo";
 import { isComercioUser } from "@/lib/role";
 import { AccountButton, AccountSheet } from "./AccountSheet";
 import { useAuth } from "./AuthProvider";
+import { useStairsCovering } from "./StairsCover";
 
 export const APP_LINKS = [
   { href: "/eventos", label: "Eventos" },
@@ -47,8 +48,11 @@ const navDot = { x: 0, seeded: false };
 /** Top bar: logo, links and the account circle. */
 export function AppNav() {
   const { user, loading } = useAuth();
+  const covering = useStairsCovering();
   const [accountOpen, setAccountOpen] = useState(false);
   const links = loading ? customerLinksFor(null) : customerLinksFor(user);
+
+  if (covering) return <div className="h-16 shrink-0" aria-hidden />;
 
   return (
     <>

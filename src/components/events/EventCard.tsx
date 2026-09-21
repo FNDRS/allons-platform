@@ -1,7 +1,10 @@
+"use client";
+
 /* eslint-disable @next/next/no-img-element */
 
 import Link from "next/link";
 import { MapPin } from "lucide-react";
+import { usePrefetchEvent } from "@/hooks/usePrefetchEvent";
 import { formatEventWhen } from "@/lib/allons-api";
 import type { EventListItem } from "@/lib/api/events";
 import { formatPriceCents } from "@/lib/format";
@@ -14,6 +17,8 @@ const HOVER_VIDEO_BY_HANDLE: Record<string, string> = {
 
 /** Full-bleed photo card: overlay copy, price pill, Reservar. */
 export function EventCard({ event }: { event: EventListItem }) {
+  const prefetchEvent = usePrefetchEvent();
+  const warm = () => prefetchEvent(event.id);
   const when = formatEventWhen(event.startsAt);
   const soldOut = event.status === "sold_out";
   const provider = event.provider;
@@ -31,6 +36,9 @@ export function EventCard({ event }: { event: EventListItem }) {
     <Link
       href={`/eventos/${encodeURIComponent(event.id)}`}
       className="group block h-full w-full"
+      onMouseEnter={warm}
+      onTouchStart={warm}
+      onFocus={warm}
     >
       <article className="event-phone relative flex aspect-[4/5] flex-col overflow-hidden rounded-[32px] border border-white/10 bg-black shadow-[0_24px_50px_rgba(0,0,0,0.38)]">
         <div className="absolute inset-0">

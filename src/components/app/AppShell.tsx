@@ -1,6 +1,7 @@
 import { AppNav } from "./AppNav";
 import { BottomTabs } from "./BottomTabs";
 import { SpaceAtmosphere } from "./SpaceAtmosphere";
+import { StairsCoverProvider } from "./StairsCover";
 
 /**
  * Frame for every customer page (events, tickets, login). The landing keeps
@@ -11,6 +12,7 @@ export function AppShell({
   width = "default",
   bottomTabs = true,
   tone = "default",
+  cover = false,
 }: {
   children: React.ReactNode;
   width?: "default" | "narrow" | "listing" | "detail";
@@ -18,6 +20,27 @@ export function AppShell({
   bottomTabs?: boolean;
   /** `space` is the eventos listing. `brand` is unused orange canvas. */
   tone?: "default" | "brand" | "space";
+  /** White stairs over the whole shell, including the nav. */
+  cover?: boolean;
+}) {
+  const frame = (
+    <ShellFrame width={width} bottomTabs={bottomTabs} tone={tone}>
+      {children}
+    </ShellFrame>
+  );
+  return cover ? <StairsCoverProvider>{frame}</StairsCoverProvider> : frame;
+}
+
+function ShellFrame({
+  children,
+  width,
+  bottomTabs,
+  tone,
+}: {
+  children: React.ReactNode;
+  width: "default" | "narrow" | "listing" | "detail";
+  bottomTabs: boolean;
+  tone: "default" | "brand" | "space";
 }) {
   const max =
     width === "narrow"

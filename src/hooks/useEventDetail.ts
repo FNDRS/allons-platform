@@ -1,12 +1,13 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import {
   eventKeys,
   getEvent,
   isEntryTypeOnSale,
   type EventDetail,
+  type EventListItem,
 } from "@/lib/api/events";
 
 export type ReserveState =
@@ -29,15 +30,46 @@ export function deriveReserveState(event: EventDetail): ReserveState {
   return { kind: "open", label: "Reservar" };
 }
 
+/** What the list already knows, shaped as a detail so the hero can paint now. */
+function detailFromListItem(item: EventListItem): EventDetail {
+  return {
+    ...item,
+    description: null,
+    venue: null,
+    address: null,
+    latitude: null,
+    longitude: null,
+    provider: item.provider ?? null,
+    entryTypes: [],
+    questions: [],
+  };
+}
+
+/**
+ * Event detail. While the real response is in flight it hands back the list
+ * card's data as a placeholder (`isPlaceholderData`), so opening an event
+ * from the list shows title, cover and date immediately; callers keep the
+ * sections that need entry types behind that flag.
+ */
 export function useEventDetail(id: string) {
+  const client = useQueryClient();
   const query = useQuery({
     queryKey: eventKeys.detail(id),
     queryFn: () => getEvent(id),
     enabled: Boolean(id),
+    placeholderData: () => {
+      const item = client
+        .getQueryData<EventListItem[]>(eventKeys.list)
+        ?.find((event) => event.id === id);
+      return item ? detailFromListItem(item) : undefined;
+    },
   });
   const reserve = useMemo(
-    () => (query.data ? deriveReserveState(query.data) : null),
-    [query.data],
+    () =>
+      query.data && !query.isPlaceholderData
+        ? deriveReserveState(query.data)
+        : null,
+    [query.data, query.isPlaceholderData],
   );
   return { event: query.data, reserve, ...query };
 }

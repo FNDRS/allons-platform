@@ -14,7 +14,7 @@ import { formatDateTime, formatPriceCents } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { CalendarMark, MetaTile, PinMark } from "@/components/ui/MetaTile";
 import { Badge } from "@/components/ui/States";
-import { ResourceGrid } from "@/components/tickets/ResourceGrid";
+import { ResourceGrid, studioFrontLabel } from "@/components/tickets/ResourceGrid";
 import { EventCover, EventPosterWash } from "./EventCover";
 
 export function EventHero({ event }: { event: EventDetail }) {
@@ -211,6 +211,7 @@ export function ResourcePreviewCard({ groups }: { groups: PublicResourceGroup[] 
               <ResourceGrid
                 compact
                 columns={group.columns}
+                frontLabel={studioFrontLabel(group.name)}
                 tiles={group.resources.map((unit) => ({
                   id: unit.id,
                   label: unit.label,

@@ -32,7 +32,7 @@ export function TicketsList() {
           {Array.from({ length: 2 }).map((_, index) => (
             <Skeleton
               key={index}
-              className="min-h-[210px] w-full rounded-[32px] border border-white/10 sm:min-h-[240px]"
+              className="min-h-[280px] w-full rounded-[32px] border border-white/10 sm:min-h-[320px]"
             />
           ))}
         </div>

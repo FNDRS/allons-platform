@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Compass, HelpCircle, Store, Ticket, type LucideIcon } from "lucide-react";
 import { isActivePath, customerLinksFor } from "./AppNav";
 import { useAuth } from "./AuthProvider";
+import { useStairsCovering } from "./StairsCover";
 
 export type BottomTab = { href: string; label: string; Icon: LucideIcon };
 
@@ -25,7 +26,8 @@ export function BottomTabs({
 }) {
   const pathname = usePathname();
   const { user, loading } = useAuth();
-  if (hidden) return null;
+  const covering = useStairsCovering();
+  if (hidden || covering) return null;
   const visible =
     tabs !== TABS
       ? tabs

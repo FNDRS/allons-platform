@@ -269,7 +269,9 @@ export function useReserveForm(eventId: string) {
 
   return {
     event,
-    isLoading: detail.isLoading,
+    // The list-card placeholder has no entry types; it must read as loading
+    // here or the page would flash "no tickets" before the detail lands.
+    isLoading: detail.isLoading || detail.isPlaceholderData,
     loadError: detail.error as Error | null,
     refetch: detail.refetch,
     availableTypes,

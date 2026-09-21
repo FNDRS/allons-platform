@@ -4,8 +4,12 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useEventDetail } from "@/hooks/useEventDetail";
 import { Button } from "@/components/ui/Button";
-import { ErrorState, Skeleton } from "@/components/ui/States";
+import { ErrorState } from "@/components/ui/States";
 import { formatPriceCents } from "@/lib/format";
+import {
+  EventDetailBodySkeleton,
+  EventDetailSkeleton,
+} from "./EventDetailSkeleton";
 import {
   EntryTypesCard,
   EventDescription,
@@ -25,16 +29,11 @@ export function EventDetailView({
   appDeepLink: string;
   appStoreLink: string;
 }) {
-  const { event, reserve, isLoading, error, refetch } = useEventDetail(id);
+  const { event, reserve, isLoading, isPlaceholderData, error, refetch } =
+    useEventDetail(id);
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="aspect-[16/10] rounded-[28px]" />
-        <Skeleton className="h-16" />
-        <Skeleton className="h-24" />
-      </div>
-    );
+    return <EventDetailSkeleton />;
   }
   if (error || !event) {
     return (
@@ -49,9 +48,11 @@ export function EventDetailView({
     );
   }
 
+  // Coming from the list we only know the card's price until the detail lands.
+  const partial = isPlaceholderData;
   const cheapest = event.entryTypes?.length
     ? Math.min(...event.entryTypes.map((type) => type.priceCents))
-    : null;
+    : (event.minPriceCents ?? null);
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,11 +65,17 @@ export function EventDetailView({
 
       <EventHero event={event} />
       <EventMeta event={event} />
-      <EntryTypesCard types={event.entryTypes ?? []} />
-      <EventDescription text={event.description} />
-      <ResourcePreviewCard groups={event.resourceGroups ?? []} />
-      <KitPickupCard info={event.kitPickupInfo} />
-      <RefundPolicyNote event={event} />
+      {partial ? (
+        <EventDetailBodySkeleton />
+      ) : (
+        <>
+          <EntryTypesCard types={event.entryTypes ?? []} />
+          <EventDescription text={event.description} />
+          <ResourcePreviewCard groups={event.resourceGroups ?? []} />
+          <KitPickupCard info={event.kitPickupInfo} />
+          <RefundPolicyNote event={event} />
+        </>
+      )}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-dim">
         <a href={appDeepLink} className="font-semibold text-muted hover:text-white">
@@ -88,7 +95,11 @@ export function EventDetailView({
               {cheapest != null ? `Desde ${formatPriceCents(cheapest)}` : ""}
             </p>
           </div>
-          {reserve?.kind === "open" ? (
+          {partial ? (
+            <Button size="lg" loading>
+              Reservar
+            </Button>
+          ) : reserve?.kind === "open" ? (
             <Link href={`/events/${encodeURIComponent(id)}/reservar`} className="shrink-0">
               <Button size="lg">{reserve.label}</Button>
             </Link>
