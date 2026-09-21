@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { ComercioShell } from "@/components/comercio/ComercioShell";
-import { ProviderGate } from "@/components/comercio/ProviderGate";
+import { ComercioPageHeader } from "@/components/comercio/ComercioPageHeader";
 import { StaffView } from "@/components/comercio/StaffView";
 
 export const metadata: Metadata = {
@@ -10,10 +9,12 @@ export const metadata: Metadata = {
 
 export default function StaffPage() {
   return (
-    <ProviderGate>
-      <ComercioShell title="Personal" subtitle="Quién puede escanear y administrar tus eventos.">
-        <StaffView />
-      </ComercioShell>
-    </ProviderGate>
+    <>
+      <ComercioPageHeader
+        title="Personal"
+        subtitle="Quién puede escanear y administrar tus eventos."
+      />
+      <StaffView />
+    </>
   );
 }
