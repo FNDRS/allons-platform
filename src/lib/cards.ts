@@ -110,6 +110,9 @@ export const EMPTY_CARD_DRAFT: CardDraft = {
 
 export type CardDraftErrors = Partial<Record<keyof CardDraft, string>>;
 
+/** Same rule the API enforces: letters, spaces, apostrophes, dots, hyphens. */
+export const CARDHOLDER_NAME_RE = /^[\p{L}\p{M}][\p{L}\p{M}' .-]{1,79}$/u;
+
 export function validateCardDraft(
   draft: CardDraft,
   { needsIdNumber }: { needsIdNumber: boolean },
@@ -118,7 +121,9 @@ export function validateCardDraft(
   const digits = digitsOnly(draft.number);
   const brand = detectBrand(digits);
   if (!passesLuhn(digits)) errors.number = "Revisa el número de tarjeta";
-  if (draft.name.trim().length < 2) errors.name = "Escribe el nombre de la tarjeta";
+  if (!CARDHOLDER_NAME_RE.test(draft.name.trim())) {
+    errors.name = "Escribe el nombre como aparece en la tarjeta";
+  }
   if (!parseExpiry(draft.expiry)) errors.expiry = "Fecha inválida o vencida";
   if (!new RegExp(`^\\d{${cvvLength(brand)}}$`).test(draft.cvv)) {
     errors.cvv = `${cvvLength(brand)} dígitos`;

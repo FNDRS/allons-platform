@@ -13,11 +13,17 @@ import {
  * switched off, which is not an error to show: the checkout simply falls
  * back to the hosted Paygate page.
  */
-export function usePaymentMethods(enabled: boolean) {
+export function usePaymentMethods({
+  userId,
+  enabled,
+}: {
+  userId: string | null;
+  enabled: boolean;
+}) {
   const query = useQuery({
-    queryKey: paymentMethodKeys.list,
+    queryKey: paymentMethodKeys.list(userId ?? ""),
     queryFn: listPaymentMethods,
-    enabled,
+    enabled: enabled && Boolean(userId),
     staleTime: 30_000,
     retry: (count, error) =>
       count < 2 && !(isApiError(error) && error.status === 503),
@@ -33,7 +39,7 @@ export function usePaymentMethods(enabled: boolean) {
     /** False while loading, when disabled, or when the list itself failed. */
     available: Boolean(query.data),
     disabled,
-    loading: enabled && query.isPending,
+    loading: enabled && Boolean(userId) && query.isPending,
     refetch: query.refetch,
   };
 }

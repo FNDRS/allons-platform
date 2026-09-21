@@ -252,16 +252,20 @@ export function useReserveForm(eventId: string) {
       email: holder.email.trim(),
       answers: answersToList(questions, holder.answers),
     }));
-    return { holderPayload, firstAnswers: holderPayload[0]?.answers ?? [] };
+    return {
+      event,
+      entryType,
+      holderPayload,
+      firstAnswers: holderPayload[0]?.answers ?? [],
+    };
   }
 
-  function paidOrderInput(
-    draft: NonNullable<ReturnType<typeof validateDraft>>,
-  ): InitiatePaymentInput | null {
-    if (!event || !entryType) return null;
+  type ValidDraft = NonNullable<ReturnType<typeof validateDraft>>;
+
+  function paidOrderInput(draft: ValidDraft): InitiatePaymentInput {
     return {
-      eventId: event.id,
-      entryTypeId: entryType.id,
+      eventId: draft.event.id,
+      entryTypeId: draft.entryType.id,
       quantity,
       holders: draft.holderPayload.map((holder) => ({ ...holder, invite: false })),
       answers: draft.firstAnswers,
@@ -283,10 +287,10 @@ export function useReserveForm(eventId: string) {
 
   async function submit() {
     const draft = validateDraft();
-    if (!draft || !event || !entryType) return;
+    if (!draft) return;
+    const { event, entryType, holderPayload, firstAnswers } = draft;
     setSubmitting(true);
     try {
-      const { holderPayload, firstAnswers } = draft;
 
       if (isFree) {
         const result = await reserveFreeTickets({
@@ -304,9 +308,7 @@ export function useReserveForm(eventId: string) {
         return;
       }
 
-      const input = paidOrderInput(draft);
-      if (!input) return;
-      const order = await initiatePayment(input);
+      const order = await initiatePayment(paidOrderInput(draft));
       try {
         window.sessionStorage.setItem(
           paymentLinkStorageKey(order.orderId),

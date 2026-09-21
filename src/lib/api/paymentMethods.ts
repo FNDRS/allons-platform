@@ -30,7 +30,8 @@ export interface EnrollCardInput {
 }
 
 export const paymentMethodKeys = {
-  list: ["me", "payment-methods"] as const,
+  /** Scoped to the account: a sign-out/sign-in on the same tab must not reuse it. */
+  list: (userId: string) => ["me", userId, "payment-methods"] as const,
 };
 
 export function listPaymentMethods() {

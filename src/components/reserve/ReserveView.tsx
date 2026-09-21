@@ -26,9 +26,14 @@ export function ReserveView({ eventId }: { eventId: string }) {
   const { ready, user } = useRequireAuth();
   const form = useReserveForm(eventId);
   // Saved cards load only for a paid ticket; a free one never shows the step.
-  const checkout = useCardCheckout({ enabled: ready && !form.isFree && Boolean(form.entryType) });
-  const payInApp = !form.isFree && checkout.available && checkout.method === "card";
-  const submitting = form.submitting || checkout.submitting;
+  const checkout = useCardCheckout({
+    userId: user?.id ?? null,
+    enabled: ready && !form.isFree && Boolean(form.entryType),
+  });
+  const payInApp = !form.isFree && checkout.available && checkout.cardReady;
+  // While the card list loads the CTA must not send anyone to the hosted
+  // page: the buyer is about to be offered the in-app card.
+  const submitting = form.submitting || checkout.submitting || (!form.isFree && checkout.loading);
   const error = form.error ?? checkout.error;
 
   function onPay() {

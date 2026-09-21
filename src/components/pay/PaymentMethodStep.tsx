@@ -29,7 +29,9 @@ export function PaymentMethodStep({
       </section>
     );
   }
+  // Nothing to offer beyond the hosted page: keep the flow as it was.
   if (!checkout.available) return null;
+  if (checkout.cards.length === 0 && !checkout.enrollmentEnabled) return null;
 
   const cardSelected = checkout.method === "card";
   const showForm = cardSelected && checkout.usingNewCard;
@@ -53,17 +55,19 @@ export function PaymentMethodStep({
           />
         ))}
 
-        <OptionRow
-          selected={showForm}
-          disabled={checkout.submitting}
-          onSelect={() => {
-            checkout.setMethod("card");
-            checkout.setChoice("new");
-          }}
-          leading={<Plus className="size-4 text-white/70" strokeWidth={2} aria-hidden />}
-          title={checkout.cards.length ? "Otra tarjeta" : "Tarjeta de crédito o débito"}
-          subtitle="Pagas aquí mismo, sin salir de Allons"
-        />
+        {checkout.enrollmentEnabled ? (
+          <OptionRow
+            selected={showForm}
+            disabled={checkout.submitting}
+            onSelect={() => {
+              checkout.setMethod("card");
+              checkout.setChoice("new");
+            }}
+            leading={<Plus className="size-4 text-white/70" strokeWidth={2} aria-hidden />}
+            title={checkout.cards.length ? "Otra tarjeta" : "Tarjeta de crédito o débito"}
+            subtitle="Pagas aquí mismo, sin salir de Allons"
+          />
+        ) : null}
 
         <AnimatePresence initial={false}>
           {showForm ? (

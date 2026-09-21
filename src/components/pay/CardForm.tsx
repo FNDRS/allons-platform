@@ -6,6 +6,7 @@ import { FieldError, Input, Label } from "@/components/ui/Field";
 import { SmoothInput } from "@/components/ui/SmoothInput";
 import {
   cvvLength,
+  detectBrand,
   digitsOnly,
   formatCardNumber,
   formatExpiry,
@@ -77,8 +78,12 @@ export function CardForm({
             aria-invalid={Boolean(error("number"))}
             prefix={<CardBrandMark brand={brand} className="h-5" />}
             onChange={(event) => {
-              const next = digitsOnly(event.target.value).slice(0, maxDigits(brand));
-              onChange({ number: formatCardNumber(next, brand) });
+              // Brand from what was just typed or pasted, not the previous
+              // value: a pasted Amex must be cut and grouped as Amex at once.
+              const typed = digitsOnly(event.target.value);
+              const typedBrand = detectBrand(typed);
+              const next = typed.slice(0, maxDigits(typedBrand));
+              onChange({ number: formatCardNumber(next, typedBrand) });
             }}
           />
           <FieldError>{error("number")}</FieldError>
