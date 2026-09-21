@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { UserRound } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { useAccountAvatar } from "@/hooks/useAccountAvatar";
 import { ProfileAvatar } from "./ProfileAvatar";
@@ -27,10 +27,10 @@ export function AccountButton({ onOpen }: { onOpen: () => void }) {
       <Link
         href={`/login?next=${encodeURIComponent(pathname)}`}
         aria-label="Iniciar sesión"
-        className="flex h-11 items-center gap-2 rounded-full border border-border bg-surface-2 px-4 text-[14px] font-semibold text-white/85 transition hover:bg-white/[0.1] hover:text-white"
+        className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white pl-4 pr-3 text-[13px] font-semibold tracking-tight text-black"
       >
-        <UserRound className="size-4" aria-hidden />
-        <span className="hidden sm:inline">Entrar</span>
+        Entrar
+        <ArrowUpRight className="size-3.5" strokeWidth={1.75} aria-hidden />
       </Link>
     );
   }

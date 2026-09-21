@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { FieldError, Label } from "@/components/ui/Field";
 import { SmoothInput } from "@/components/ui/SmoothInput";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { isComercioUser } from "@/lib/role";
 import { useAuth } from "./AuthProvider";
 
 type Mode = "login" | "signup" | "reset" | "update";
@@ -81,6 +82,15 @@ function safeNext(raw: string | null): string {
   }
 }
 
+/** A comercio lands on its panel unless it was already going to /comercio. */
+function homeFor(
+  user: Parameters<typeof isComercioUser>[0],
+  next: string,
+): string {
+  if (isComercioUser(user) && !next.startsWith("/comercio")) return "/comercio";
+  return next;
+}
+
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -124,7 +134,7 @@ export function LoginForm() {
   }, []);
 
   useEffect(() => {
-    if (!loading && user && mode !== "update") router.replace(next);
+    if (!loading && user && mode !== "update") router.replace(homeFor(user, next));
   }, [loading, user, router, next, mode]);
 
   async function onSubmit(event: React.FormEvent) {
@@ -135,12 +145,12 @@ export function LoginForm() {
     try {
       const supabase = getSupabaseBrowser();
       if (mode === "login") {
-        const { error: err } = await supabase.auth.signInWithPassword({
+        const { data, error: err } = await supabase.auth.signInWithPassword({
           email: email.trim().toLowerCase(),
           password,
         });
         if (err) throw err;
-        router.replace(next);
+        router.replace(homeFor(data.user, next));
         return;
       }
       if (mode === "signup") {
@@ -155,7 +165,7 @@ export function LoginForm() {
         });
         if (err) throw err;
         if (data.session) {
-          router.replace(next);
+          router.replace(homeFor(data.user, next));
         } else {
           setNotice(
             "Te enviamos un correo para confirmar tu cuenta. Al confirmarlo podrás entrar.",
@@ -170,7 +180,7 @@ export function LoginForm() {
         toast.success("Contraseña actualizada");
         setPassword("");
         forgetNext();
-        router.replace(next);
+        router.replace(homeFor(user, next));
         return;
       }
       const { error: err } = await supabase.auth.resetPasswordForEmail(
