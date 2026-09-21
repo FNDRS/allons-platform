@@ -14,7 +14,7 @@ export default async function ReservePage({
 }) {
   const { id } = await params;
   return (
-    <AppShell width="narrow">
+    <AppShell width="narrow" tone="space" bottomTabs={false}>
       <ReserveView eventId={id} />
     </AppShell>
   );

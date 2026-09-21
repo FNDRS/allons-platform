@@ -1,6 +1,5 @@
 "use client";
 
-import { Clock } from "lucide-react";
 import { useCountdown } from "@/hooks/useCountdown";
 import { Button } from "@/components/ui/Button";
 
@@ -21,12 +20,12 @@ export function HoldCountdown({
     return (
       <div
         role="alert"
-        className="flex flex-col gap-3 rounded-[18px] border border-red-500/30 bg-red-500/[0.08] px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+        className="flex flex-col gap-3 rounded-[24px] border border-red-500/25 bg-red-500/[0.08] px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
           <p className="font-semibold text-red-200">Reserva vencida</p>
-          <p className="mt-0.5 text-sm text-white/70">
-            El tiempo para completar tu compra terminó. Empieza el proceso de nuevo.
+          <p className="mt-0.5 text-sm text-white/60">
+            El tiempo para completar tu compra terminó.
           </p>
         </div>
         <Button variant="secondary" size="sm" onClick={onRestart}>
@@ -46,14 +45,13 @@ export function HoldCountdown({
     <div
       role="timer"
       aria-live="polite"
-      className="flex items-center justify-between rounded-[18px] border border-white/[0.08] bg-white/[0.03] px-5 py-3.5"
+      className="flex items-center justify-between rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2.5"
     >
-      <span className="flex items-center gap-2 text-sm text-white/60">
-        <Clock className="size-4" aria-hidden />
-        Tu reserva vence en
+      <span className="text-[12px] font-medium tracking-tight text-white/40">
+        Se libera en
       </span>
       <span
-        className={`text-lg font-bold tabular-nums tracking-tight ${
+        className={`text-[15px] font-bold tabular-nums tracking-tight ${
           urgent ? "text-red-300" : "text-white"
         }`}
       >

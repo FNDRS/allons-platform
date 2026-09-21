@@ -4,8 +4,57 @@ import { Check, Minus, Plus } from "lucide-react";
 import type { EventEntryType, EventQuestion } from "@/lib/api/events";
 import { formatCents, formatPriceCents } from "@/lib/format";
 import type { HolderDraft } from "@/hooks/useReserveForm";
-import { Card, StepTitle } from "@/components/ui/Card";
 import { FieldError, Input, Label, Select, Textarea } from "@/components/ui/Field";
+
+export function StepHeading({
+  n,
+  children,
+  hint,
+}: {
+  n: number;
+  children: React.ReactNode;
+  hint?: string;
+}) {
+  return (
+    <div className="mb-4 flex items-center gap-3">
+      <span className="flex size-7 items-center justify-center rounded-full border border-white/10 text-[10px] font-bold tabular-nums tracking-[0.08em] text-white/40">
+        {String(n).padStart(2, "0")}
+      </span>
+      <h2 className="text-[15px] font-semibold tracking-tight text-white/90">
+        {children}
+      </h2>
+      {hint ? <span className="text-[12px] text-white/35">{hint}</span> : null}
+    </div>
+  );
+}
+
+function Shell({
+  children,
+  className = "",
+  active = false,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  active?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-[26px] p-[1px] ${
+        active
+          ? "bg-gradient-to-br from-accent/70 via-accent/20 to-white/10"
+          : "bg-white/[0.08]"
+      } ${className}`}
+    >
+      <div
+        className={`rounded-[25px] px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${
+          active ? "bg-[#14110e]" : "bg-[#0c0c0e]"
+        }`}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export function EntryTypePicker({
   types,
@@ -18,7 +67,7 @@ export function EntryTypePicker({
 }) {
   return (
     <section>
-      <StepTitle step={1}>Entradas</StepTitle>
+      <StepHeading n={1}>Entrada</StepHeading>
       <div role="radiogroup" className="flex flex-col gap-2.5">
         {types.map((type) => {
           const active = type.id === value;
@@ -29,30 +78,40 @@ export function EntryTypePicker({
               role="radio"
               aria-checked={active}
               onClick={() => onChange(type.id)}
-              className={`flex items-center justify-between gap-4 rounded-[22px] border px-5 py-4 text-left transition ${
-                active
-                  ? "border-accent bg-accent/[0.08]"
-                  : "border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06]"
-              }`}
+              className="text-left transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.99]"
             >
-              <div className="flex items-center gap-3">
-                <span
-                  className={`flex size-6 items-center justify-center rounded-full border ${
-                    active ? "border-accent bg-accent text-black" : "border-white/25"
-                  }`}
-                >
-                  {active ? <Check className="size-3.5" strokeWidth={3} /> : null}
-                </span>
-                <div>
-                  <p className="font-semibold tracking-tight">{type.name}</p>
-                  {type.remaining != null ? (
-                    <p className="text-sm text-white/50">{type.remaining} disponibles</p>
-                  ) : null}
+              <Shell active={active}>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex min-w-0 items-center gap-3.5">
+                    <span
+                      className={`flex size-6 shrink-0 items-center justify-center rounded-full border ${
+                        active
+                          ? "border-accent bg-accent text-black"
+                          : "border-white/20"
+                      }`}
+                    >
+                      {active ? (
+                        <Check className="size-3.5" strokeWidth={2.5} />
+                      ) : null}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-semibold tracking-tight">{type.name}</p>
+                      {type.remaining != null ? (
+                        <p className="mt-0.5 text-[13px] text-white/40">
+                          {type.remaining} disponibles
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <p
+                    className={`shrink-0 text-[17px] font-bold tracking-tight ${
+                      active ? "text-accent" : "text-white"
+                    }`}
+                  >
+                    {formatPriceCents(type.priceCents)}
+                  </p>
                 </div>
-              </div>
-              <p className="text-lg font-bold tracking-tight">
-                {formatPriceCents(type.priceCents)}
-              </p>
+              </Shell>
             </button>
           );
         })}
@@ -72,22 +131,34 @@ export function QuantityStepper({
 }) {
   return (
     <section>
-      <StepTitle step={2}>Cantidad</StepTitle>
-      <Card className="flex items-center justify-between py-4">
-        <p className="text-sm text-white/60">
-          {value === 1 ? "1 ticket" : `${value} tickets`}
-          {max < 10 ? ` · máx. ${max}` : ""}
-        </p>
-        <div className="flex items-center gap-3">
-          <StepButton onClick={() => onChange(value - 1)} disabled={value <= 1} label="Quitar uno">
-            <Minus className="size-4" />
-          </StepButton>
-          <span className="w-6 text-center text-xl font-bold tabular-nums">{value}</span>
-          <StepButton onClick={() => onChange(value + 1)} disabled={value >= max} label="Agregar uno">
-            <Plus className="size-4" />
-          </StepButton>
+      <StepHeading n={2}>Cantidad</StepHeading>
+      <Shell>
+        <div className="flex items-center justify-between py-1">
+          <p className="text-[14px] text-white/50">
+            {value === 1 ? "1 ticket" : `${value} tickets`}
+            {max < 10 ? ` · máx. ${max}` : ""}
+          </p>
+          <div className="flex items-center gap-3">
+            <StepButton
+              onClick={() => onChange(value - 1)}
+              disabled={value <= 1}
+              label="Quitar uno"
+            >
+              <Minus className="size-4" strokeWidth={1.75} />
+            </StepButton>
+            <span className="w-7 text-center text-[20px] font-bold tabular-nums">
+              {value}
+            </span>
+            <StepButton
+              onClick={() => onChange(value + 1)}
+              disabled={value >= max}
+              label="Agregar uno"
+            >
+              <Plus className="size-4" strokeWidth={1.75} />
+            </StepButton>
+          </div>
         </div>
-      </Card>
+      </Shell>
     </section>
   );
 }
@@ -109,7 +180,7 @@ function StepButton({
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className="flex size-11 items-center justify-center rounded-full border border-white/12 bg-white/[0.06] transition hover:bg-white/[0.12] disabled:opacity-30"
+      className="flex size-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/[0.1] disabled:opacity-25"
     >
       {children}
     </button>
@@ -138,61 +209,64 @@ export function HolderCard({
   onAnswer: (questionId: string, value: string) => void;
 }) {
   return (
-    <Card className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <p className="font-semibold tracking-tight">
-          Ticket {index + 1} <span className="text-white/40">· {typeName}</span>
-        </p>
-        {isMe ? (
-          <span className="rounded-full bg-white/[0.08] px-2.5 py-1 text-[12px] font-semibold text-white/70">
-            Para mí
-          </span>
+    <Shell>
+      <div className="flex flex-col gap-4 py-1">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[14px] font-semibold tracking-tight">
+            Ticket {index + 1}
+            <span className="font-medium text-white/35"> · {typeName}</span>
+          </p>
+          {isMe ? (
+            <span className="rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-accent">
+              Para mí
+            </span>
+          ) : null}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <Label>Nombre</Label>
+            <Input
+              value={holder.name}
+              onChange={(event) => onChange({ name: event.target.value })}
+              placeholder="Nombre completo"
+              autoComplete={index === 0 ? "name" : "off"}
+            />
+            <FieldError>{showErrors ? errors.name : null}</FieldError>
+          </label>
+          <label className="block">
+            <Label>Correo</Label>
+            <Input
+              type="email"
+              inputMode="email"
+              value={holder.email}
+              onChange={(event) => onChange({ email: event.target.value })}
+              placeholder="correo@ejemplo.com"
+              autoComplete={index === 0 ? "email" : "off"}
+            />
+            <FieldError>{showErrors ? errors.email : null}</FieldError>
+          </label>
+        </div>
+        {questions.length > 0 ? (
+          <div className="flex flex-col gap-3 border-t border-white/[0.06] pt-4">
+            {questions.map((question) => (
+              <QuestionField
+                key={question.id}
+                question={question}
+                value={holder.answers[question.id] ?? ""}
+                onChange={(value) => onAnswer(question.id, value)}
+                error={
+                  showErrors && errors.answers.includes(question.id)
+                    ? question.kind === "boolean"
+                      ? "Necesitamos tu confirmación"
+                      : "Respuesta requerida"
+                    : null
+                }
+              />
+            ))}
+          </div>
         ) : null}
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="block">
-          <Label>Nombre</Label>
-          <Input
-            value={holder.name}
-            onChange={(event) => onChange({ name: event.target.value })}
-            placeholder="Nombre completo"
-            autoComplete={index === 0 ? "name" : "off"}
-          />
-          <FieldError>{showErrors ? errors.name : null}</FieldError>
-        </label>
-        <label className="block">
-          <Label>Correo</Label>
-          <Input
-            type="email"
-            inputMode="email"
-            value={holder.email}
-            onChange={(event) => onChange({ email: event.target.value })}
-            placeholder="correo@ejemplo.com"
-            autoComplete={index === 0 ? "email" : "off"}
-          />
-          <FieldError>{showErrors ? errors.email : null}</FieldError>
-        </label>
-      </div>
-      {questions.length > 0 ? (
-        <div className="flex flex-col gap-3 border-t border-white/[0.08] pt-4">
-          {questions.map((question) => (
-            <QuestionField
-              key={question.id}
-              question={question}
-              value={holder.answers[question.id] ?? ""}
-              onChange={(value) => onAnswer(question.id, value)}
-              error={
-                showErrors && errors.answers.includes(question.id)
-                  ? question.kind === "boolean"
-                    ? "Necesitamos tu confirmación"
-                    : "Respuesta requerida"
-                  : null
-              }
-            />
-          ))}
-        </div>
-      ) : null}
-    </Card>
+    </Shell>
   );
 }
 
@@ -225,7 +299,7 @@ function QuestionField({
               checked ? "border-accent bg-accent text-black" : "border-white/25"
             }`}
           >
-            {checked ? <Check className="size-3.5" strokeWidth={3} /> : null}
+            {checked ? <Check className="size-3.5" strokeWidth={2.5} /> : null}
           </span>
           <span className="text-[15px] leading-6 text-white/85">
             {question.label}
@@ -284,13 +358,15 @@ export function DonationField({
 }) {
   return (
     <section>
-      <StepTitle step={4} hint="opcional">Aporte</StepTitle>
-      <Card>
-        <p className="text-sm text-white/60">
-          Este evento acepta un aporte extra además de la entrada. Es opcional.
+      <StepHeading n={4} hint="opcional">
+        Aporte
+      </StepHeading>
+      <Shell>
+        <p className="text-[14px] leading-6 text-white/50">
+          Este evento acepta un aporte extra además de la entrada.
         </p>
         <div className="mt-3 flex items-center gap-2">
-          <span className="text-lg font-bold text-white/60">L</span>
+          <span className="text-lg font-bold text-white/40">L</span>
           <Input
             type="number"
             inputMode="decimal"
@@ -303,7 +379,7 @@ export function DonationField({
             aria-label="Aporte en lempiras"
           />
         </div>
-      </Card>
+      </Shell>
     </section>
   );
 }
@@ -324,24 +400,31 @@ export function ReserveSummary({
   isFree: boolean;
 }) {
   return (
-    <Card className="flex flex-col gap-2 text-sm">
-      <Row label={`${quantity} × ${typeName}`} value={isFree ? "Gratis" : formatCents(ticketsCents)} />
-      {donationCents > 0 ? <Row label="Aporte" value={formatCents(donationCents)} /> : null}
-      <div className="mt-1 flex items-center justify-between border-t border-white/[0.08] pt-3">
-        <span className="font-semibold">Total</span>
-        <span className="text-xl font-bold tracking-tight">
-          {isFree ? "Gratis" : formatCents(totalCents)}
-        </span>
+    <Shell>
+      <div className="flex flex-col gap-2.5 py-1 text-[14px]">
+        <Row
+          label={`${quantity} × ${typeName}`}
+          value={isFree ? "Gratis" : formatCents(ticketsCents)}
+        />
+        {donationCents > 0 ? (
+          <Row label="Aporte" value={formatCents(donationCents)} />
+        ) : null}
+        <div className="mt-1 flex items-baseline justify-between border-t border-white/[0.06] pt-3">
+          <span className="text-[13px] font-medium text-white/45">Total</span>
+          <span className="text-[22px] font-bold tracking-tight">
+            {isFree ? "Gratis" : formatCents(totalCents)}
+          </span>
+        </div>
       </div>
-    </Card>
+    </Shell>
   );
 }
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between text-white/65">
+    <div className="flex items-center justify-between text-white/45">
       <span>{label}</span>
-      <span className="text-white">{value}</span>
+      <span className="font-medium text-white/85">{value}</span>
     </div>
   );
 }

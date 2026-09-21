@@ -15,6 +15,7 @@ import {
   HolderCard,
   QuantityStepper,
   ReserveSummary,
+  StepHeading,
 } from "./ReserveSections";
 import { formatCents } from "@/lib/format";
 
