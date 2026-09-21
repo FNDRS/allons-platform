@@ -19,8 +19,8 @@ export type PayPhase =
   | "error";
 
 /**
- * Polls the order until it is terminal. Paygate has no return URL, so the
- * buyer pays in the iframe and this page watches the order.
+ * Polls the order until it is terminal. Paygate has no return URL and
+ * blocks iframes, so the buyer pays in another tab and this page watches.
  */
 export function usePaymentOrder(orderId: string) {
   const [pollingSince, setPollingSince] = useState(() => Date.now());

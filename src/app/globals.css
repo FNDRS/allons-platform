@@ -785,8 +785,7 @@
   }
 }
 .edge-light-spark {
-  animation: edge-light-lap 5.2s linear infinite;
-  animation-delay: var(--edge-delay, 0s);
+  animation: edge-light-lap 6s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

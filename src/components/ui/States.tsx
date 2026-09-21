@@ -45,9 +45,11 @@ export function ErrorState({
     <EdgeLight tone="danger" className="w-full">
       <div
         role="alert"
-        className="flex w-full items-center gap-3 rounded-full bg-white/[0.045] p-1.5 pl-5 backdrop-blur-md sm:pl-6"
+        className={`flex w-full items-center gap-3 rounded-full bg-[#0a0a0b]/85 backdrop-blur-md ${
+          onRetry ? "p-1.5 pl-5 sm:pl-6" : "px-6 py-3.5"
+        }`}
       >
-        <p className="min-w-0 flex-1 py-2 text-[13px] leading-snug tracking-tight text-white/65">
+        <p className="min-w-0 flex-1 text-[13px] leading-snug tracking-tight text-white/70">
           {message ?? "Intenta de nuevo en un momento."}
         </p>
         {onRetry ? (

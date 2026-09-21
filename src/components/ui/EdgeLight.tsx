@@ -1,27 +1,26 @@
 "use client";
 
-import { type CSSProperties, type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
-const PAD = 10;
-const STROKE = 1.35;
+const PAD = 14;
+const STROKE = 1.15;
 
 const TONE = {
   danger: {
     bloom: "#f87171",
-    core: "#ffffff",
-    rim: "rgba(248,113,113,0.38)",
+    core: "#fff5f5",
+    rim: "rgba(248,113,113,0.22)",
   },
   accent: {
     bloom: "#f67010",
-    core: "#ffffff",
-    rim: "rgba(246,112,16,0.42)",
+    core: "#fff7f0",
+    rim: "rgba(246,112,16,0.22)",
   },
 } as const;
 
 /**
- * Hairline rim with a short spark traveling the border, the same family as
- * the comercio mark on event detail in the app. Glow sits on the stroke,
- * not on the fill.
+ * Hairline rim with one short spark on the border. Glow is a blurred
+ * stroke outside the path, not a fill behind the label.
  */
 export function EdgeLight({
   tone,
@@ -62,11 +61,11 @@ export function EdgeLight({
     Math.max(0, h - STROKE),
     r,
   );
-  const spark = Math.min(0.14, 40 / Math.max(length, 1));
-  const gap = Math.max(0.001, 1 - spark);
+  const spark = Math.min(0.04, 26 / Math.max(length, 1));
+  const bloom = spark * 1.35;
   const canvasW = w + PAD * 2;
   const canvasH = h + PAD * 2;
-  const gradId = `edge-${uid}`;
+  const blurId = `edge-blur-${uid}`;
 
   return (
     <div ref={wrap} className={`relative overflow-visible ${className}`}>
@@ -79,32 +78,44 @@ export function EdgeLight({
           style={{ left: -PAD, top: -PAD }}
         >
           <defs>
-            <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#ffffff" stopOpacity="0.92" />
-              <stop offset="0.32" stopColor={palette.bloom} stopOpacity="0.95" />
-              <stop offset="0.7" stopColor="#ffffff" stopOpacity="0.22" />
-              <stop offset="1" stopColor="#ffffff" stopOpacity="0.65" />
-            </linearGradient>
+            <filter
+              id={blurId}
+              x="-40%"
+              y="-40%"
+              width="180%"
+              height="180%"
+            >
+              <feGaussianBlur stdDeviation="2.4" />
+            </filter>
           </defs>
           <path
             d={d}
             fill="none"
-            stroke={palette.bloom}
-            strokeWidth={STROKE + 6}
-            strokeOpacity={0.16}
+            stroke={palette.rim}
+            strokeWidth={STROKE}
           />
-          <path d={d} fill="none" stroke={palette.rim} strokeWidth={STROKE} />
-          <path d={d} fill="none" stroke={`url(#${gradId})`} strokeWidth={STROKE} />
+          <path
+            d={d}
+            fill="none"
+            className="edge-light-spark"
+            pathLength={1}
+            filter={`url(#${blurId})`}
+            stroke={palette.bloom}
+            strokeWidth={STROKE + 7}
+            strokeLinecap="round"
+            strokeOpacity={0.55}
+            strokeDasharray={`${bloom} ${1 - bloom}`}
+          />
           <path
             d={d}
             fill="none"
             className="edge-light-spark"
             pathLength={1}
             stroke={palette.bloom}
-            strokeWidth={STROKE + 5}
+            strokeWidth={STROKE + 1.4}
             strokeLinecap="round"
-            strokeOpacity={0.32}
-            strokeDasharray={`${spark} ${gap}`}
+            strokeOpacity={0.9}
+            strokeDasharray={`${spark} ${1 - spark}`}
           />
           <path
             d={d}
@@ -114,8 +125,7 @@ export function EdgeLight({
             stroke={palette.core}
             strokeWidth={STROKE}
             strokeLinecap="round"
-            strokeDasharray={`${spark * 0.5} ${1 - spark * 0.5}`}
-            style={{ "--edge-delay": "-2.4s" } as CSSProperties}
+            strokeDasharray={`${spark * 0.42} ${1 - spark * 0.42}`}
           />
         </svg>
       ) : null}

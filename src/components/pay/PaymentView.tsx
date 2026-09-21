@@ -169,7 +169,7 @@ export function PaymentView({ orderId }: { orderId: string }) {
           {phase === "still_pending" ? "Tu pago sigue pendiente" : "Completa tu pago"}
         </h1>
         <p className="mt-2 text-sm text-muted">
-          El pago es de Paygate (Clinpays), aquí mismo. Cuando termine, emitimos tu ticket.
+          El pago es de Paygate (Clinpays). Se abre en su página; aquí confirmamos el ticket.
         </p>
       </div>
 
@@ -187,7 +187,7 @@ export function PaymentView({ orderId }: { orderId: string }) {
         ) : null}
         {link ? (
           <Button size="lg" full onClick={() => setCheckoutOpen(true)}>
-            {checkoutOpen ? "Pago en curso" : "Continuar pago"}
+            {checkoutOpen ? "Pago en curso" : "Abrir pago"}
           </Button>
         ) : (
           <p className="text-sm text-amber-200">
