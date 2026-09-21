@@ -33,18 +33,10 @@ function isNavActive(pathname: string, href: string, exact: boolean) {
 
 /**
  * Dashboard frame for the comercio: a fixed sidebar on desktop, a frosted tab
- * bar on phones, and a header with the page title and account control.
+ * bar on phones, and a header with the account control. Pages render their
+ * own heading (see `ComercioPageHeader`).
  */
-export function ComercioShellInner({
-  title,
-  subtitle,
-  children,
-}: {
-  /** Omit on pages whose content opens with its own heading. */
-  title?: React.ReactNode;
-  subtitle?: React.ReactNode;
-  children: React.ReactNode;
-}) {
+export function ComercioShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [accountOpen, setAccountOpen] = useState(false);
 
@@ -109,17 +101,7 @@ export function ComercioShellInner({
         </header>
 
         <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-32 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-          <PageTransition>
-            {title ? (
-              <div className="mb-8">
-                <h1 className="text-[30px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[38px]">
-                  {title}
-                </h1>
-                {subtitle ? <p className="mt-2 text-[15px] text-muted">{subtitle}</p> : null}
-              </div>
-            ) : null}
-            {children}
-          </PageTransition>
+          <PageTransition>{children}</PageTransition>
         </main>
 
         <BottomTabs tabs={TABS} />
@@ -130,8 +112,8 @@ export function ComercioShellInner({
 }
 
 /**
- * Every comercio page runs inside this, so the realtime channel is opened
- * once per session and its state is shared with whatever is on screen.
+ * Mounted once by the comercio layout, so the realtime channel is opened
+ * once per session and its state is shared with whatever page is on screen.
  */
 export function ComercioShell(props: Parameters<typeof ComercioShellInner>[0]) {
   const { user } = useAuth();
