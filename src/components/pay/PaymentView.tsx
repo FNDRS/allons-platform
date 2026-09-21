@@ -14,8 +14,12 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 
-/** Hosts the Paygate (Clinpays) hosted page is served from. */
-const PAYGATE_HOSTS = ["paygatehn.com", "clinpays.com"];
+/**
+ * Hosts the Paygate (Clinpays) hosted page is served from. The checkout
+ * link itself is on paygate.biz (`https://<env>.paygate.biz/checkout/<id>`);
+ * the API host is paygatehn.com.
+ */
+const PAYGATE_HOSTS = ["paygate.biz", "paygatehn.com", "clinpays.com"];
 
 /**
  * The link only ever comes from `POST /me/payments/initiate`. The reserve
