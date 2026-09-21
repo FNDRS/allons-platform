@@ -1,7 +1,8 @@
 "use client";
 
-import { AlertCircle, Inbox } from "lucide-react";
-import { Button } from "./Button";
+import { Inbox } from "lucide-react";
+import { glassCtaClass } from "./cta";
+import { EdgeLight } from "./EdgeLight";
 import { StatusPill } from "./Pill";
 
 export function Skeleton({ className = "" }: { className?: string }) {
@@ -41,18 +42,25 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center rounded-[18px] border border-danger/20 bg-danger/[0.06] px-6 py-10 text-center">
-      <AlertCircle className="size-6 text-red-300" aria-hidden />
-      <p className="mt-4 text-base font-bold tracking-tight">No pudimos cargar esto</p>
-      <p className="mt-1.5 max-w-sm text-sm text-muted">
-        {message ?? "Intenta de nuevo en un momento."}
-      </p>
-      {onRetry ? (
-        <Button variant="secondary" size="sm" className="mt-5" onClick={onRetry}>
-          Reintentar
-        </Button>
-      ) : null}
-    </div>
+    <EdgeLight tone="danger" className="w-full">
+      <div
+        role="alert"
+        className="flex w-full items-center gap-3 rounded-full bg-white/[0.045] p-1.5 pl-5 backdrop-blur-md sm:pl-6"
+      >
+        <p className="min-w-0 flex-1 py-2 text-[13px] leading-snug tracking-tight text-white/65">
+          {message ?? "Intenta de nuevo en un momento."}
+        </p>
+        {onRetry ? (
+          <button
+            type="button"
+            onClick={onRetry}
+            className={`${glassCtaClass} h-8 shrink-0 px-3.5 text-[12px]`}
+          >
+            Reintentar
+          </button>
+        ) : null}
+      </div>
+    </EdgeLight>
   );
 }
 

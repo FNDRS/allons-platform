@@ -217,7 +217,7 @@ export function HolderCard({
             Ticket {index + 1}
             <span className="font-medium text-white/35"> · {typeName}</span>
           </p>
-          {isMe ? <StatusPill>Para mí</StatusPill> : null}
+          {isMe ? <StatusPill tone="glass">Para mí</StatusPill> : null}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
@@ -387,6 +387,9 @@ export function DonationField({
   );
 }
 
+/** Allons base commission, same 8% the API withholds from the comercio. */
+const PLATFORM_FEE_PCT = 8;
+
 export function ReserveSummary({
   quantity,
   typeName,
@@ -402,6 +405,10 @@ export function ReserveSummary({
   totalCents: number;
   isFree: boolean;
 }) {
+  const platformFeeCents = isFree
+    ? 0
+    : Math.round((ticketsCents * PLATFORM_FEE_PCT) / 100);
+
   return (
     <Shell>
       <div className="flex flex-col gap-2.5 py-1 text-[14px]">
@@ -409,6 +416,12 @@ export function ReserveSummary({
           label={`${quantity} × ${typeName}`}
           value={isFree ? "Gratis" : formatCents(ticketsCents)}
         />
+        {platformFeeCents > 0 ? (
+          <Row
+            label="Fee de plataforma"
+            value={formatCents(platformFeeCents)}
+          />
+        ) : null}
         {donationCents > 0 ? (
           <Row label="Aporte" value={formatCents(donationCents)} />
         ) : null}

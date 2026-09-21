@@ -755,12 +755,47 @@
   background-size: 180px 180px;
 }
 
+/* Toasts stay glass. Sonner paints error/success as red/green boxes. */
+[data-sonner-toaster][data-sonner-theme="dark"] {
+  --normal-bg: rgba(10, 10, 11, 0.82);
+  --normal-border: rgba(255, 255, 255, 0.1);
+  --normal-text: rgba(255, 255, 255, 0.65);
+  --success-bg: rgba(10, 10, 11, 0.82);
+  --success-border: rgba(255, 255, 255, 0.1);
+  --success-text: rgba(255, 255, 255, 0.65);
+  --error-bg: rgba(10, 10, 11, 0.82);
+  --error-border: rgba(255, 255, 255, 0.1);
+  --error-text: rgba(255, 255, 255, 0.65);
+}
+
+[data-sonner-toast][data-styled="true"] {
+  justify-content: center;
+}
+
+[data-sonner-toast][data-type="error"],
+[data-sonner-toast][data-type="success"] {
+  background: var(--normal-bg) !important;
+  border-color: var(--normal-border) !important;
+  color: var(--normal-text) !important;
+}
+
+@keyframes edge-light-lap {
+  to {
+    stroke-dashoffset: -1;
+  }
+}
+.edge-light-spark {
+  animation: edge-light-lap 5.2s linear infinite;
+  animation-delay: var(--edge-delay, 0s);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise,
   .fade-up,
   .shimmer,
   .modal-card,
-  .modal-overlay {
+  .modal-overlay,
+  .edge-light-spark {
     animation: none !important;
     opacity: 1 !important;
   }

@@ -58,7 +58,7 @@ export function StairsPreloader({
               reduced ? { duration: 0 } : { duration: 0.28, ease: EASE }
             }
           >
-            <AllonsLogo className="h-5 w-auto sm:h-6" variant="black" />
+            <AllonsLogo className="h-3.5 w-auto sm:h-4" variant="black" />
           </motion.div>
         </motion.div>
       ) : null}

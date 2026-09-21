@@ -3,7 +3,7 @@
 import confetti from "canvas-confetti";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, ExternalLink, Loader2, XCircle } from "lucide-react";
+import { Check, Loader2, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useCountdown } from "@/hooks/useCountdown";
 import { usePaymentOrder } from "@/hooks/usePaymentOrder";
@@ -13,6 +13,7 @@ import { formatCents } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorState, Skeleton } from "@/components/ui/States";
+import { PaygateModal } from "./PaygateModal";
 
 /**
  * Hosts the Paygate (Clinpays) hosted page is served from. The checkout
@@ -63,16 +64,15 @@ export function PaymentView({ orderId }: { orderId: string }) {
   const eventId = params.get("event");
   const { order, phase, error, resume } = usePaymentOrder(ready ? orderId : "");
   const countdown = useCountdown(order?.expiresAt);
-  const [popupBlocked, setPopupBlocked] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const opened = useRef(false);
   const celebrated = useRef(false);
 
-  // One automatic attempt; browsers often block it, so the button stays.
   useEffect(() => {
-    if (!link || opened.current || phase !== "waiting") return;
+    if (!link || opened.current) return;
+    if (phase !== "waiting" && phase !== "still_pending") return;
     opened.current = true;
-    const win = window.open(link, "_blank", "noopener");
-    if (!win) setPopupBlocked(true);
+    setCheckoutOpen(true);
   }, [link, phase]);
 
   useEffect(() => {
@@ -100,19 +100,23 @@ export function PaymentView({ orderId }: { orderId: string }) {
   if (phase === "paid" && order) {
     const ticketId = order.ticketIds[0];
     return (
-      <Card className="flex flex-col items-center py-10 text-center">
-        <CheckCircle2 className="size-14 text-accent" aria-hidden />
-        <h1 className="mt-5 break-words text-[26px] font-bold tracking-[-0.03em] sm:text-[30px]">¡Pago confirmado!</h1>
-        <p className="mt-2 text-sm text-muted">
+      <div className="flex flex-col items-center px-4 py-12 text-center sm:py-16">
+        <span className="flex size-14 items-center justify-center rounded-[18px] bg-white/[0.04] ring-1 ring-white/12">
+          <Check className="size-6 text-white/80" strokeWidth={1.6} aria-hidden />
+        </span>
+        <h1 className="mt-8 break-words text-[28px] font-bold tracking-[-0.04em] sm:text-[34px]">
+          ¡Pago confirmado!
+        </h1>
+        <p className="mt-2 max-w-sm text-[14px] leading-relaxed text-white/50">
           Pagaste {formatCents(order.amountCents)}. Tu ticket ya está en tu cuenta.
         </p>
-        <Link href={`/tickets/${encodeURIComponent(ticketId)}?nuevo=1`} className="mt-7 w-full max-w-xs">
+        <Link href={`/tickets/${encodeURIComponent(ticketId)}?nuevo=1`} className="mt-8 w-full max-w-xs">
           <Button size="lg" full>Ver mi ticket</Button>
         </Link>
-        <Link href="/tickets" className="mt-3 text-sm text-muted hover:text-white">
+        <Link href="/tickets" className="mt-4 text-[13px] text-white/40 transition hover:text-white">
           Ir a mis tickets
         </Link>
-      </Card>
+      </div>
     );
   }
 
@@ -151,13 +155,21 @@ export function PaymentView({ orderId }: { orderId: string }) {
   // waiting | still_pending
   return (
     <div className="flex flex-col gap-5">
+      {link ? (
+        <PaygateModal
+          open={checkoutOpen}
+          onClose={() => setCheckoutOpen(false)}
+          src={link}
+          amountLabel={order ? formatCents(order.amountCents) : undefined}
+        />
+      ) : null}
+
       <div>
         <h1 className="break-words text-[28px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[40px]">
           {phase === "still_pending" ? "Tu pago sigue pendiente" : "Completa tu pago"}
         </h1>
         <p className="mt-2 text-sm text-muted">
-          Tu pago se abre en Paygate (Clinpays), la pasarela segura. Cuando termines, vuelve a
-          esta pestaña: aquí confirmamos el ticket.
+          El pago es de Paygate (Clinpays), aquí mismo. Cuando termine, emitimos tu ticket.
         </p>
       </div>
 
@@ -174,21 +186,14 @@ export function PaymentView({ orderId }: { orderId: string }) {
           </p>
         ) : null}
         {link ? (
-          <a href={link} target="_blank" rel="noopener noreferrer" className="block">
-            <Button size="lg" full onClick={() => setPopupBlocked(false)}>
-              Pagar ahora <ExternalLink className="size-4" />
-            </Button>
-          </a>
+          <Button size="lg" full onClick={() => setCheckoutOpen(true)}>
+            {checkoutOpen ? "Pago en curso" : "Continuar pago"}
+          </Button>
         ) : (
           <p className="text-sm text-amber-200">
             No encontramos el enlace de pago. Vuelve al evento e inicia la compra otra vez.
           </p>
         )}
-        {popupBlocked ? (
-          <p className="text-xs text-dim">
-            Tu navegador bloqueó la ventana automática. Usa el botón para abrir el pago.
-          </p>
-        ) : null}
       </Card>
 
       <Card className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
