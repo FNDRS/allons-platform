@@ -5,6 +5,7 @@ import { useState } from "react";
 import { SearchPill } from "@/components/ui/Pill";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useProviderActivity } from "@/hooks/useProviderActivity";
+import { useProviderLive } from "./ProviderLive";
 import { listProviderEvents, providerKeys } from "@/lib/api/provider";
 import { formatHNL, formatNumber } from "@/lib/format";
 import { SectionTitle } from "@/components/ui/Card";
@@ -21,8 +22,10 @@ export function ComercioDashboard() {
     queryKey: providerKeys.events,
     queryFn: listProviderEvents,
     enabled: ready,
+    refetchInterval: live ? false : 60_000,
   });
 
+  const { live } = useProviderLive();
   const activity = useProviderActivity(ready);
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();

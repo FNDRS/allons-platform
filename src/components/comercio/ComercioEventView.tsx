@@ -34,6 +34,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
     queryKey: providerKeys.event(eventId),
     queryFn: () => getProviderEvent(eventId),
     enabled: ready,
+    refetchInterval: live ? false : 60_000,
   });
   const hourly = useQuery({
     queryKey: providerKeys.hourly(eventId),
@@ -45,6 +46,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
     queryKey: providerKeys.payments(eventId),
     queryFn: () => getProviderPayments(eventId),
     enabled: ready,
+    refetchInterval: live ? false : 60_000,
   });
 
   if (event.isLoading) {

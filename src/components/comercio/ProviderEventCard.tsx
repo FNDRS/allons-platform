@@ -4,21 +4,20 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Building2, CalendarDays, Clock, Ticket } from "lucide-react";
+import { ArrowUpRight, Building2, CalendarDays, Clock, Ticket } from "lucide-react";
 import { usePrefetchProviderEvent } from "@/hooks/usePrefetchProviderEvent";
 import type { ProviderEventListItem } from "@/lib/api/provider";
 import { formatCardDay, formatCardTime, formatHNL, formatNumber } from "@/lib/format";
-import { StatusPill } from "@/components/ui/Pill";
 
-const STATUS: Record<string, { label: string; tone: "solid" | "glass" | "mute" }> = {
-  published: { label: "Publicado", tone: "solid" },
-  draft: { label: "Borrador", tone: "glass" },
-  sold_out: { label: "Agotado", tone: "mute" },
-  ended: { label: "Finalizado", tone: "mute" },
+const STATUS: Record<string, string> = {
+  published: "Publicado",
+  draft: "Borrador",
+  sold_out: "Agotado",
+  ended: "Finalizado",
 };
 
 export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
-  const status = STATUS[event.status] ?? { label: event.status, tone: "mute" as const };
+  const status = STATUS[event.status] ?? event.status;
   const prefetch = usePrefetchProviderEvent();
   const warm = () => prefetch(event.id);
   const day = formatCardDay(event.startsAt);
@@ -41,31 +40,26 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
       className="group block h-full w-full"
     >
       <article className="flex h-full flex-col rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.14] hover:bg-white/[0.05]">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3">
-            {event.coverImageUrl ? (
-              <img
-                src={event.coverImageUrl}
-                alt=""
-                className="size-12 shrink-0 rounded-[12px] object-cover ring-1 ring-white/10"
-              />
-            ) : null}
-            <div className="min-w-0">
-              <h3 className="line-clamp-2 text-[17px] font-semibold leading-[1.2] tracking-[-0.02em] text-white">
-                {event.title}
-              </h3>
-              {event.city ? (
-                <p className="mt-1 flex items-center gap-1.5 text-[13px] text-white/50">
-                  <Building2 className="size-3.5 shrink-0" aria-hidden />
-                  <span className="truncate">{event.city}</span>
-                </p>
-              ) : null}
-            </div>
+        <div className="flex min-w-0 items-start gap-3">
+          {event.coverImageUrl ? (
+            <img
+              src={event.coverImageUrl}
+              alt=""
+              className="size-12 shrink-0 rounded-[12px] object-cover ring-1 ring-white/10"
+            />
+          ) : null}
+          <div className="min-w-0">
+            <h3 className="line-clamp-2 text-[17px] font-semibold leading-[1.2] tracking-[-0.02em] text-white">
+              {event.title}
+            </h3>
+            <p className="mt-1 text-[13px] text-white/40">{status}</p>
           </div>
-          <StatusPill tone={status.tone}>{status.label}</StatusPill>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-white/55">
+          {event.city ? (
+            <Stat icon={<Building2 className="size-3.5" />}>{event.city}</Stat>
+          ) : null}
           <Stat icon={<CalendarDays className="size-3.5" />}>
             {day ?? "Sin fecha"}
           </Stat>
@@ -89,12 +83,16 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
           <div className="mt-4 h-px w-full bg-white/[0.06]" aria-hidden />
         )}
 
-        <div className="mt-4 flex items-center gap-2">
-          <span className="rounded-full bg-white/[0.06] px-3.5 py-2 text-[13px] font-semibold tracking-tight text-white ring-1 ring-white/10">
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <p className="text-[15px] font-semibold tabular-nums tracking-tight">
             {formatHNL(event.revenue)}
-          </span>
-          <span className="rounded-full bg-white px-3.5 py-2 text-[13px] font-semibold tracking-tight text-black">
+          </p>
+          <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white pl-4 pr-3 text-[13px] font-semibold tracking-tight text-black">
             Abrir
+            <ArrowUpRight
+              className="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              aria-hidden
+            />
           </span>
         </div>
       </article>

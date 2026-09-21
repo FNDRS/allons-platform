@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/app/AuthProvider";
+import { useProviderLive } from "@/components/comercio/ProviderLive";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { isApiError } from "@/lib/api/client";
 import { getProviderDashboard, providerKeys } from "@/lib/api/provider";
@@ -21,6 +22,9 @@ export function useProviderAccess({
 }: { withDashboard?: boolean } = {}) {
   const { user } = useAuth();
   const { ready: authReady } = useRequireAuth();
+  // Realtime invalidates this key as sales land; the interval is what keeps
+  // the numbers moving when the socket is not available.
+  const { live } = useProviderLive();
   const allowed = isComercioUser(user);
   const ready = authReady && allowed;
   const query = useQuery({
@@ -28,6 +32,7 @@ export function useProviderAccess({
     queryFn: getProviderDashboard,
     enabled: ready && withDashboard,
     retry: false,
+    refetchInterval: live ? false : 60_000,
   });
   const forbidden =
     (authReady && !allowed) ||

@@ -2,7 +2,6 @@ import { Ticket, Users } from "lucide-react";
 import type { ProviderPaymentRow, ProviderTicketType } from "@/lib/api/provider";
 import { formatCents, formatDateTime, formatHNL, formatNumber } from "@/lib/format";
 import { SectionTitle } from "@/components/ui/Card";
-import { StatusPill } from "@/components/ui/Pill";
 import { EmptyState } from "@/components/ui/States";
 
 export function TicketTypeTable({ types }: { types: ProviderTicketType[] }) {
@@ -64,13 +63,6 @@ export function TicketTypeTable({ types }: { types: ProviderTicketType[] }) {
   );
 }
 
-const PAYMENT_TONE: Record<string, "solid" | "glass" | "mute"> = {
-  paid: "solid",
-  pending_payment: "glass",
-  failed: "mute",
-  cancelled: "mute",
-  refunded: "mute",
-};
 const PAYMENT_LABEL: Record<string, string> = {
   paid: "Pagado",
   pending_payment: "Pendiente",
@@ -130,9 +122,9 @@ export function PaymentsTable({
                       {formatCents(row.amountCents)}
                     </p>
                   </div>
-                  <StatusPill tone={PAYMENT_TONE[row.status] ?? "mute"}>
+                  <p className="shrink-0 text-[13px] text-white/40">
                     {PAYMENT_LABEL[row.status] ?? row.status}
-                  </StatusPill>
+                  </p>
                 </div>
 
                 <div className="mt-4 flex flex-col gap-1.5 text-[13px] text-white/50">

@@ -13,6 +13,16 @@ export function getApiBaseUrl(): string {
   ).replace(/\/+$/, "");
 }
 
+/**
+ * True when the API being used is a local one. Its data lives in a local
+ * Postgres, which no Supabase Realtime stream can see, so the comercio panel
+ * falls back to polling instead of claiming to be live.
+ */
+export function usesLocalApi(): boolean {
+  const base = getApiBaseUrl();
+  return base.includes("localhost") || base.includes("127.0.0.1");
+}
+
 export class ApiError extends Error {
   status: number;
   code: string | null;

@@ -4,6 +4,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/app/AuthProvider";
+import { usesLocalApi } from "@/lib/api/client";
 import { providerKeys } from "@/lib/api/provider";
 import { uniqueChannelTopic } from "@/lib/realtime";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -49,7 +50,9 @@ export function useProviderRealtime(enabled: boolean): LiveState {
   const accessToken = session?.access_token;
 
   useEffect(() => {
-    if (!enabled || !userId || !accessToken) {
+    // A local API writes to a local database, which Realtime cannot observe.
+    // Staying idle there keeps the fallback polling on and the badge honest.
+    if (!enabled || !userId || !accessToken || usesLocalApi()) {
       setState("idle");
       return;
     }
@@ -68,10 +71,8 @@ export function useProviderRealtime(enabled: boolean): LiveState {
       channelRef.current = null;
     }
 
-    // Realtime authorizes with its own token, and RLS is what keeps one
-    // comercio from seeing another's rows.
-    supabase.realtime.setAuth(accessToken);
     setState("connecting");
+    let cancelled = false;
 
     const invalidate = (key: readonly unknown[]) =>
       void queryClientRef.current.invalidateQueries({ queryKey: key });
@@ -80,67 +81,77 @@ export function useProviderRealtime(enabled: boolean): LiveState {
     const refreshEvents = () => invalidate(providerKeys.events);
     const refreshDashboard = () => invalidate(providerKeys.dashboard);
 
-    const channel = supabase
-      .channel(uniqueChannelTopic(`${CHANNEL_PREFIX}-${userId}`))
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "tickets" },
-        () => {
-          refreshDashboard();
-          refreshEvents();
-          invalidate(providerKeys.activity);
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "provider_activity_log" },
-        () => {
-          invalidate(providerKeys.activity);
-          refreshDashboard();
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "provider_event_ticket_types",
-        },
-        () => {
-          refreshDashboard();
-          refreshEvents();
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "payment_orders_broadcast",
-        },
-        () => {
-          refreshDashboard();
-          refreshEvents();
-        },
-      )
-      .subscribe((status) => {
-        switch (status) {
-          case "SUBSCRIBED":
-            setState("open");
-            break;
-          case "CLOSED":
-            setState("closed");
-            break;
-          case "CHANNEL_ERROR":
-          case "TIMED_OUT":
-            setState("error");
-            break;
-        }
+    const open = () =>
+      supabase
+        .channel(uniqueChannelTopic(`${CHANNEL_PREFIX}-${userId}`))
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "tickets" },
+          () => {
+            refreshDashboard();
+            refreshEvents();
+            invalidate(providerKeys.activity);
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "provider_activity_log" },
+          () => {
+            invalidate(providerKeys.activity);
+            refreshDashboard();
+          },
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "provider_event_ticket_types",
+          },
+          () => {
+            refreshDashboard();
+            refreshEvents();
+          },
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "payment_orders_broadcast",
+          },
+          () => {
+            refreshDashboard();
+            refreshEvents();
+          },
+        )
+        .subscribe((status) => {
+          switch (status) {
+            case "SUBSCRIBED":
+              setState("open");
+              break;
+            case "CLOSED":
+              setState("closed");
+              break;
+            case "CHANNEL_ERROR":
+            case "TIMED_OUT":
+              setState("error");
+              break;
+          }
+        });
+
+    // `setAuth` resolves before the channel joins, so it never joins with a
+    // token the session has already replaced.
+    void supabase.realtime
+      .setAuth(accessToken)
+      .catch(() => undefined)
+      .then(() => {
+        if (cancelled) return;
+        channelRef.current = open();
       });
 
-    channelRef.current = channel;
-
     return () => {
+      cancelled = true;
       if (channelRef.current) {
         void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
