@@ -78,7 +78,7 @@ export function AppNav() {
   return (
     <>
       <header className="glass sticky top-0 z-40 border-b border-border pt-[env(safe-area-inset-top)]">
-        <div className="flex h-16 w-full items-center px-4 sm:px-5 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-2 lg:px-6">
+        <div className="flex h-16 w-full items-center px-5 sm:px-8 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-2 lg:px-12">
           <Link href="/eventos" aria-label="Allons, ir a eventos" className="shrink-0 md:justify-self-start">
             <AllonsLogo className="h-auto w-[80px] md:w-[92px]" variant="orange" />
           </Link>

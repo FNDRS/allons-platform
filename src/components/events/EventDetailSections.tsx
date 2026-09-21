@@ -70,7 +70,7 @@ function HostMark({ src, name }: { src?: string | null; name: string }) {
   return (
     <span className="relative size-11 shrink-0 overflow-hidden rounded-[12px] bg-black ring-1 ring-white/12">
       {src ? (
-        <img src={src} alt="" className="h-full w-full object-cover" />
+        <img src={src} alt="" className="absolute inset-0 size-full object-cover object-center" />
       ) : (
         <span className="grid h-full w-full place-items-center text-sm font-bold text-accent">
           {initial}

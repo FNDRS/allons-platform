@@ -20,7 +20,12 @@ export function getSupabaseBrowser(): SupabaseClient {
     );
   }
   client = createClient(url, key, {
-    auth: { persistSession: true, autoRefreshToken: true },
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: "pkce",
+    },
   });
   return client;
 }

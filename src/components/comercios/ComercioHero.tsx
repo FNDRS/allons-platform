@@ -42,14 +42,14 @@ export function ComercioHero({
       <div className="relative flex flex-col gap-7 p-6 sm:p-9">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-7">
           <span
-            className="grid size-[88px] shrink-0 place-items-center overflow-hidden rounded-[26px] bg-white/[0.06] text-[30px] font-bold tracking-tight text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] ring-1 ring-white/15 backdrop-blur sm:size-[104px] sm:text-[36px]"
+            className="relative grid size-[88px] shrink-0 place-items-center overflow-hidden rounded-[26px] bg-white/[0.06] text-[30px] font-bold tracking-tight text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] ring-1 ring-white/15 backdrop-blur sm:size-[104px] sm:text-[36px]"
             style={profile.logoUrl ? undefined : { backgroundColor: `${brand}33` }}
           >
             {profile.logoUrl ? (
               <img
                 src={profile.logoUrl}
                 alt=""
-                className="h-full w-full object-cover"
+                className="absolute inset-0 size-full object-cover object-center"
               />
             ) : (
               comercioInitials(profile.name)
@@ -57,10 +57,7 @@ export function ComercioHero({
           </span>
 
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-white/45">
-              Comercio en Allons
-            </p>
-            <h1 className="mt-2 break-words text-[28px] font-bold leading-[1.02] tracking-[-0.04em] sm:text-[48px]">
+            <h1 className="break-words text-[28px] font-bold leading-[1.02] tracking-[-0.04em] sm:text-[48px]">
               {profile.name}
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[14px] text-white/65">

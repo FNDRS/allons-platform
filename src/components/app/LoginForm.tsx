@@ -7,51 +7,17 @@ import { Button } from "@/components/ui/Button";
 import { FieldError, Label } from "@/components/ui/Field";
 import { SmoothInput } from "@/components/ui/SmoothInput";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
-import { isComercioUser } from "@/lib/role";
+import {
+  forgetLoginNext,
+  homeFor,
+  peekLoginNext,
+  rememberLoginNext,
+  safeLoginNext,
+  takeLoginNext,
+} from "@/lib/login-next";
 import { useAuth } from "./AuthProvider";
 
 type Mode = "login" | "signup" | "reset" | "update";
-
-const NEXT_STORAGE_KEY = "allons.login.next";
-/** A reset link older than this is stale; forget where it was going. */
-const NEXT_TTL_MS = 60 * 60 * 1000;
-
-/**
- * The recovery email opens in a fresh tab, so the destination has to live in
- * localStorage (sessionStorage is per tab). Stored only once Supabase accepted
- * the reset request, and read at most once.
- */
-function rememberNext(next: string) {
-  try {
-    window.localStorage.setItem(NEXT_STORAGE_KEY, JSON.stringify({ next, at: Date.now() }));
-  } catch {
-    /* the user simply lands on /events after the reset */
-  }
-}
-
-function takeRememberedNext(): string | null {
-  try {
-    const raw = window.localStorage.getItem(NEXT_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { next?: unknown; at?: unknown };
-    if (typeof parsed.next !== "string" || typeof parsed.at !== "number") return null;
-    if (Date.now() - parsed.at > NEXT_TTL_MS) {
-      window.localStorage.removeItem(NEXT_STORAGE_KEY);
-      return null;
-    }
-    return parsed.next;
-  } catch {
-    return null;
-  }
-}
-
-function forgetNext() {
-  try {
-    window.localStorage.removeItem(NEXT_STORAGE_KEY);
-  } catch {
-    /* nothing to clean */
-  }
-}
 
 function friendlyAuthError(message: string): string {
   const lower = message.toLowerCase();
@@ -65,37 +31,18 @@ function friendlyAuthError(message: string): string {
     return "La contraseña necesita al menos 6 caracteres.";
   if (lower.includes("rate limit"))
     return "Demasiados intentos. Espera un momento.";
+  if (lower.includes("bad_oauth_state") || lower.includes("invalid_request"))
+    return "No se pudo entrar con Google. Inténtalo de nuevo.";
   return message || "Algo salió mal. Intenta de nuevo.";
-}
-
-/** Only a same-origin path: no protocol-relative, no backslash tricks. */
-function safeNext(raw: string | null): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || /[\\\s]/.test(raw)) {
-    return "/events";
-  }
-  try {
-    const url = new URL(raw, "https://allonsapp.com");
-    if (url.origin !== "https://allonsapp.com") return "/events";
-    return url.pathname + url.search;
-  } catch {
-    return "/events";
-  }
-}
-
-/** A comercio lands on its panel unless it was already going to /comercio. */
-function homeFor(
-  user: Parameters<typeof isComercioUser>[0],
-  next: string,
-): string {
-  if (isComercioUser(user) && !next.startsWith("/comercio")) return "/comercio";
-  return next;
 }
 
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
+  const queryNext = params.get("next");
   const [storedNext, setStoredNext] = useState<string | null>(null);
-  const next = params.get("next") ? safeNext(params.get("next")) : storedNext ?? "/events";
+  const [nextReady, setNextReady] = useState(Boolean(queryNext));
+  const next = queryNext ? safeLoginNext(queryNext) : storedNext ?? "/events";
   const { user, loading } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");
@@ -106,18 +53,26 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (params.get("oauth_error") || params.get("error_code") || params.get("error")) {
+      setError("No se pudo entrar con Google. Inténtalo de nuevo.");
+    }
+  }, [params]);
+
   // A recovery link lands here with a session already open. Supabase raises
   // PASSWORD_RECOVERY for it; switch to the new-password form instead of
   // bouncing the user straight into the app with the old password.
   useEffect(() => {
-    // Only a recovery landing consumes the remembered destination; an
-    // ordinary visit to /login must never be redirected by it.
     const recovering = window.location.hash.includes("type=recovery");
     if (recovering) {
       setMode("update");
-      const saved = takeRememberedNext();
-      if (saved && !params.get("next")) setStoredNext(safeNext(saved));
+      const saved = takeLoginNext();
+      if (saved && !queryNext) setStoredNext(safeLoginNext(saved));
+    } else if (!queryNext) {
+      const saved = peekLoginNext();
+      if (saved) setStoredNext(safeLoginNext(saved));
     }
+    setNextReady(true);
     let supabase: ReturnType<typeof getSupabaseBrowser>;
     try {
       supabase = getSupabaseBrowser();
@@ -127,15 +82,17 @@ export function LoginForm() {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "PASSWORD_RECOVERY") return;
       setMode("update");
-      const saved = takeRememberedNext();
-      if (saved && !params.get("next")) setStoredNext(safeNext(saved));
+      const saved = takeLoginNext();
+      if (saved && !queryNext) setStoredNext(safeLoginNext(saved));
     });
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [queryNext]);
 
   useEffect(() => {
-    if (!loading && user && mode !== "update") router.replace(homeFor(user, next));
-  }, [loading, user, router, next, mode]);
+    if (!nextReady || loading || !user || mode === "update") return;
+    forgetLoginNext();
+    router.replace(homeFor(user, next));
+  }, [nextReady, loading, user, router, next, mode]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -179,7 +136,7 @@ export function LoginForm() {
         if (err) throw err;
         toast.success("Contraseña actualizada");
         setPassword("");
-        forgetNext();
+        forgetLoginNext();
         router.replace(homeFor(user, next));
         return;
       }
@@ -190,7 +147,7 @@ export function LoginForm() {
       if (err) throw err;
       // Persist only once the request went through, so a failed attempt
       // cannot leave a stale destination behind for a later login.
-      rememberNext(next);
+      rememberLoginNext(next);
       toast.success("Revisa tu correo para cambiar la contraseña.");
       setMode("login");
     } catch (err) {
@@ -206,11 +163,10 @@ export function LoginForm() {
     setBusy("google");
     try {
       const supabase = getSupabaseBrowser();
-      const redirect = new URL("/login", window.location.origin);
-      if (next && next !== "/events") redirect.searchParams.set("next", next);
+      rememberLoginNext(next);
       const { error: err } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: redirect.toString() },
+        options: { redirectTo: `${window.location.origin}/` },
       });
       if (err) throw err;
     } catch (err) {

@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { AuthProvider, useAuth } from "./AuthProvider";
+import { AuthReturnTo } from "./AuthReturnTo";
 
 /**
  * Private query keys are not scoped by user, so the cache must not outlive
@@ -47,6 +48,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <AuthProvider>
+        <AuthReturnTo />
         <CacheResetOnUserChange />
         {children}
       </AuthProvider>
