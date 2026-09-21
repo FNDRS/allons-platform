@@ -3,13 +3,12 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   reactStrictMode: true,
-  // Dev only. By default `next dev` drops a route it has not served for 60 s
-  // and rebuilds it on the next click, which costs seconds per tab change in
-  // the comercio panel. Keep compiled routes around for the whole session.
-  onDemandEntries: {
-    maxInactiveAge: 60 * 60 * 1000,
-    pagesBufferLength: 20,
-  },
+  // `onDemandEntries` used to live here, to stop `next dev` dropping a route it
+  // had not served for 60 s and rebuilding it on the next click — seconds per
+  // tab change in the comercio panel. Only the webpack hot reloader reads that
+  // option, and Next 16 serves dev with Turbopack, which does not dispose
+  // routes that way. Leaving it would have promised a fix nothing applies.
+
   // Baseline hardening for a site that now hosts a card form: no framing (a
   // clickjacked checkout is the classic attack on one), no MIME sniffing, no
   // order URLs leaking through Referer, and no sensor APIs for any script.

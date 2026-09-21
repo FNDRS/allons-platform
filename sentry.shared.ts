@@ -14,16 +14,39 @@ export const SENTRY_DSN = (process.env.NEXT_PUBLIC_SENTRY_DSN ?? "").trim();
 
 export const isSentryConfigured = Boolean(SENTRY_DSN);
 
+/**
+ * `??` would let an empty string through, and `.env.example` ships these as
+ * `KEY=` lines meant to be uncommented. That is how a preview would report
+ * into environment `""` — which Sentry then reads as production — at a sample
+ * rate of `Number("") === 0`, with tracing silently off.
+ */
+function envText(...candidates: Array<string | undefined>): string | undefined {
+  for (const candidate of candidates) {
+    const trimmed = candidate?.trim();
+    if (trimmed) return trimmed;
+  }
+  return undefined;
+}
+
+function envRate(raw: string | undefined, fallback: number): number {
+  const parsed = Number(raw?.trim());
+  return Number.isFinite(parsed) && parsed >= 0 && parsed <= 1
+    ? parsed
+    : fallback;
+}
+
 export const sentryBaseOptions = {
   dsn: SENTRY_DSN,
   environment:
-    process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ??
-    // Vercel sets this at build time for preview and production alike.
-    process.env.NEXT_PUBLIC_VERCEL_ENV ??
-    process.env.NODE_ENV ??
-    "development",
-  tracesSampleRate: Number(
-    process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ?? "0.1",
+    envText(
+      process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
+      // Vercel sets this at build time for preview and production alike.
+      process.env.NEXT_PUBLIC_VERCEL_ENV,
+      process.env.NODE_ENV,
+    ) ?? "development",
+  tracesSampleRate: envRate(
+    process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE,
+    0.1,
   ),
   // Checkout and ticket screens carry buyer emails and payment payloads.
   sendDefaultPii: false,
