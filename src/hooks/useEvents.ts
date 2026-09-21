@@ -4,9 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { eventKeys, listEvents, type EventListItem } from "@/lib/api/events";
 
+/** Same query the listing and the stairs cover share, so one fetch fills both. */
+export function useEventsQuery() {
+  return useQuery({ queryKey: eventKeys.list, queryFn: listEvents });
+}
+
 /** Public event list with client-side search. */
 export function useEvents() {
-  const query = useQuery({ queryKey: eventKeys.list, queryFn: listEvents });
+  const query = useEventsQuery();
   const [search, setSearch] = useState("");
 
   const visible = useMemo(

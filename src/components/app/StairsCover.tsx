@@ -1,20 +1,27 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { useStairsPreload } from "@/hooks/useStairsPreload";
+import { useEventsQuery } from "@/hooks/useEvents";
 import { StairsPreloader } from "@/components/ui/StairsPreloader";
 
-const StairsCoverContext = createContext<{
-  show: boolean;
-  setReady: (ready: boolean) => void;
-}>({ show: false, setReady: () => {} });
+const StairsCoverContext = createContext(false);
 
 /** White stairs sit on top of the shell, including the nav, from the first paint. */
 export function StairsCoverProvider({ children }: { children: ReactNode }) {
-  const [ready, setReady] = useState(false);
-  const show = useStairsPreload(ready);
+  const events = useEventsQuery();
+  useEffect(() => {
+    if (!events.data) return;
+    for (const event of events.data) {
+      if (!event.coverImageUrl) continue;
+      const img = new Image();
+      img.decoding = "async";
+      img.src = event.coverImageUrl;
+    }
+  }, [events.data]);
+  const show = useStairsPreload(!events.isPending);
   return (
-    <StairsCoverContext.Provider value={{ show, setReady }}>
+    <StairsCoverContext.Provider value={show}>
       {children}
       <StairsPreloader show={show} label="Cargando eventos" />
     </StairsCoverContext.Provider>
@@ -22,13 +29,5 @@ export function StairsCoverProvider({ children }: { children: ReactNode }) {
 }
 
 export function useStairsCovering() {
-  return useContext(StairsCoverContext).show;
-}
-
-/** Call once the listing data is in so the stairs can lift. */
-export function useStairsCoverReady(ready: boolean) {
-  const { setReady } = useContext(StairsCoverContext);
-  useEffect(() => {
-    setReady(ready);
-  }, [ready, setReady]);
+  return useContext(StairsCoverContext);
 }

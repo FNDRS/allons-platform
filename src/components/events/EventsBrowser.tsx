@@ -2,7 +2,6 @@
 
 import { Search } from "lucide-react";
 import { useEvents } from "@/hooks/useEvents";
-import { useStairsCoverReady } from "@/components/app/StairsCover";
 import { Hero } from "@/components/app/Hero";
 import { SmoothInput } from "@/components/ui/SmoothInput";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
@@ -10,7 +9,6 @@ import { EventCard } from "./EventCard";
 
 export function EventsBrowser() {
   const { events, search, setSearch, isLoading, error, refetch } = useEvents();
-  useStairsCoverReady(!isLoading);
 
   return (
     <div>
