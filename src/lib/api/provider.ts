@@ -1,10 +1,30 @@
 import { apiFetch } from "./client";
 
+/** What Allons and the pasarela withhold from each sale, as percentages. */
+export interface ProviderCommission {
+  plan: string | null;
+  planName: string | null;
+  baseFee: number;
+  pasarelaFee: number;
+  totalFee: number;
+}
+
+export interface ProviderPayout {
+  id: string;
+  /** Lempiras. */
+  amount: number;
+  method: string;
+  /** "pending" until the operator makes the transfer, then "completed". */
+  status: string;
+  date: string;
+}
+
 export interface ProviderDashboard {
   availableBalance: number;
   pendingBalance: number;
   heldBalance: number;
   platformFee: number;
+  commission?: ProviderCommission;
   totals: {
     gross: number;
     fees: number;
@@ -13,6 +33,7 @@ export interface ProviderDashboard {
     scans: number;
   };
   events: unknown[];
+  payouts?: ProviderPayout[];
 }
 
 export interface ProviderEventListItem {
@@ -220,6 +241,18 @@ export interface ProviderActivityRow {
   date: string;
 }
 
+export function listPayouts() {
+  return apiFetch<ProviderPayout[]>("/provider/payouts");
+}
+
+/** Amount in lempiras. The destination bank account is agreed out of band. */
+export function requestPayout(amount: number, method?: string) {
+  return apiFetch<{ requested: boolean }>("/provider/payouts", {
+    method: "POST",
+    body: method ? { amount, method } : { amount },
+  });
+}
+
 export function getProviderActivity(limit = 20) {
   return apiFetch<ProviderActivityRow[]>(`/provider/activity?limit=${limit}`);
 }
@@ -227,6 +260,7 @@ export function getProviderActivity(limit = 20) {
 export const providerKeys = {
   dashboard: ["provider", "dashboard"] as const,
   activity: ["provider", "activity"] as const,
+  payouts: ["provider", "payouts"] as const,
   events: ["provider", "events"] as const,
   event: (id: string) => ["provider", "events", id] as const,
   hourly: (id: string) => ["provider", "events", id, "hourly"] as const,

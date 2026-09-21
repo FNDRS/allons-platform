@@ -3,23 +3,25 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { ArrowUpRight, LayoutDashboard, Smartphone, Users } from "lucide-react";
+import { ArrowUpRight, LayoutDashboard, Smartphone, Users, Wallet } from "lucide-react";
 import { AllonsLogo } from "@/components/AllonsLogo";
 import { useProviderRealtime } from "@/hooks/useProviderRealtime";
 import { isComercioUser } from "@/lib/role";
 import { useAuth } from "@/components/app/AuthProvider";
-import { ProviderLiveProvider } from "./ProviderLive";
+import { LiveIndicator, ProviderLiveProvider } from "./ProviderLive";
 import { AccountButton, AccountSheet } from "@/components/app/AccountSheet";
 import { BottomTabs } from "@/components/app/BottomTabs";
 import { isActivePath } from "@/components/app/AppNav";
 
 const NAV = [
   { href: "/comercio", label: "Resumen", Icon: LayoutDashboard, exact: false },
+  { href: "/comercio/finanzas", label: "Finanzas", Icon: Wallet, exact: true },
   { href: "/comercio/staff", label: "Personal", Icon: Users, exact: true },
 ];
 
 const TABS = [
   { href: "/comercio", label: "Resumen", Icon: LayoutDashboard },
+  { href: "/comercio/finanzas", label: "Finanzas", Icon: Wallet },
   { href: "/comercio/staff", label: "Personal", Icon: Users },
 ];
 
@@ -99,7 +101,10 @@ export function ComercioShellInner({
             <p className="hidden text-[13px] font-semibold text-dim lg:block">
               allonsapp.com/comercio
             </p>
-            <AccountButton onOpen={() => setAccountOpen(true)} />
+            <div className="flex items-center gap-3">
+              <LiveIndicator />
+              <AccountButton onOpen={() => setAccountOpen(true)} />
+            </div>
           </div>
         </header>
 

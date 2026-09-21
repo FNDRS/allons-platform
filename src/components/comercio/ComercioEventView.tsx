@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, Clock } from "lucide-react";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
+import { useProviderLive } from "./ProviderLive";
 import {
   getHourlySales,
   getProviderEvent,
@@ -26,6 +27,9 @@ const STATUS: Record<string, { label: string; tone: "solid" | "glass" | "mute" }
 
 export function ComercioEventView({ eventId }: { eventId: string }) {
   const { ready } = useProviderAccess();
+  // Realtime already invalidates these keys; the interval is the fallback
+  // for a browser that cannot hold the socket open.
+  const { live } = useProviderLive();
   const event = useQuery({
     queryKey: providerKeys.event(eventId),
     queryFn: () => getProviderEvent(eventId),
@@ -35,7 +39,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
     queryKey: providerKeys.hourly(eventId),
     queryFn: () => getHourlySales(eventId),
     enabled: ready,
-    refetchInterval: 60_000,
+    refetchInterval: live ? false : 60_000,
   });
   const payments = useQuery({
     queryKey: providerKeys.payments(eventId),

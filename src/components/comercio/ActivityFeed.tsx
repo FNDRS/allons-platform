@@ -12,7 +12,6 @@ import type { ProviderActivityRow } from "@/lib/api/provider";
 import { formatRelativeTime } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
-import { LiveIndicator } from "./ProviderLive";
 
 const ICON: Record<string, { Icon: LucideIcon; tint: string }> = {
   sale: { Icon: Ticket, tint: "text-accent" },
@@ -39,7 +38,7 @@ export function ActivityFeed({
 }) {
   return (
     <section>
-      <SectionTitle action={<LiveIndicator />}>Actividad</SectionTitle>
+      <SectionTitle>Actividad</SectionTitle>
       {loading ? (
         <Card className="flex flex-col gap-3">
           {Array.from({ length: 4 }).map((_, index) => (

@@ -119,13 +119,13 @@ export function HourlySalesChart({ data }: { data: HourlySales }) {
           </svg>
           {hover !== null ? (
             <div
-              className="pointer-events-none absolute top-0 rounded-[12px] border border-border-strong bg-[#141416] px-3 py-2 text-xs shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
+              className="pointer-events-none absolute top-0 rounded-[16px] border border-white/[0.12] bg-[#111] px-3 py-2 text-xs"
               style={{
                 left: `${(x(hover) / W) * 100}%`,
                 transform: `translateX(${hover > 18 ? "-100%" : hover < 4 ? "0" : "-50%"})`,
               }}
             >
-              <p className="text-dim">
+              <p className="text-white/45">
                 {String(hover).padStart(2, "0")}:00 a {String(hover + 1).padStart(2, "0")}:00
               </p>
               <p className="mt-0.5 flex items-center gap-1.5 font-semibold text-white">
@@ -135,7 +135,7 @@ export function HourlySalesChart({ data }: { data: HourlySales }) {
             </div>
           ) : null}
         </div>
-      </Card>
+      </div>
     </section>
   );
 }
