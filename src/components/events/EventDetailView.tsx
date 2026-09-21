@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { useEventDetail } from "@/hooks/useEventDetail";
 import { Button } from "@/components/ui/Button";
 import { ErrorState, Skeleton } from "@/components/ui/States";
+import { formatPriceCents } from "@/lib/format";
 import {
   EntryTypesCard,
   EventDescription,
   EventHero,
   EventMeta,
   KitPickupCard,
+  OrganizerCard,
   RefundPolicyNote,
   ResourcePreviewCard,
 } from "./EventDetailSections";
@@ -30,8 +33,8 @@ export function EventDetailView({
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4">
-        <Skeleton className="-mx-4 aspect-[4/3] rounded-none sm:mx-0 sm:aspect-[21/9] sm:rounded-[28px]" />
-        <Skeleton className="h-28" />
+        <Skeleton className="-mx-4 aspect-[4/3] rounded-none sm:mx-0 sm:aspect-[21/9] sm:rounded-[24px]" />
+        <Skeleton className="h-24" />
         <Skeleton className="h-40" />
       </div>
     );
@@ -49,18 +52,37 @@ export function EventDetailView({
     );
   }
 
+  const cheapest = event.entryTypes?.length
+    ? Math.min(...event.entryTypes.map((type) => type.priceCents))
+    : null;
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-7">
+      <Link
+        href="/events"
+        className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-muted hover:text-white"
+      >
+        <ArrowLeft className="size-4" aria-hidden /> Eventos
+      </Link>
+
       <EventHero event={event} />
       <EventMeta event={event} />
-      <EntryTypesCard types={event.entryTypes ?? []} />
-      <ResourcePreviewCard groups={event.resourceGroups ?? []} />
-      <KitPickupCard info={event.kitPickupInfo} />
-      <EventDescription text={event.description} />
-      <RefundPolicyNote event={event} />
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/45">
-        <a href={appDeepLink} className="font-semibold text-white/70 hover:text-white">
+      <div className="grid gap-7 lg:grid-cols-[1fr_360px] lg:items-start">
+        <div className="flex flex-col gap-7">
+          <EventDescription text={event.description} />
+          <ResourcePreviewCard groups={event.resourceGroups ?? []} />
+          <KitPickupCard info={event.kitPickupInfo} />
+        </div>
+        <div className="flex flex-col gap-7">
+          <EntryTypesCard types={event.entryTypes ?? []} />
+          <OrganizerCard event={event} />
+          <RefundPolicyNote event={event} />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-dim">
+        <a href={appDeepLink} className="font-semibold text-muted hover:text-white">
           Abrir en la app
         </a>
         <span aria-hidden>·</span>
@@ -72,12 +94,12 @@ export function EventDetailView({
         </a>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/[0.08] bg-[#050505]/90 px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-3 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
+      <div className="fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-2 sm:px-6">
+        <div className="glass mx-auto flex max-w-[1120px] items-center justify-between gap-4 rounded-[18px] border border-border-strong px-4 py-3 sm:px-5">
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold tracking-tight">{event.title}</p>
-            <p className="text-xs text-white/50">
-              {event.entryTypes?.length ? `Desde ${cheapest(event.entryTypes)}` : ""}
+            <p className="truncate text-[15px] font-bold tracking-tight">{event.title}</p>
+            <p className="text-[13px] text-muted">
+              {cheapest != null ? `Desde ${formatPriceCents(cheapest)}` : ""}
             </p>
           </div>
           {reserve?.kind === "open" ? (
@@ -93,10 +115,4 @@ export function EventDetailView({
       </div>
     </div>
   );
-}
-
-function cheapest(types: { priceCents: number }[]) {
-  const min = Math.min(...types.map((type) => type.priceCents));
-  if (!Number.isFinite(min) || min <= 0) return "Gratis";
-  return new Intl.NumberFormat("es-HN", { style: "currency", currency: "HNL" }).format(min / 100);
 }

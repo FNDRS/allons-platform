@@ -44,7 +44,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
     return (
       <div className="flex flex-col items-center gap-4">
         <Skeleton className="h-8 w-1/2" />
-        <Skeleton className="size-72 rounded-[28px]" />
+        <Skeleton className="size-72 rounded-[24px]" />
         <Skeleton className="h-16 w-2/3" />
       </div>
     );
@@ -59,25 +59,23 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
     .join(" · ");
 
   return (
-    <div className="flex flex-col gap-6">
-      <Link href="/tickets" className="inline-flex items-center gap-1.5 text-sm text-white/55 hover:text-white">
-        <ArrowLeft className="size-4" /> Mis tickets
+    <div className="flex flex-col gap-7">
+      <Link href="/tickets" className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-muted hover:text-white">
+        <ArrowLeft className="size-4" aria-hidden /> Mis tickets
       </Link>
 
       {isNew ? (
-        <p className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-center text-sm font-semibold text-emerald-200">
-          ¡Listo! Este es tu ticket.
+        <p className="rounded-[14px] border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-center text-sm font-semibold text-emerald-200">
+          Listo. Este es tu ticket.
         </p>
       ) : null}
 
       <div className="text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent">Ticket</p>
-        <h1 className="mt-2 text-3xl font-semibold leading-tight tracking-[-0.04em]">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-accent">Ticket</p>
+        <h1 className="mt-2 text-[30px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[36px]">
           {ticket.event?.title ?? ticket.title}
         </h1>
-        {ticket.holderName ? (
-          <p className="mt-1.5 text-white/60">{ticket.holderName}</p>
-        ) : null}
+        {ticket.holderName ? <p className="mt-2 text-[15px] text-muted">{ticket.holderName}</p> : null}
       </div>
 
       <TicketQr payload={ticket.qrPayload} />
@@ -94,10 +92,8 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         />
       ))}
 
-      <Card className="flex flex-col gap-3">
-        {when ? (
-          <Row icon={<Calendar className="size-4" />}>{when}</Row>
-        ) : null}
+      <Card className="flex flex-col gap-3.5">
+        {when ? <Row icon={<Calendar className="size-4" />}>{when}</Row> : null}
         {place ? <Row icon={<MapPin className="size-4" />}>{place}</Row> : null}
         {ticket.kitPickupInfo ? (
           <Row icon={<Package className="size-4" />}>
@@ -105,7 +101,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
           </Row>
         ) : null}
         <Row icon={<Undo2 className="size-4" />}>
-          <span className="text-white/55">
+          <span className="text-muted">
             {ticket.refundPolicy?.eligible
               ? "Puedes cancelar desde la app y recibir reembolso según la política del evento."
               : ticket.refundPolicy?.reason || "Este ticket no admite reembolso."}
@@ -113,7 +109,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         </Row>
       </Card>
 
-      <p className="text-center text-xs text-white/40">
+      <p className="text-center text-[13px] text-dim">
         Este ticket también está en la app de Allons con la misma cuenta.
       </p>
 

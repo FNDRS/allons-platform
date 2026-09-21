@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { AppShell } from "@/components/app/AppShell";
 import { ComercioEventView } from "@/components/comercio/ComercioEventView";
+import { ComercioShell } from "@/components/comercio/ComercioShell";
 import { ProviderGate } from "@/components/comercio/ProviderGate";
 
 export const metadata: Metadata = {
@@ -15,10 +15,10 @@ export default async function ComercioEventPage({
 }) {
   const { id } = await params;
   return (
-    <AppShell>
+    <ComercioShell title="Evento" subtitle="Ventas, asistentes y unidades de este evento.">
       <ProviderGate>
         <ComercioEventView eventId={id} />
       </ProviderGate>
-    </AppShell>
+    </ComercioShell>
   );
 }

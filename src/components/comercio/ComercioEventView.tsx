@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useProviderResources } from "@/hooks/useProviderResources";
 import { formatEventWhen } from "@/lib/allons-api";
@@ -56,17 +56,27 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <Link href="/comercio" className="inline-flex items-center gap-1.5 text-sm text-white/55 hover:text-white">
+      <div className="flex flex-col gap-3">
+        <Link href="/comercio" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-white">
           <ArrowLeft className="size-4" /> Resumen
         </Link>
-        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.3em] text-accent">
-          {formatEventWhen(data.startsAt) ?? "Sin fecha"}
-        </p>
-        <h1 className="mt-1 text-3xl font-semibold leading-tight tracking-[-0.04em] sm:text-4xl">{data.title}</h1>
-        {data.venue || data.city ? (
-          <p className="mt-1 text-sm text-white/55">{[data.venue, data.city].filter(Boolean).join(" · ")}</p>
-        ) : null}
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-accent">
+              {formatEventWhen(data.startsAt) ?? "Sin fecha"}
+            </p>
+            <h2 className="mt-1 text-[26px] font-bold leading-tight tracking-[-0.03em] sm:text-[32px]">{data.title}</h2>
+            {data.venue || data.city ? (
+              <p className="mt-1 text-sm text-muted">{[data.venue, data.city].filter(Boolean).join(" · ")}</p>
+            ) : null}
+          </div>
+          <Link
+            href={`/events/${encodeURIComponent(eventId)}`}
+            className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-surface px-4 text-[13px] font-semibold text-muted transition hover:border-border-strong hover:text-white"
+          >
+            Ver página pública <ArrowUpRight className="size-4" aria-hidden />
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

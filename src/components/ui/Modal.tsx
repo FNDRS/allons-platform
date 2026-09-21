@@ -4,8 +4,8 @@ import { X } from "lucide-react";
 import { useEffect } from "react";
 
 /**
- * Bottom sheet on phones, centered dialog on wider screens. Closes on
- * backdrop click and Escape.
+ * Bottom sheet on phones (with a drag handle), centered dialog on wider
+ * screens. Closes on backdrop click and Escape.
  */
 export function Modal({
   open,
@@ -38,7 +38,7 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:p-6"
+      className="modal-overlay fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:p-6"
       onClick={onClose}
       role="presentation"
     >
@@ -47,23 +47,22 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         onClick={(event) => event.stopPropagation()}
-        className="flex max-h-[92dvh] w-full flex-col rounded-t-[28px] border border-white/10 bg-[#0d0d0f] shadow-[0_-20px_80px_rgba(0,0,0,0.6)] sm:max-w-lg sm:rounded-[28px]"
+        className="modal-card flex max-h-[92dvh] w-full flex-col rounded-t-[24px] border border-border-strong bg-[#0c0c0e] sm:max-w-lg sm:rounded-[24px]"
       >
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+        <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-white/20 sm:hidden" aria-hidden />
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 sm:pt-5">
+          <h2 className="text-[19px] font-bold tracking-tight">{title}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="flex size-9 items-center justify-center rounded-full bg-white/[0.06] text-white/70 hover:bg-white/[0.12]"
+            className="flex size-10 items-center justify-center rounded-full bg-surface-2 text-muted hover:bg-white/[0.12] hover:text-white"
           >
             <X className="size-4" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-5 pb-5">{children}</div>
-        {footer ? (
-          <div className="border-t border-white/[0.08] px-5 py-4">{footer}</div>
-        ) : null}
+        {footer ? <div className="border-t border-border px-5 py-4">{footer}</div> : null}
       </div>
     </div>
   );

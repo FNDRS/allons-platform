@@ -15,24 +15,24 @@ export function TicketCode({ code }: { code: string }) {
     }
   }
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <p className="text-[12px] font-semibold uppercase tracking-[0.25em] text-white/45">
-        Código de acceso
-      </p>
+    <div className="flex flex-col items-center gap-2">
+      <p className="text-[12px] font-semibold uppercase tracking-[0.22em] text-muted">Código de acceso</p>
       <button
         type="button"
         onClick={() => void copy()}
-        className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-3 font-mono text-2xl font-bold tracking-[0.18em] hover:bg-white/[0.09]"
+        className="flex h-14 items-center gap-3 rounded-full border border-border bg-surface-2 pl-6 pr-3 text-[26px] font-bold tracking-[0.12em] transition hover:border-border-strong hover:bg-white/[0.09]"
         aria-label={`Copiar código ${code}`}
       >
-        {code}
-        {copied ? (
-          <Check className="size-4 text-emerald-300" aria-hidden />
-        ) : (
-          <Copy className="size-4 text-white/40" aria-hidden />
-        )}
+        <span className="tabular-nums">{code}</span>
+        <span className="flex size-9 items-center justify-center rounded-full bg-white/[0.08]">
+          {copied ? (
+            <Check className="size-4 text-success" aria-hidden />
+          ) : (
+            <Copy className="size-4 text-muted" aria-hidden />
+          )}
+        </span>
       </button>
-      <p className="text-xs text-white/40">Si el QR no lee, dicta este código en la entrada.</p>
+      <p className="text-[13px] text-dim">Si el QR no lee, dicta este código en la entrada.</p>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { AppShell, PageHeader } from "@/components/app/AppShell";
 import { ComercioDashboard } from "@/components/comercio/ComercioDashboard";
-import { ComercioNav } from "@/components/comercio/ComercioNav";
+import { ComercioShell } from "@/components/comercio/ComercioShell";
 import { ProviderGate } from "@/components/comercio/ProviderGate";
 
 export const metadata: Metadata = {
@@ -11,12 +10,10 @@ export const metadata: Metadata = {
 
 export default function ComercioPage() {
   return (
-    <AppShell>
-      <PageHeader eyebrow="Comercio" title="Resumen" body="Ventas, asistentes y staff de tus eventos." />
-      <ComercioNav />
+    <ComercioShell title="Resumen" subtitle="Ventas, asistentes y saldo de tus eventos.">
       <ProviderGate>
         <ComercioDashboard />
       </ProviderGate>
-    </AppShell>
+    </ComercioShell>
   );
 }

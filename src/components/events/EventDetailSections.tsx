@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import { Calendar, ExternalLink, MapPin, Package, Undo2, Users } from "lucide-react";
 import { formatEventWhen } from "@/lib/allons-api";
 import {
@@ -16,20 +18,35 @@ import { EventCover } from "./EventCover";
 
 export function EventHero({ event }: { event: EventDetail }) {
   return (
-    <div className="relative -mx-4 -mt-6 aspect-[4/3] overflow-hidden sm:mx-0 sm:mt-0 sm:aspect-[21/9] sm:rounded-[28px]">
+    <div className="relative -mx-4 aspect-[4/3] overflow-hidden sm:mx-0 sm:aspect-[21/9] sm:rounded-[24px] sm:border sm:border-border">
       <EventCover src={event.coverImageUrl} alt="" themeColor={event.themeColor} />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/30 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#070708] via-[#070708]/40 to-transparent" aria-hidden />
       <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8">
-        {event.provider?.name ? (
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent">
-            {event.provider.name}
-          </p>
-        ) : null}
-        <h1 className="mt-2 text-3xl font-semibold leading-[1.02] tracking-[-0.05em] sm:text-5xl">
+        <h1 className="max-w-3xl text-[34px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[52px]">
           {event.title}
         </h1>
       </div>
     </div>
+  );
+}
+
+function MetaPill({ icon, children, href }: { icon: React.ReactNode; children: React.ReactNode; href?: string }) {
+  const className =
+    "inline-flex h-11 max-w-full items-center gap-2 rounded-full border border-border bg-surface px-4 text-[14px] font-semibold";
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" className={`${className} transition hover:border-border-strong hover:bg-surface-2`}>
+        <span className="text-accent">{icon}</span>
+        <span className="truncate">{children}</span>
+        <ExternalLink className="size-3.5 text-dim" aria-hidden />
+      </a>
+    );
+  }
+  return (
+    <span className={className}>
+      <span className="text-accent">{icon}</span>
+      <span className="truncate">{children}</span>
+    </span>
   );
 }
 
@@ -41,49 +58,44 @@ export function EventMeta({ event }: { event: EventDetail }) {
       : event.address || event.venue
         ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([event.venue, event.address, event.city].filter(Boolean).join(", "))}`
         : null;
+  const place = event.venue ?? event.address ?? event.city;
   return (
-    <Card className="grid gap-4 sm:grid-cols-2">
-      {when ? (
-        <div className="flex gap-3">
-          <Calendar className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
-          <div>
-            <p className="font-semibold tracking-tight">{when}</p>
-            {event.endsAt ? (
-              <p className="text-sm text-white/50">Termina {formatDateTime(event.endsAt)}</p>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-      {event.venue || event.address || event.city ? (
-        <div className="flex gap-3">
-          <MapPin className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
-          <div className="min-w-0">
-            <p className="font-semibold tracking-tight">{event.venue ?? event.city}</p>
-            <p className="text-sm text-white/50">
-              {[event.address, event.venue ? event.city : null].filter(Boolean).join(" · ")}
-            </p>
-            {mapsUrl ? (
-              <a
-                href={mapsUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-accent"
-              >
-                Ver en el mapa <ExternalLink className="size-3.5" aria-hidden />
-              </a>
-            ) : null}
-          </div>
-        </div>
+    <div className="flex flex-wrap gap-2">
+      {when ? <MetaPill icon={<Calendar className="size-4" aria-hidden />}>{when}</MetaPill> : null}
+      {place ? (
+        <MetaPill icon={<MapPin className="size-4" aria-hidden />} href={mapsUrl ?? undefined}>
+          {[place, place !== event.city ? event.city : null].filter(Boolean).join(" · ")}
+        </MetaPill>
       ) : null}
       {typeof event.attendeeCount === "number" && event.attendeeCount > 0 ? (
-        <div className="flex gap-3">
-          <Users className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
-          <p className="font-semibold tracking-tight">
-            {event.attendeeCount} {event.attendeeCount === 1 ? "persona va" : "personas van"}
-          </p>
-        </div>
+        <MetaPill icon={<Users className="size-4" aria-hidden />}>
+          {event.attendeeCount} {event.attendeeCount === 1 ? "persona va" : "personas van"}
+        </MetaPill>
       ) : null}
-    </Card>
+    </div>
+  );
+}
+
+export function OrganizerCard({ event }: { event: EventDetail }) {
+  const provider = event.provider;
+  if (!provider?.name) return null;
+  return (
+    <section>
+      <SectionTitle>Organiza</SectionTitle>
+      <Card className="flex items-center gap-4">
+        {provider.logoUrl ? (
+          <img src={provider.logoUrl} alt="" className="size-12 rounded-full object-cover" />
+        ) : (
+          <span className="flex size-12 items-center justify-center rounded-full bg-accent-soft text-[15px] font-bold text-accent">
+            {provider.name.charAt(0).toUpperCase()}
+          </span>
+        )}
+        <div className="min-w-0">
+          <p className="truncate text-[16px] font-bold tracking-tight">{provider.name}</p>
+          {provider.handle ? <p className="truncate text-sm text-muted">@{provider.handle}</p> : null}
+        </div>
+      </Card>
+    </section>
   );
 }
 
@@ -92,7 +104,7 @@ export function EventDescription({ text }: { text: string | null }) {
   return (
     <section>
       <SectionTitle>Sobre el evento</SectionTitle>
-      <p className="whitespace-pre-line text-[15px] leading-7 text-white/75">{text}</p>
+      <p className="whitespace-pre-line text-[16px] leading-7 text-white/80">{text}</p>
     </section>
   );
 }
@@ -103,33 +115,32 @@ export function EntryTypesCard({ types }: { types: EventEntryType[] }) {
   return (
     <section>
       <SectionTitle>Entradas</SectionTitle>
-      <div className="flex flex-col gap-2.5">
+      <Card padding="none" className="divide-y divide-border">
         {types.map((type) => {
           const onSale = isEntryTypeOnSale(type, now);
           const soldOut = type.soldOut || type.remaining === 0;
+          const status = soldOut
+            ? "Agotado"
+            : !onSale && type.saleStartsAt && new Date(type.saleStartsAt).getTime() > now
+              ? `A la venta desde ${formatDateTime(type.saleStartsAt)}`
+              : !onSale
+                ? "Venta cerrada"
+                : type.remaining != null
+                  ? `${type.remaining} disponibles`
+                  : "Disponible";
           return (
-            <Card key={type.id} className="flex items-center justify-between gap-4 py-4">
+            <div key={type.id} className={`flex items-center justify-between gap-4 px-5 py-4 ${soldOut || !onSale ? "opacity-60" : ""}`}>
               <div className="min-w-0">
-                <p className="font-semibold tracking-tight">{type.name}</p>
-                <p className="mt-0.5 text-sm text-white/50">
-                  {soldOut
-                    ? "Agotado"
-                    : !onSale && type.saleStartsAt && new Date(type.saleStartsAt).getTime() > now
-                      ? `A la venta desde ${formatDateTime(type.saleStartsAt)}`
-                      : !onSale
-                        ? "Venta cerrada"
-                        : type.remaining != null
-                          ? `${type.remaining} disponibles`
-                          : "Disponible"}
-                </p>
+                <p className="text-[15px] font-bold tracking-tight">{type.name}</p>
+                <p className="mt-0.5 text-[13px] text-muted">{status}</p>
               </div>
-              <p className="shrink-0 text-lg font-bold tracking-tight">
+              <p className="shrink-0 text-[17px] font-bold tabular-nums tracking-tight">
                 {formatPriceCents(type.priceCents)}
               </p>
-            </Card>
+            </div>
           );
         })}
-      </div>
+      </Card>
     </section>
   );
 }
@@ -144,15 +155,15 @@ export function ResourcePreviewCard({ groups }: { groups: PublicResourceGroup[] 
           <Card key={group.id}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-semibold tracking-tight">
-                  Este evento asigna {group.name.toLowerCase()}
+                <p className="text-[16px] font-bold tracking-tight">
+                  Tu {group.name.toLowerCase()}
                 </p>
-                <p className="mt-0.5 text-sm text-white/50">
-                  {group.available} de {group.total} libres
-                  {group.required ? " · se elige después de comprar" : ""}
+                <p className="mt-0.5 text-[13px] text-muted">
+                  {group.available} de {group.total} libres ·{" "}
+                  {group.required ? "se elige después de comprar" : "opcional, se elige después de comprar"}
                 </p>
                 {group.description ? (
-                  <p className="mt-2 text-sm text-white/60">{group.description}</p>
+                  <p className="mt-2 text-sm text-white/70">{group.description}</p>
                 ) : null}
               </div>
               <Badge tone={group.available > 0 ? "accent" : "danger"}>
@@ -180,11 +191,13 @@ export function ResourcePreviewCard({ groups }: { groups: PublicResourceGroup[] 
 export function KitPickupCard({ info }: { info: string | null | undefined }) {
   if (!info?.trim()) return null;
   return (
-    <Card className="flex gap-3">
-      <Package className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
+    <Card className="flex gap-4">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+        <Package className="size-4" aria-hidden />
+      </span>
       <div>
-        <p className="font-semibold tracking-tight">Retiro de kit</p>
-        <p className="mt-1 whitespace-pre-line text-sm leading-6 text-white/65">{info}</p>
+        <p className="text-[15px] font-bold tracking-tight">Retiro de kit</p>
+        <p className="mt-1 whitespace-pre-line text-sm leading-6 text-white/70">{info}</p>
       </div>
     </Card>
   );
@@ -199,7 +212,7 @@ export function RefundPolicyNote({ event }: { event: EventDetail }) {
         ? `Reembolso completo si cancelas${event.refundDeadlineDays ? ` hasta ${event.refundDeadlineDays} día(s) antes` : ""}.`
         : `Reembolso del ${event.refundPartialPct ?? 0}% si cancelas${event.refundDeadlineDays ? ` hasta ${event.refundDeadlineDays} día(s) antes` : ""}.`;
   return (
-    <p className="flex items-center gap-2 text-sm text-white/50">
+    <p className="flex items-center gap-2 text-[13px] text-dim">
       <Undo2 className="size-4" aria-hidden /> {text}
     </p>
   );

@@ -21,10 +21,7 @@ export function ResourcePicker({
   open: boolean;
   onClose: () => void;
 }) {
-  const { groups, isLoading, error, refetch, assign } = useTicketResources(
-    ticketId,
-    open,
-  );
+  const { groups, isLoading, error, refetch, assign } = useTicketResources(ticketId, open);
   const group: TicketResourceGroup | undefined =
     groups.find((item) => item.id === groupId) ?? groups[0];
 
@@ -39,16 +36,11 @@ export function ResourcePicker({
       ) : error || !group ? (
         <ErrorState message={(error as Error | null)?.message} onRetry={() => void refetch()} />
       ) : (
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-white/60">
+        <div className="flex flex-col gap-5">
+          <p className="text-sm text-muted">
             {group.description ??
               "Toca una unidad libre para reservarla. Puedes cambiarla mientras haya lugar."}
           </p>
-          <div className="flex items-center gap-4 text-xs text-white/50">
-            <Legend className="border-white/[0.14] bg-white/[0.08]">Libre</Legend>
-            <Legend className="border-accent bg-accent">Tuya</Legend>
-            <Legend className="border-white/[0.06] bg-white/[0.03]">Ocupada</Legend>
-          </div>
           <div className={assign.isPending ? "pointer-events-none opacity-60" : ""}>
             <ResourceGrid
               columns={group.columns}
@@ -64,9 +56,16 @@ export function ResourcePicker({
               }}
             />
           </div>
-          <p className="text-center text-xs text-white/40">
-            {group.available} de {group.total} libres
-          </p>
+          <div className="flex items-center justify-between text-[12px] text-muted">
+            <div className="flex items-center gap-4">
+              <Legend className="border-border bg-white/[0.09]">Libre</Legend>
+              <Legend className="border-accent bg-accent">Tuya</Legend>
+              <Legend className="border-transparent bg-white/[0.03]">Ocupada</Legend>
+            </div>
+            <span className="tabular-nums">
+              {group.available} de {group.total} libres
+            </span>
+          </div>
         </div>
       )}
     </Modal>
