@@ -1,4 +1,5 @@
 import { Bell, Smartphone } from "lucide-react";
+import { glassCtaClass } from "@/components/ui/cta";
 
 /** Nudge to follow the comercio in the app, where alerts and class bookings live. */
 export function ComercioAppCard({
@@ -29,7 +30,7 @@ export function ComercioAppCard({
         <div className="mt-4 flex flex-col gap-2">
           <a
             href={appDeepLink}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-white text-[13px] font-bold text-black transition hover:bg-white/90"
+            className={`inline-flex h-10 items-center justify-center gap-2 text-[13px] ${glassCtaClass}`}
           >
             <Smartphone className="size-4" aria-hidden />
             Abrir en la app

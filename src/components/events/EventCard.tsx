@@ -15,6 +15,7 @@ import {
 } from "@/lib/format";
 import { EventCover, EventPosterWash } from "./EventCover";
 import { EventHoverVideo } from "./EventHoverVideo";
+import { glassCtaClass } from "@/components/ui/cta";
 
 const HOVER_VIDEO_BY_HANDLE: Record<string, string> = {
   kinetix: "/providers/kinetix-hover.mp4",
@@ -108,11 +109,13 @@ export function EventCard({ event }: { event: EventListItem }) {
               {price}
             </p>
             {soldOut ? null : (
-              <span className="inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-white text-[13px] font-semibold tracking-tight text-black">
+              <span
+                className={`inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 text-[13px] ${glassCtaClass}`}
+              >
                 Reservar
                 <ArrowUpRight
-                  className="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  strokeWidth={1.75}
+                  className="size-3.5 text-white/45 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white/70"
+                  strokeWidth={1.5}
                   aria-hidden
                 />
               </span>

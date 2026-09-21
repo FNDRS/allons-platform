@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/provider";
 import { formatCardDay, formatCardTime, formatHNL, formatNumber } from "@/lib/format";
 import { ErrorState, Skeleton } from "@/components/ui/States";
+import { glassCtaClass } from "@/components/ui/cta";
 import { PaymentsTable, TicketTypeTable } from "./EventTables";
 import { HourlySalesChart } from "./HourlySalesChart";
 import { KpiTile } from "./KpiTile";
@@ -108,9 +109,10 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
           </div>
           <Link
             href={`/events/${encodeURIComponent(eventId)}`}
-            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-[13px] font-semibold tracking-tight text-black"
+            className={`inline-flex h-10 shrink-0 items-center gap-1.5 px-4 text-[13px] ${glassCtaClass}`}
           >
-            Ver página pública <ArrowUpRight className="size-4" aria-hidden />
+            Ver página pública
+            <ArrowUpRight className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
           </Link>
         </div>
       </div>

@@ -15,7 +15,6 @@ import { formatDateTime, formatPriceCents } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { CalendarMark, MetaTile, PinMark } from "@/components/ui/MetaTile";
 import { ResourceGrid, studioFrontLabel } from "@/components/tickets/ResourceGrid";
-import { StatusPill } from "@/components/ui/Pill";
 import { EventCover, EventPosterWash } from "./EventCover";
 
 export function EventHero({ event }: { event: EventDetail }) {
@@ -194,21 +193,15 @@ export function ResourcePreviewCard({ groups }: { groups: PublicResourceGroup[] 
       <SectionTitle>Al comprar eliges</SectionTitle>
       <div className="flex flex-col gap-3">
         {groups.map((group) => {
-          const open = group.available > 0;
           return (
             <Card key={group.id}>
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[16px] font-bold tracking-tight">
-                    Tu {group.name.toLowerCase()}
-                  </p>
-                  <p className="mt-0.5 text-[13px] text-muted">
-                    {group.available} de {group.total} libres
-                  </p>
-                </div>
-                <StatusPill tone={open ? "glass" : "mute"}>
-                  {open ? "Hay lugar" : "Sin lugar"}
-                </StatusPill>
+              <div className="min-w-0">
+                <p className="text-[16px] font-bold tracking-tight">
+                  Tu {group.name.toLowerCase()}
+                </p>
+                <p className="mt-0.5 text-[13px] text-muted">
+                  {group.available} de {group.total} libres
+                </p>
               </div>
               <div className="mt-4">
                 <ResourceGrid

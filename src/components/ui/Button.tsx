@@ -2,6 +2,7 @@
 
 import type { ButtonHTMLAttributes } from "react";
 import { Loader2 } from "lucide-react";
+import { glassCtaClass } from "./cta";
 
 type Variant = "primary" | "secondary" | "ghost" | "glass" | "danger" | "white";
 type Size = "sm" | "md" | "lg" | "icon" | "icon-sm";
@@ -16,7 +17,7 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 const VARIANT: Record<Variant, string> = {
   primary:
     "bg-accent text-black hover:bg-[#ff7d24] hover:shadow-[0_10px_40px_rgba(246,112,16,0.28)] disabled:shadow-none",
-  white: "bg-white text-black hover:bg-white/90",
+  white: glassCtaClass,
   secondary:
     "border border-border-strong bg-surface-2 text-white hover:bg-white/[0.1]",
   ghost: "text-muted hover:text-white hover:bg-surface-2",

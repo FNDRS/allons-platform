@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { glassCtaClass } from "@/components/ui/cta";
 import { useAccountAvatar } from "@/hooks/useAccountAvatar";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { useAuth } from "./AuthProvider";
@@ -27,10 +28,10 @@ export function AccountButton({ onOpen }: { onOpen: () => void }) {
       <Link
         href={`/login?next=${encodeURIComponent(pathname)}`}
         aria-label="Iniciar sesión"
-        className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white pl-4 pr-3 text-[13px] font-semibold tracking-tight text-black"
+        className={`inline-flex h-10 items-center gap-1.5 pl-4 pr-3 text-[13px] ${glassCtaClass}`}
       >
         Entrar
-        <ArrowUpRight className="size-3.5" strokeWidth={1.75} aria-hidden />
+        <ArrowUpRight className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
       </Link>
     );
   }

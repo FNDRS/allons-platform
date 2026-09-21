@@ -8,6 +8,7 @@ import { ArrowUpRight, Building2, CalendarDays, Clock, Ticket } from "lucide-rea
 import { usePrefetchProviderEvent } from "@/hooks/usePrefetchProviderEvent";
 import type { ProviderEventListItem } from "@/lib/api/provider";
 import { formatCardDay, formatCardTime, formatHNL, formatNumber } from "@/lib/format";
+import { glassCtaClass } from "@/components/ui/cta";
 
 const STATUS: Record<string, string> = {
   published: "Publicado",
@@ -89,11 +90,13 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
           <p className="text-[15px] font-semibold tabular-nums tracking-tight">
             {formatHNL(event.revenue)}
           </p>
-          <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white pl-4 pr-3 text-[13px] font-semibold tracking-tight text-black">
+          <span
+            className={`inline-flex h-9 shrink-0 items-center gap-1.5 pl-4 pr-3 text-[13px] ${glassCtaClass}`}
+          >
             Abrir
             <ArrowUpRight
-              className="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              strokeWidth={1.75}
+              className="size-3.5 text-white/45 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white/70"
+              strokeWidth={1.5}
               aria-hidden
             />
           </span>

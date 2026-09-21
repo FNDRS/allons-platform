@@ -4,6 +4,7 @@ import { Building2, CalendarDays, Car, Clock, Ticket, User } from "lucide-react"
 import type { TicketListItem } from "@/lib/api/tickets";
 import { EventPosterWash } from "@/components/events/EventCover";
 import { StatusPill } from "@/components/ui/Pill";
+import { glassCtaClass } from "@/components/ui/cta";
 
 /** Full-width pass with overlay facts, like a listing card. */
 export function TicketCard({
@@ -77,7 +78,9 @@ export function TicketCard({
             <span className="rounded-full bg-black/45 px-4 py-2.5 text-[13px] font-semibold tracking-tight text-white ring-1 ring-white/15 backdrop-blur-md">
               {typeLabel ?? ticket.holderName ?? ticketsLabel}
             </span>
-            <span className="rounded-full bg-white px-4 py-2.5 text-[13px] font-semibold tracking-tight text-black">
+            <span
+              className={`inline-flex items-center rounded-full px-4 py-2.5 text-[13px] ${glassCtaClass}`}
+            >
               Ver pase
             </span>
           </div>

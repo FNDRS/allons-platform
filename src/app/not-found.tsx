@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AllonsLogo } from "@/components/AllonsLogo";
+import { glassCtaClass } from "@/components/ui/cta";
 
 export default function NotFoundPage() {
   return (
@@ -21,7 +22,7 @@ export default function NotFoundPage() {
         </p>
         <Link
           href="/"
-          className="mt-9 inline-flex items-center justify-center rounded-full bg-white px-7 py-4 text-sm font-bold text-black shadow-[0_18px_45px_rgba(255,255,255,0.18)] transition hover:bg-white/90"
+          className={`mt-9 inline-flex items-center justify-center px-7 py-4 text-sm ${glassCtaClass}`}
         >
           Volver al inicio
         </Link>

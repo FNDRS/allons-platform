@@ -3,6 +3,7 @@
 import { Globe, Mail, MapPin, Smartphone, Star } from "lucide-react";
 import { comercioInitials, type ComercioProfile } from "@/lib/api/comercios";
 import { safeColor } from "@/components/events/EventCover";
+import { glassCtaClass } from "@/components/ui/cta";
 import { ComercioStats } from "./ComercioStats";
 
 /**
@@ -93,7 +94,7 @@ export function ComercioHero({
         <div className="flex flex-wrap items-center gap-2.5">
           <a
             href={appDeepLink}
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-bold tracking-tight text-black transition hover:bg-white/90"
+            className={`inline-flex h-11 items-center gap-2 px-5 text-sm ${glassCtaClass}`}
           >
             <Smartphone className="size-4" aria-hidden />
             Seguir en la app
