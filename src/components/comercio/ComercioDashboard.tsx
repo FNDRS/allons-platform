@@ -57,7 +57,7 @@ export function ComercioDashboard() {
             <KpiTile label="Neto" value={formatHNL(dashboard.totals.net)} hint="Después de comisiones" />
             <KpiTile label="Escaneados" value={formatNumber(dashboard.totals.scans)} />
           </div>
-          <div className="mt-3 grid grid-cols-3 gap-3">
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <KpiTile label="Disponible" value={formatHNL(dashboard.availableBalance)} />
             <KpiTile label="Pendiente" value={formatHNL(dashboard.pendingBalance)} />
             <KpiTile label="Retenido" value={formatHNL(dashboard.heldBalance)} hint="Ventana de reembolso" />

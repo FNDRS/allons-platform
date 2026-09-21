@@ -3,10 +3,11 @@ import Image from "next/image";
 interface Props {
   className?: string;
   /**
-   * "light" → white logo for dark backgrounds (default)
-   * "dark"  → dark/black logo for light backgrounds
+   * "light"  → white wordmark for dark bars (default)
+   * "orange" → brand orange wordmark
+   * "dark"   → same orange file, kept for the waitlist hero
    */
-  variant?: "dark" | "light";
+  variant?: "dark" | "light" | "orange";
 }
 
 export function AllonsLogo({ className, variant = "light" }: Props) {

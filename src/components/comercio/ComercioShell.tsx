@@ -44,7 +44,7 @@ export function ComercioShellInner({ children }: { children: React.ReactNode }) 
     <div className="app-canvas min-h-dvh text-white lg:flex">
       <aside className="hidden w-[248px] shrink-0 flex-col border-r border-border px-4 pb-6 pt-6 lg:sticky lg:top-0 lg:flex lg:h-dvh">
         <Link href="/events" aria-label="Allons, ir a eventos" className="px-3">
-          <AllonsLogo className="h-auto w-[92px]" />
+          <AllonsLogo className="h-auto w-[92px]" variant="orange" />
         </Link>
         <p className="mt-6 px-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-dim">
           Comercio
@@ -85,10 +85,10 @@ export function ComercioShellInner({ children }: { children: React.ReactNode }) 
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="glass sticky top-0 z-40 border-b border-border">
+        <header className="glass sticky top-0 z-40 border-b border-border pt-[env(safe-area-inset-top)]">
           <div className="mx-auto flex h-16 w-full max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <Link href="/events" aria-label="Allons, ir a eventos" className="shrink-0 lg:hidden">
-              <AllonsLogo className="h-auto w-[84px]" />
+              <AllonsLogo className="h-auto w-[84px]" variant="orange" />
             </Link>
             <p className="hidden text-[13px] font-semibold text-dim lg:block">
               allonsapp.com/comercio

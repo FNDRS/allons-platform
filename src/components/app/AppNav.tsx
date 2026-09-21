@@ -77,10 +77,10 @@ export function AppNav() {
 
   return (
     <>
-      <header className="glass sticky top-0 z-40 border-b border-border">
+      <header className="glass sticky top-0 z-40 border-b border-border pt-[env(safe-area-inset-top)]">
         <div className="grid h-16 w-full grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-5 lg:px-6">
           <Link href="/eventos" aria-label="Allons, ir a eventos" className="justify-self-start">
-            <AllonsLogo className="h-auto w-[92px]" />
+            <AllonsLogo className="h-auto w-[80px] md:w-[92px]" variant="orange" />
           </Link>
 
           <NavLinks links={links} />
@@ -134,7 +134,7 @@ function NavLinks({
     <nav
       ref={navRef}
       aria-label="Principal"
-      className="relative flex min-w-0 items-center justify-center gap-0.5"
+      className="relative hidden min-w-0 items-center justify-center gap-0.5 md:flex"
     >
       {links.map((link, index) => {
         const active = index === activeIndex;

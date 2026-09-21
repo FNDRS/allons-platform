@@ -28,7 +28,7 @@ export function Stat({
         {label}
       </p>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <p className="text-[30px] font-bold leading-none tracking-[-0.03em] tabular-nums sm:text-[34px]">
+        <p className="break-words text-[22px] font-bold leading-none tracking-[-0.03em] tabular-nums sm:text-[30px] lg:text-[34px]">
           {value}
         </p>
         {showDelta ? (
