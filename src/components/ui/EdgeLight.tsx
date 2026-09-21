@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useId, useRef, useState } from "react";
 
 const PAD = 14;
 const STROKE = 1.15;
@@ -19,8 +19,8 @@ const TONE = {
 } as const;
 
 /**
- * Hairline rim with one short spark on the border. Glow is a blurred
- * stroke outside the path, not a fill behind the label.
+ * Hairline rim with two short sparks opposite each other, same family as
+ * the comercio mark on event detail. Glow sits on the stroke, not the fill.
  */
 export function EdgeLight({
   tone,
@@ -94,43 +94,77 @@ export function EdgeLight({
             stroke={palette.rim}
             strokeWidth={STROKE}
           />
-          <path
+          <Spark d={d} palette={palette} spark={spark} bloom={bloom} blurId={blurId} />
+          <Spark
             d={d}
-            fill="none"
-            className="edge-light-spark"
-            pathLength={1}
-            filter={`url(#${blurId})`}
-            stroke={palette.bloom}
-            strokeWidth={STROKE + 7}
-            strokeLinecap="round"
-            strokeOpacity={0.55}
-            strokeDasharray={`${bloom} ${1 - bloom}`}
-          />
-          <path
-            d={d}
-            fill="none"
-            className="edge-light-spark"
-            pathLength={1}
-            stroke={palette.bloom}
-            strokeWidth={STROKE + 1.4}
-            strokeLinecap="round"
-            strokeOpacity={0.9}
-            strokeDasharray={`${spark} ${1 - spark}`}
-          />
-          <path
-            d={d}
-            fill="none"
-            className="edge-light-spark"
-            pathLength={1}
-            stroke={palette.core}
-            strokeWidth={STROKE}
-            strokeLinecap="round"
-            strokeDasharray={`${spark * 0.42} ${1 - spark * 0.42}`}
+            palette={palette}
+            spark={spark}
+            bloom={bloom}
+            blurId={blurId}
+            delay="-3s"
           />
         </svg>
       ) : null}
       {children}
     </div>
+  );
+}
+
+function Spark({
+  d,
+  palette,
+  spark,
+  bloom,
+  blurId,
+  delay = "0s",
+}: {
+  d: string;
+  palette: (typeof TONE)[keyof typeof TONE];
+  spark: number;
+  bloom: number;
+  blurId: string;
+  delay?: string;
+}) {
+  const style = { "--edge-delay": delay } as CSSProperties;
+  return (
+    <>
+      <path
+        d={d}
+        fill="none"
+        className="edge-light-spark"
+        pathLength={1}
+        filter={`url(#${blurId})`}
+        stroke={palette.bloom}
+        strokeWidth={STROKE + 7}
+        strokeLinecap="round"
+        strokeOpacity={0.5}
+        strokeDasharray={`${bloom} ${1 - bloom}`}
+        style={style}
+      />
+      <path
+        d={d}
+        fill="none"
+        className="edge-light-spark"
+        pathLength={1}
+        stroke={palette.bloom}
+        strokeWidth={STROKE + 1.4}
+        strokeLinecap="round"
+        strokeOpacity={0.9}
+        strokeDasharray={`${spark} ${1 - spark}`}
+        style={style}
+      />
+      <path
+        d={d}
+        fill="none"
+        className="edge-light-spark"
+        pathLength={1}
+        stroke={palette.core}
+        strokeWidth={STROKE}
+        strokeLinecap="round"
+        strokeDasharray={`${spark * 0.42} ${1 - spark * 0.42}`}
+        style={style}
+      />
+    </>
   );
 }
 
