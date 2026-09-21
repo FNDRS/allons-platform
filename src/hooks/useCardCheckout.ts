@@ -25,17 +25,15 @@ import {
   type CardDraft,
 } from "@/lib/cards";
 
-export type PayMethod = "card" | "paygate";
 /** A saved card id, or "new" for the form. */
 export type CardChoice = string;
 
-const DECLINED_MESSAGE =
-  "Tu banco rechazó la tarjeta. Prueba con otra o paga en Paygate.";
+const DECLINED_MESSAGE = "Tu banco rechazó la tarjeta. Prueba con otra.";
 
 /**
- * Everything behind the "Pago" step: which method, which card, the new-card
- * draft, and the settle flow (vault the card, charge it, hand off to /pagar).
- * Card data lives only in React state and is wiped after every attempt.
+ * Everything behind the "Pago" step: which card, the new-card draft, and the
+ * settle flow (vault the card, charge it, hand off to /pagar). Card data lives
+ * only in React state and is wiped after every attempt.
  */
 export function useCardCheckout({
   userId,
@@ -49,7 +47,6 @@ export function useCardCheckout({
   const saved = usePaymentMethods({ userId, enabled });
   const listKey = paymentMethodKeys.list(userId ?? "");
 
-  const [method, setMethod] = useState<PayMethod>("card");
   const [choice, setChoice] = useState<CardChoice>("new");
   const [draft, setDraft] = useState<CardDraft>(EMPTY_CARD_DRAFT);
   // Opt in, never opt out: a card is kept only when the buyer asks.
@@ -60,15 +57,13 @@ export function useCardCheckout({
 
   // Preselect the default card once the list lands, so a returning buyer
   // pays in one tap. Only runs while the buyer has not picked anything.
-  // With no cards and enrollment closed, the hosted page is the only way.
   const [autoPicked, setAutoPicked] = useState(false);
   useEffect(() => {
     if (autoPicked || !saved.available) return;
     const preferred = saved.cards.find((card) => card.isDefault) ?? saved.cards[0];
     if (preferred) setChoice(preferred.id);
-    else if (!saved.enrollmentEnabled) setMethod("paygate");
     setAutoPicked(true);
-  }, [autoPicked, saved.available, saved.cards, saved.enrollmentEnabled]);
+  }, [autoPicked, saved.available, saved.cards]);
 
   // The list can lose the chosen card under us (removed from the app or
   // another tab): fall back rather than posting an id the API will 404.
@@ -89,7 +84,7 @@ export function useCardCheckout({
   const draftValid = Object.keys(errors).length === 0;
   const usingNewCard = effectiveChoice === "new";
   /** A card (saved or new) is selected and can actually be charged. */
-  const cardReady = method === "card" && effectiveChoice !== "";
+  const cardReady = effectiveChoice !== "";
 
   function updateDraft(patch: Partial<CardDraft>) {
     setDraft((current) => ({ ...current, ...patch }));
@@ -191,15 +186,13 @@ export function useCardCheckout({
     needsIdNumber: saved.needsIdNumber,
     /** Whether a new card can be added on this deployment. */
     enrollmentEnabled: saved.enrollmentEnabled,
-    method,
-    setMethod,
     choice: effectiveChoice,
     setChoice: (next: CardChoice) => {
       setChoice(next);
       setError(null);
     },
     usingNewCard,
-    /** True when tapping Pagar will charge a card here instead of opening Paygate. */
+    /** True when tapping Pagar will charge a card here. */
     cardReady,
     draft,
     updateDraft,
@@ -219,7 +212,7 @@ export type CardCheckout = ReturnType<typeof useCardCheckout>;
 function messageFor(err: unknown): string {
   if (isApiError(err)) {
     if (err.code === "card_declined_lockout") {
-      return "Tu tarjeta fue rechazada varias veces. Espera unos minutos o paga en Paygate.";
+      return "Tu tarjeta fue rechazada varias veces. Espera unos minutos e intenta de nuevo.";
     }
     if (err.status === 429) {
       return "Demasiados intentos. Espera un momento e intenta de nuevo.";

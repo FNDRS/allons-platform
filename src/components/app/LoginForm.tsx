@@ -186,16 +186,7 @@ export function LoginForm() {
 
   return (
     <div className="mx-auto w-full max-w-md">
-      {mode === "signup" ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent">
-          Nuevo en Allons
-        </p>
-      ) : null}
-      <h1
-        className={`break-words text-[28px] font-semibold leading-none tracking-[-0.05em] sm:text-4xl ${
-          mode === "signup" ? "mt-2" : ""
-        }`}
-      >
+      <h1 className="break-words text-[28px] font-semibold leading-none tracking-[-0.05em] sm:text-4xl">
         {title}
       </h1>
       <p className="mt-3 text-sm text-white/55">

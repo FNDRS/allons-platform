@@ -76,7 +76,7 @@ export function CardForm({
             disabled={disabled}
             maxLength={maxDigits(brand) + 5}
             aria-invalid={Boolean(error("number"))}
-            prefix={<CardBrandMark brand={brand} className="h-5" />}
+            prefix={<CardBrandMark brand={brand} framed />}
             onChange={(event) => {
               // Brand from what was just typed or pasted, not the previous
               // value: a pasted Amex must be cut and grouped as Amex at once.

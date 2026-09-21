@@ -51,7 +51,7 @@ export function CardPreview({
         <Face brand={brand} className="[backface-visibility:hidden]">
           <div className="flex items-start justify-between">
             <Chip />
-            <CardBrandMark brand={brand} className="h-7" />
+            <CardBrandMark brand={brand} framed />
           </div>
           <p className="mt-auto font-mono text-[19px] font-semibold tabular-nums tracking-[0.12em] text-white/95 sm:text-[21px]">
             {number}

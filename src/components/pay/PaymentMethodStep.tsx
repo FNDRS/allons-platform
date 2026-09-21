@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ExternalLink, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { CardCheckout } from "@/hooks/useCardCheckout";
 import { StepHeading } from "@/components/reserve/ReserveSections";
 import { Skeleton } from "@/components/ui/States";
@@ -9,7 +9,7 @@ import { CardForm } from "./CardForm";
 import { OptionRow, SavedCardRow } from "./SavedCardRow";
 
 /**
- * Step "Pago": saved cards, a new card, or the hosted Paygate page. Renders
+ * Step "Pago": saved cards and, when enrollment is on, a new card. Renders
  * nothing while the deployment has saved cards switched off, so the flow
  * degrades to the hosted page without a gap in the numbering.
  */
@@ -33,8 +33,7 @@ export function PaymentMethodStep({
   if (!checkout.available) return null;
   if (checkout.cards.length === 0 && !checkout.enrollmentEnabled) return null;
 
-  const cardSelected = checkout.method === "card";
-  const showForm = cardSelected && checkout.usingNewCard;
+  const showForm = checkout.usingNewCard;
 
   return (
     <section>
@@ -46,12 +45,9 @@ export function PaymentMethodStep({
           <SavedCardRow
             key={card.id}
             card={card}
-            selected={cardSelected && checkout.choice === card.id}
+            selected={checkout.choice === card.id}
             disabled={checkout.submitting}
-            onSelect={() => {
-              checkout.setMethod("card");
-              checkout.setChoice(card.id);
-            }}
+            onSelect={() => checkout.setChoice(card.id)}
           />
         ))}
 
@@ -59,10 +55,7 @@ export function PaymentMethodStep({
           <OptionRow
             selected={showForm}
             disabled={checkout.submitting}
-            onSelect={() => {
-              checkout.setMethod("card");
-              checkout.setChoice("new");
-            }}
+            onSelect={() => checkout.setChoice("new")}
             leading={<Plus className="size-4 text-white/70" strokeWidth={2} aria-hidden />}
             title={checkout.cards.length ? "Otra tarjeta" : "Tarjeta de crédito o débito"}
             subtitle="Pagas aquí mismo, sin salir de Allons"
@@ -95,17 +88,6 @@ export function PaymentMethodStep({
             </motion.div>
           ) : null}
         </AnimatePresence>
-
-        <OptionRow
-          selected={checkout.method === "paygate"}
-          disabled={checkout.submitting}
-          onSelect={() => checkout.setMethod("paygate")}
-          leading={
-            <ExternalLink className="size-4 text-white/70" strokeWidth={1.75} aria-hidden />
-          }
-          title="Pagar en Paygate"
-          subtitle="Se abre la página de Clinpays en otra pestaña"
-        />
       </div>
     </section>
   );

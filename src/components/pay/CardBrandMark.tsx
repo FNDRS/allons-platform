@@ -11,27 +11,30 @@ const SRC: Partial<Record<CardBrand, string>> = {
   discover: "/brands/discover.png",
 };
 
+const WHITE_PLATE =
+  "bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] ring-black/10";
+
 const PLATE: Record<CardBrand, string> = {
-  visa: "bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] ring-black/10",
-  mastercard: "bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] ring-black/10",
-  amex: "bg-[#016fd0] ring-white/12",
-  diners: "bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] ring-black/10",
-  discover: "bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] ring-black/10",
+  visa: WHITE_PLATE,
+  mastercard: WHITE_PLATE,
+  amex: "bg-transparent ring-black/10",
+  diners: WHITE_PLATE,
+  discover: WHITE_PLATE,
   unknown: "bg-white/6 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-white/10",
 };
 
 const FRAMED_IMG: Record<CardBrand, string> = {
-  visa: "h-[13px] w-[42px] object-contain",
-  mastercard: "h-7 w-10 object-contain",
+  visa: "h-[14px] w-[44px] object-contain",
+  mastercard: "h-[22px] w-9 object-contain",
   amex: "absolute inset-0 size-full object-cover",
-  diners: "h-7 w-7 object-cover object-left",
-  discover: "h-[11px] w-[44px] object-contain",
+  diners: "h-[18px] w-[44px] object-contain object-left",
+  discover: "h-[12px] w-[44px] object-contain",
   unknown: "h-5 w-5 object-contain",
 };
 
 /**
- * Card network marks from the real brand files in /public/brands.
- * Nothing is drawn by hand.
+ * Real brand artwork from /public/brands. Same white plate for every
+ * network; Amex fills the chip because that mark is already a square.
  */
 export function CardBrandMark({
   brand,
