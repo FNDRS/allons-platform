@@ -3,10 +3,12 @@
 /* eslint-disable @next/next/no-img-element */
 
 import Link from "next/link";
-import { Mail, Package, Undo2 } from "lucide-react";
+import { Package, Undo2 } from "lucide-react";
 import { formatEventWhen } from "@/lib/allons-api";
 import { instagramLink } from "@/lib/instagram";
+import { whatsappLink } from "@/lib/whatsapp";
 import { InstagramMark } from "@/components/shared/InstagramMark";
+import { WhatsAppMark } from "@/components/shared/WhatsAppMark";
 import {
   isEntryTypeOnSale,
   type EventDetail,
@@ -93,9 +95,9 @@ export function EventMeta({ event }: { event: EventDetail }) {
     .filter(Boolean)
     .join(" · ");
   const instagram = instagramLink(event.provider?.instagramUrl);
-  const email = event.provider?.email?.trim() || null;
+  const whatsapp = whatsappLink(event.provider?.phone);
 
-  if (!when && !place && !instagram && !email) {
+  if (!when && !place && !instagram && !whatsapp) {
     return null;
   }
 
@@ -116,13 +118,13 @@ export function EventMeta({ event }: { event: EventDetail }) {
           {instagram.label}
         </MetaTile>
       ) : null}
-      {email ? (
+      {whatsapp ? (
         <MetaTile
-          icon={<Mail className="size-[18px]" aria-hidden />}
-          label="Escribir"
-          href={`mailto:${email}`}
+          icon={<WhatsAppMark className="size-[18px]" />}
+          label="WhatsApp"
+          href={whatsapp.href}
         >
-          {email}
+          {whatsapp.label}
         </MetaTile>
       ) : null}
     </ul>

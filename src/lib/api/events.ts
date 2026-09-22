@@ -89,6 +89,7 @@ export interface EventProvider {
   websiteUrl?: string | null;
   instagramUrl?: string | null;
   email?: string | null;
+  phone?: string | null;
 }
 
 export interface EventDetail extends EventListItem {

@@ -22,6 +22,7 @@ export interface ComercioProfile {
   brandLogoColor: string | null;
   city: string | null;
   email: string | null;
+  phone: string | null;
   followerCount: number;
   eventCount: number;
   classCount: number;
