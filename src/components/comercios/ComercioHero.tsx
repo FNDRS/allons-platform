@@ -1,14 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { Globe, Mail, MapPin, Smartphone, Star } from "lucide-react";
+import { Globe, Mail, MapPin, Smartphone } from "lucide-react";
 import { comercioInitials, type ComercioProfile } from "@/lib/api/comercios";
+import { instagramLink } from "@/lib/instagram";
+import { InstagramMark } from "@/components/shared/InstagramMark";
 import { safeColor } from "@/components/events/EventCover";
 import { glassCtaClass } from "@/components/ui/cta";
 import { ComercioStats } from "./ComercioStats";
 
 /**
  * Identity block: a brand-tinted field with the logo, the name, where it is,
- * how it is rated, its counters and the ways to reach it.
+ * its counters and the ways to reach it.
  */
 export function ComercioHero({
   profile,
@@ -19,10 +21,7 @@ export function ComercioHero({
 }) {
   const brand = safeColor(profile.brandLogoColor) ?? "#f67010";
   const handle = profile.handle ? `@${profile.handle.replace(/^@/, "")}` : null;
-  const rating =
-    profile.rating != null && profile.reviewCount > 0
-      ? profile.rating.toFixed(1)
-      : null;
+  const instagram = instagramLink(profile.instagramUrl);
 
   return (
     <header className="relative overflow-hidden rounded-[32px] border border-white/10 bg-black shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
@@ -72,16 +71,6 @@ export function ComercioHero({
                   {profile.city}
                 </span>
               ) : null}
-              {rating ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <Star className="size-4 fill-accent text-accent" aria-hidden />
-                  <span className="font-semibold text-white">{rating}</span>
-                  <span className="text-white/45">
-                    · {profile.reviewCount}{" "}
-                    {profile.reviewCount === 1 ? "reseña" : "reseñas"}
-                  </span>
-                </span>
-              ) : null}
             </div>
           </div>
         </div>
@@ -105,6 +94,17 @@ export function ComercioHero({
             >
               <Globe className="size-4" aria-hidden />
               Sitio web
+            </a>
+          ) : null}
+          {instagram ? (
+            <a
+              href={instagram.href}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-5 text-sm font-semibold text-white/85 transition hover:bg-white/[0.12] hover:text-white"
+            >
+              <InstagramMark />
+              Instagram
             </a>
           ) : null}
           {profile.email ? (

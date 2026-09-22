@@ -22,6 +22,7 @@ export function useComercioCatalogue(profile: ComercioProfile) {
     logoUrl: profile.logoUrl,
     description: profile.description,
     websiteUrl: profile.websiteUrl,
+    instagramUrl: profile.instagramUrl,
   };
 
   const upcoming = useQuery({

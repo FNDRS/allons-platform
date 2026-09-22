@@ -7,7 +7,6 @@ import { ComercioAppCard } from "./ComercioAppCard";
 import { ComercioClassProgramsSection } from "./ComercioClassProgramsSection";
 import { ComercioEventsSection } from "./ComercioEventsSection";
 import { ComercioHero } from "./ComercioHero";
-import { ComercioReviews } from "./ComercioReviews";
 
 /**
  * Public comercio page, as a customer sees it: identity on top, the
@@ -42,16 +41,10 @@ export function ComercioProfileView({
             loading={catalogue.programsLoading}
             appDeepLink={appDeepLink}
           />
-          <div className="lg:hidden">
-            <ComercioReviews profile={profile} />
-          </div>
         </div>
 
         <div className="flex flex-col gap-6 lg:sticky lg:top-24">
           <ComercioAbout profile={profile} />
-          <div className="hidden lg:block">
-            <ComercioReviews profile={profile} />
-          </div>
           <ComercioAppCard
             name={profile.name}
             appDeepLink={appDeepLink}

@@ -3,8 +3,10 @@
 /* eslint-disable @next/next/no-img-element */
 
 import Link from "next/link";
-import { Package, Undo2 } from "lucide-react";
+import { Mail, Package, Undo2 } from "lucide-react";
 import { formatEventWhen } from "@/lib/allons-api";
+import { instagramLink } from "@/lib/instagram";
+import { InstagramMark } from "@/components/shared/InstagramMark";
 import {
   isEntryTypeOnSale,
   type EventDetail,
@@ -92,8 +94,16 @@ export function EventMeta({ event }: { event: EventDetail }) {
   const placeLabel = [place, place !== event.city ? event.city : null]
     .filter(Boolean)
     .join(" · ");
+  const instagram = instagramLink(event.provider?.instagramUrl);
+  const email = event.provider?.email?.trim() || null;
 
-  if (!when && !place && !(event.attendeeCount && event.attendeeCount > 0)) {
+  if (
+    !when &&
+    !place &&
+    !(event.attendeeCount && event.attendeeCount > 0) &&
+    !instagram &&
+    !email
+  ) {
     return null;
   }
 
@@ -113,6 +123,20 @@ export function EventMeta({ event }: { event: EventDetail }) {
         <MetaTile icon={<PeopleMark />} label="Asistencia">
           {event.attendeeCount}{" "}
           {event.attendeeCount === 1 ? "persona va" : "personas van"}
+        </MetaTile>
+      ) : null}
+      {instagram ? (
+        <MetaTile icon={<InstagramMark className="size-[18px]" />} label="Instagram" href={instagram.href}>
+          {instagram.label}
+        </MetaTile>
+      ) : null}
+      {email ? (
+        <MetaTile
+          icon={<Mail className="size-[18px]" aria-hidden />}
+          label="Escribir"
+          href={`mailto:${email}`}
+        >
+          {email}
         </MetaTile>
       ) : null}
     </ul>

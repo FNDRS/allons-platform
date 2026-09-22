@@ -17,6 +17,7 @@ export interface ComercioProfile {
   handle: string | null;
   description: string | null;
   websiteUrl: string | null;
+  instagramUrl: string | null;
   logoUrl: string | null;
   brandLogoColor: string | null;
   city: string | null;

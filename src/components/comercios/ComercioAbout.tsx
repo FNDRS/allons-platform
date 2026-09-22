@@ -1,12 +1,17 @@
 import { Globe, Mail, MapPin } from "lucide-react";
 import type { ComercioProfile } from "@/lib/api/comercios";
+import { instagramLink } from "@/lib/instagram";
+import { InstagramMark } from "@/components/shared/InstagramMark";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { MetaTile } from "@/components/ui/MetaTile";
 
 /** Description plus the ways to reach the comercio. Hidden when both are empty. */
 export function ComercioAbout({ profile }: { profile: ComercioProfile }) {
   const description = profile.description?.trim() || null;
-  const hasContact = Boolean(profile.websiteUrl || profile.email || profile.city);
+  const instagram = instagramLink(profile.instagramUrl);
+  const hasContact = Boolean(
+    profile.websiteUrl || instagram || profile.email || profile.city,
+  );
   if (!description && !hasContact) return null;
 
   return (
@@ -30,6 +35,15 @@ export function ComercioAbout({ profile }: { profile: ComercioProfile }) {
                 href={profile.websiteUrl}
               >
                 {profile.websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+              </MetaTile>
+            ) : null}
+            {instagram ? (
+              <MetaTile
+                icon={<InstagramMark />}
+                label="Instagram"
+                href={instagram.href}
+              >
+                {instagram.label}
               </MetaTile>
             ) : null}
             {profile.email ? (
