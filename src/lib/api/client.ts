@@ -53,7 +53,10 @@ const FRIENDLY_BY_STATUS: Record<number, string> = {
   429: "Demasiadas solicitudes. Espera un momento e intenta de nuevo.",
 };
 
-function messageFromBody(body: unknown, status: number): {
+function messageFromBody(
+  body: unknown,
+  status: number,
+): {
   message: string;
   code: string | null;
 } {
@@ -73,13 +76,16 @@ function messageFromBody(body: unknown, status: number): {
         message:
           typeof inner.message === "string"
             ? inner.message
-            : FRIENDLY_BY_STATUS[status] ?? "Algo salió mal.",
+            : (FRIENDLY_BY_STATUS[status] ?? "Algo salió mal."),
         code: typeof inner.code === "string" ? inner.code : code,
       };
     }
     return { message: FRIENDLY_BY_STATUS[status] ?? "Algo salió mal.", code };
   }
-  return { message: FRIENDLY_BY_STATUS[status] ?? "Algo salió mal.", code: null };
+  return {
+    message: FRIENDLY_BY_STATUS[status] ?? "Algo salió mal.",
+    code: null,
+  };
 }
 
 async function getAccessToken(): Promise<string | null> {
@@ -99,7 +105,11 @@ export async function apiFetch<T>(
   path: string,
   { method = "GET", body, auth = true }: Options = {},
 ): Promise<T> {
-  const headers: Record<string, string> = { Accept: "application/json" };
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    // De dónde salió la compra, para el aviso de venta y el panel.
+    "x-allons-client": "web",
+  };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (auth) {
     const token = await getAccessToken();
