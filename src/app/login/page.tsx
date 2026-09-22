@@ -6,7 +6,12 @@ import { Card } from "@/components/ui/Card";
 
 export const metadata: Metadata = {
   title: "Iniciar sesión",
+  description: "Todos tus eventos en un solo lugar. Entra con tu cuenta Allons.",
   robots: { index: false, follow: false },
+  openGraph: {
+    title: "Allons",
+    description: "Todos tus eventos en un solo lugar.",
+  },
 };
 
 export default function LoginPage() {

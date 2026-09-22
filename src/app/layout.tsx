@@ -20,11 +20,11 @@ export const metadata: Metadata = {
     telephone: false,
   },
   title: {
-    default: "Allons Eventos sin fricción",
+    default: "Allons",
     template: "%s Allons",
   },
   description:
-    "Allons es la plataforma para gestionar, vender y controlar entradas de eventos en Honduras. Únete a la lista de espera.",
+    "Compra entradas, guarda tu QR y vive eventos en Honduras. La misma cuenta que usas en la app.",
   keywords: [
     "Allons",
     "eventos Honduras",
@@ -32,7 +32,6 @@ export const metadata: Metadata = {
     "venta de entradas",
     "boletos",
     "QR",
-    "lista de espera",
     "Tegucigalpa",
     "San Pedro Sula",
   ],
@@ -58,22 +57,22 @@ export const metadata: Metadata = {
     locale: "es_HN",
     url: SITE_URL,
     siteName: "Allons",
-    title: "Allons Eventos sin fricción",
+    title: "Allons",
     description:
-      "Únete a la lista de espera. Próximamente en Honduras y Latinoamérica.",
+      "Todos tus eventos en un solo lugar. Compra tu entrada y guarda tu QR.",
     images: [
       {
         url: `${SITE_URL}/opengraph-image`,
         width: 1200,
         height: 630,
-        alt: "Allons Eventos sin fricción",
+        alt: "Allons. Todos tus eventos en un solo lugar.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Allons Eventos sin fricción",
-    description: "Únete a la lista de espera.",
+    title: "Allons",
+    description: "Todos tus eventos en un solo lugar.",
     images: [`${SITE_URL}/opengraph-image`],
   },
   robots: {
