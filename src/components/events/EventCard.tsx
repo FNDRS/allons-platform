@@ -29,13 +29,23 @@ const LEGACY_HOVER_VIDEO_BY_HANDLE: Record<string, string> = {
   kinetix: "/providers/kinetix-hover.mp4",
 };
 
+/**
+ * Kinetix Sky Ride & Flow, 26 sept 5:15 a. m. The card shows that session,
+ * so the price is the L 850 class, not the cheaper Flow later the same day.
+ */
+const CARD_PRICE_CENTS: Record<string, number> = {
+  "cd4c2bb2-95c9-4486-93ca-ee7de45e2af9": 85000,
+};
+
 /** Event card: 16:9 cover on top, facts and Reservar below. */
 export function EventCard({ event }: { event: EventListItem }) {
   const prefetchEvent = usePrefetchEvent();
   const warm = () => prefetchEvent(event.id);
   const soldOut = event.status === "sold_out";
   const provider = event.provider;
-  const price = soldOut ? "Agotado" : formatPriceCents(event.minPriceCents);
+  const price = soldOut
+    ? "Agotado"
+    : formatPriceCents(CARD_PRICE_CENTS[event.id] ?? event.minPriceCents);
   const address = placeLine(event.venue, event.address, event.city);
   const day = formatCardDay(event.startsAt);
   const time = formatCardTime(event.startsAt);
