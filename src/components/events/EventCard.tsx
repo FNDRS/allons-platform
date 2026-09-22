@@ -17,7 +17,15 @@ import { EventCover, EventPosterWash } from "./EventCover";
 import { EventHoverVideo } from "./EventHoverVideo";
 import { glassCtaClass } from "@/components/ui/cta";
 
-const HOVER_VIDEO_BY_HANDLE: Record<string, string> = {
+/**
+ * Respaldo mientras `hoverVideoUrl` se llena desde el panel.
+ *
+ * El video vivia solo aca, asi que agregar uno pedia tocar codigo y desplegar
+ * el sitio. Ahora manda la columna; este mapa evita que un evento ya publicado
+ * se quede sin video entre el deploy y el momento en que alguien lo cargue, y
+ * se borra cuando no quede ninguno apuntando aca.
+ */
+const LEGACY_HOVER_VIDEO_BY_HANDLE: Record<string, string> = {
   kinetix: "/providers/kinetix-hover.mp4",
 };
 
@@ -31,9 +39,11 @@ export function EventCard({ event }: { event: EventListItem }) {
   const address = placeLine(event.venue, event.address, event.city);
   const day = formatCardDay(event.startsAt);
   const time = formatCardTime(event.startsAt);
-  const hoverSrc = provider?.handle
-    ? HOVER_VIDEO_BY_HANDLE[provider.handle.replace(/^@/, "")]
-    : undefined;
+  const hoverSrc =
+    event.hoverVideoUrl?.trim() ||
+    (provider?.handle
+      ? LEGACY_HOVER_VIDEO_BY_HANDLE[provider.handle.replace(/^@/, "")]
+      : undefined);
 
   return (
     <Link
