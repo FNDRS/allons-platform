@@ -1,5 +1,6 @@
 # dependencies
-node_modules/
+# Sin barra: un symlink llamado node_modules también debe quedar fuera.
+node_modules
 .pnp
 .pnp.js
 
