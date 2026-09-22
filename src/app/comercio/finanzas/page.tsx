@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ComercioFinancePage() {
   return (
     <>
-      <ComercioPageHeader title="Finanzas" subtitle="Tu saldo y lo que se retiene por venta." />
+      <ComercioPageHeader title="Finanzas" subtitle="El dinero se deposita después del evento." />
       <FinanceView />
     </>
   );
