@@ -52,10 +52,6 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   }
 
   const when = formatEventWhen(ticket.event?.startsAt ?? null);
-  // Los reembolsos ya no salen de una política por evento: se piden desde la
-  // app y los revisa Allons, así que este texto no promete una devolución.
-  const refund =
-    "Para pedir un reembolso, enviá tu solicitud desde la app. La revisamos y te respondemos por correo.";
 
   return (
     <div className="flex flex-col gap-8">
@@ -101,7 +97,6 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         address={ticket.event?.address}
         city={ticket.event?.city}
         kitPickupInfo={ticket.kitPickupInfo}
-        refund={refund}
       />
 
       <p className="text-center text-[13px] leading-relaxed text-white/32">

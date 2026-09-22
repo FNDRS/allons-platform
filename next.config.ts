@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   reactStrictMode: true,
+  // The Network URL Next prints (192.168.x.x) is not allowed for /_next/hmr.
+  // Without it the client never hydrates and /eventos stays on the white splash.
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*"],
   // `onDemandEntries` used to live here, to stop `next dev` dropping a route it
   // had not served for 60 s and rebuilding it on the next click — seconds per
   // tab change in the comercio panel. Only the webpack hot reloader reads that

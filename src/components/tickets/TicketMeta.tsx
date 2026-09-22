@@ -3,7 +3,6 @@ import {
   KitMark,
   MetaTile,
   PinMark,
-  RefundMark,
 } from "@/components/ui/MetaTile";
 
 export function TicketMeta({
@@ -12,14 +11,12 @@ export function TicketMeta({
   address,
   city,
   kitPickupInfo,
-  refund,
 }: {
   when: string | null;
   venue?: string | null;
   address?: string | null;
   city?: string | null;
   kitPickupInfo?: string | null;
-  refund: string;
 }) {
   const place = placeLabel(venue, address, city);
   const maps =
@@ -45,9 +42,6 @@ export function TicketMeta({
           <span className="whitespace-pre-line">{kitPickupInfo}</span>
         </MetaTile>
       ) : null}
-      <MetaTile icon={<RefundMark />} label="Reembolso">
-        {refund}
-      </MetaTile>
     </ul>
   );
 }

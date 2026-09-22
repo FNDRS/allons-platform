@@ -101,22 +101,3 @@ export function KitMark() {
   );
 }
 
-export function RefundMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" aria-hidden>
-      <path
-        d="M7.2 8.2 4.5 11l2.7 2.8"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M5 11h9.2c3 0 5.3 1.8 5.3 4.4 0 1.4-.6 2.6-1.6 3.4"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
