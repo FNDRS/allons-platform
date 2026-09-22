@@ -70,6 +70,11 @@ export interface PublicResourceGroup {
   required: boolean;
   columns: number | null;
   sortOrder: number;
+  /**
+   * Horario (tipo de boleto) dueño del mapa. null = todo el evento, que es
+   * como funciona un evento de una sola función.
+   */
+  ticketTypeId: string | null;
   total: number;
   available: number;
   resources: PublicResource[];
@@ -149,17 +154,36 @@ export function getEventQuote(
   );
 }
 
-export function getEventResources(id: string) {
+export function getEventResources(id: string, ticketTypeId?: string | null) {
+  const query = ticketTypeId
+    ? `?entryTypeId=${encodeURIComponent(ticketTypeId)}`
+    : "";
   return apiFetch<{ groups: PublicResourceGroup[] }>(
-    `/events/${encodeURIComponent(id)}/resources`,
+    `/events/${encodeURIComponent(id)}/resources${query}`,
     { auth: false },
+  );
+}
+
+/**
+ * Los grupos que le tocan a un horario: los suyos y los que cubren todo el
+ * evento. Espeja la regla del servidor, que es la que manda al comprar; aquí
+ * sólo evita ofrecer un mapa que no es de quien compra.
+ */
+export function resourceGroupsForTicketType<
+  T extends { ticketTypeId: string | null },
+>(groups: T[], ticketTypeId: string | null | undefined): T[] {
+  return groups.filter(
+    (group) =>
+      group.ticketTypeId === null ||
+      (Boolean(ticketTypeId) && group.ticketTypeId === ticketTypeId),
   );
 }
 
 export const eventKeys = {
   list: ["events"] as const,
   detail: (id: string) => ["events", id] as const,
-  resources: (id: string) => ["events", id, "resources"] as const,
+  resources: (id: string, ticketTypeId?: string | null) =>
+    ["events", id, "resources", ticketTypeId ?? "all"] as const,
   quote: (
     id: string,
     entryTypeId: string | null,
