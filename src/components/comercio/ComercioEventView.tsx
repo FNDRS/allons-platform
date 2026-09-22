@@ -120,7 +120,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <KpiTile
           label="Vendidos"
           value={
@@ -134,8 +134,10 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
               : undefined
           }
         />
-        <KpiTile label="Ingresos" value={formatHNL(data.revenue)} hint="Incluye aportes" />
-        <KpiTile label="Aportes" value={formatHNL(data.contributions)} />
+        <KpiTile
+          label="Ingresos"
+          value={formatHNL(data.revenue - (data.contributions ?? 0))}
+        />
         <KpiTile
           label="Escaneados"
           value={formatNumber(data.scans)}
