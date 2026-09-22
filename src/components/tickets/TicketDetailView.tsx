@@ -72,21 +72,23 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         {ticket.holderName ? (
           <p className="mt-2 text-[15px] text-white/50">{ticket.holderName}</p>
         ) : null}
+        {(ticket.resourceGroups ?? [])
+          .filter((group) => group.assigned)
+          .map((group) => (
+            <div key={group.id} className="mt-5">
+              <TicketResourceCard
+                group={group}
+                onPick={() => {
+                  setPickerGroup(group.id);
+                  setPickerOpen(true);
+                }}
+              />
+            </div>
+          ))}
       </div>
 
       <TicketQr payload={ticket.qrPayload} />
       <TicketCode code={ticket.code} />
-
-      {(ticket.resourceGroups ?? []).map((group) => (
-        <TicketResourceCard
-          key={group.id}
-          group={group}
-          onPick={() => {
-            setPickerGroup(group.id);
-            setPickerOpen(true);
-          }}
-        />
-      ))}
 
       <TicketMeta
         when={when}
