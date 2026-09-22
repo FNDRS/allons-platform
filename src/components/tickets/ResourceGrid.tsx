@@ -88,7 +88,7 @@ function UnitTile({
     tile.mine
       ? "border-accent bg-accent text-black shadow-[0_8px_30px_rgba(246,112,16,0.35)]"
       : tile.taken && tile.caption
-        ? "border-white/14 bg-white/[0.08] text-white"
+        ? "border-accent bg-accent text-black shadow-[0_8px_30px_rgba(246,112,16,0.35)]"
         : tile.taken
           ? "border-transparent bg-white/[0.03] text-white/25"
           : "border-white/12 bg-white/[0.07] text-white hover:border-white/20 hover:bg-white/[0.12]"
