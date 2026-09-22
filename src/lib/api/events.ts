@@ -11,6 +11,8 @@ export interface EventListItem {
   venue?: string | null;
   address?: string | null;
   coverImageUrl: string | null;
+  /** Video corto que se reproduce al pasar el mouse sobre la tarjeta. */
+  hoverVideoUrl?: string | null;
   themeColor: string | null;
   minPriceCents: number | null;
   status?: EventStatus;
