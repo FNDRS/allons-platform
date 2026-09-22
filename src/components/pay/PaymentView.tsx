@@ -10,12 +10,10 @@ import { usePaymentOrder } from "@/hooks/usePaymentOrder";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { paymentLinkStorageKey } from "@/lib/api/payments";
 import { formatCents } from "@/lib/format";
-import { PAYMENTS_PAUSED } from "@/lib/payments-paused";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { PaygateModal } from "./PaygateModal";
-import { PaymentsPausedModal } from "./PaymentsPausedModal";
 
 /**
  * Hosts the Paygate (Clinpays) hosted page is served from. The checkout
@@ -76,14 +74,10 @@ export function PaymentView({ orderId }: { orderId: string }) {
   const { order, phase, error, resume } = usePaymentOrder(ready ? orderId : "");
   const countdown = useCountdown(order?.expiresAt);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [pausedOpen, setPausedOpen] = useState(true);
   const opened = useRef(false);
   const celebrated = useRef(false);
-  const checkoutBlocked =
-    PAYMENTS_PAUSED && (phase === "waiting" || phase === "still_pending");
 
   useEffect(() => {
-    if (PAYMENTS_PAUSED) return;
     if (!link || opened.current || estado) return;
     if (phase !== "waiting" && phase !== "still_pending") return;
     opened.current = true;
@@ -164,38 +158,6 @@ export function PaymentView({ orderId }: { orderId: string }) {
           <Button variant="secondary">Ir a mis tickets</Button>
         </Link>
       </Card>
-    );
-  }
-
-  if (checkoutBlocked) {
-    return (
-      <>
-        <PaymentsPausedModal open={pausedOpen} onClose={() => setPausedOpen(false)} />
-        <div className="flex flex-col gap-5">
-          <div>
-            <h1 className="break-words text-[28px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[40px]">
-              Pagos en pausa
-            </h1>
-            <p className="mt-2 text-sm text-muted">
-              Estamos trabajando en el cobro. Tu orden sigue aquí y no se hizo ningún cargo.
-            </p>
-          </div>
-          <Card className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted">Total</span>
-              <span className="text-2xl font-bold tracking-tight">
-                {order ? formatCents(order.amountCents) : "—"}
-              </span>
-            </div>
-            <Button size="lg" full variant="secondary" onClick={() => setPausedOpen(true)}>
-              Ver aviso
-            </Button>
-          </Card>
-          <Link href={retryHref} className="text-center text-sm text-dim hover:text-white">
-            Volver al evento
-          </Link>
-        </div>
-      </>
     );
   }
 
