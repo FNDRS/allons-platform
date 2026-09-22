@@ -87,9 +87,11 @@ function UnitTile({
   const className = `flex aspect-[1/1.18] w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-[16px] border text-center transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] select-none ${
     tile.mine
       ? "border-accent bg-accent text-black shadow-[0_8px_30px_rgba(246,112,16,0.35)]"
-      : tile.taken
-        ? "border-transparent bg-white/[0.03] text-white/25"
-        : "border-white/12 bg-white/[0.07] text-white hover:border-white/20 hover:bg-white/[0.12]"
+      : tile.taken && tile.caption
+        ? "border-white/14 bg-white/[0.08] text-white"
+        : tile.taken
+          ? "border-transparent bg-white/[0.03] text-white/25"
+          : "border-white/12 bg-white/[0.07] text-white hover:border-white/20 hover:bg-white/[0.12]"
   } ${interactive ? "cursor-pointer active:scale-95" : "cursor-default"}`;
 
   const content = (

@@ -17,6 +17,8 @@ import { glassCtaClass } from "@/components/ui/cta";
 import { PaymentsTable, TicketTypeTable } from "./EventTables";
 import { HourlySalesChart } from "./HourlySalesChart";
 import { KpiTile } from "./KpiTile";
+import { ResourceMap } from "./ResourceMap";
+import { useProviderResources } from "@/hooks/useProviderResources";
 
 const STATUS: Record<string, string> = {
   published: "Publicado",
@@ -48,6 +50,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
     enabled: ready,
     refetchInterval: live ? false : 60_000,
   });
+  const seats = useProviderResources(eventId, ready);
 
   if (event.isLoading) {
     return (
@@ -145,6 +148,22 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
       </div>
 
       <TicketTypeTable types={data.ticketTypes ?? []} />
+
+      {seats.isLoading ? (
+        <Skeleton className="h-64 rounded-[24px]" />
+      ) : (
+        <ResourceMap
+          groups={seats.groups}
+          typeNames={Object.fromEntries(
+            (data.ticketTypes ?? []).map((type) => [type.id, type.name]),
+          )}
+          busy={seats.assign.isPending || seats.release.isPending}
+          onRelease={(resourceId) => seats.release.mutate(resourceId)}
+          onAssign={(resourceId, ticketId) =>
+            seats.assign.mutate({ resourceId, ticketId })
+          }
+        />
+      )}
 
       {hourly.data ? (
         <HourlySalesChart data={hourly.data} />

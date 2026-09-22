@@ -7,16 +7,19 @@ import { Button } from "@/components/ui/Button";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Input, Label } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
-import { ResourceGrid } from "@/components/tickets/ResourceGrid";
+import { ResourceGrid, studioFrontLabel } from "@/components/tickets/ResourceGrid";
 
-/** Who holds each unit, with door fixes (release / assign by ticket id). */
+/** Who holds each unit, with the ticket they will sit on. */
 export function ResourceMap({
   groups,
+  typeNames = {},
   onRelease,
   onAssign,
   busy,
 }: {
   groups: ProviderResourceGroup[];
+  /** Ticket type id to the name the buyer bought, e.g. a class hour. */
+  typeNames?: Record<string, string>;
   onRelease: (resourceId: string) => void;
   onAssign: (resourceId: string, ticketId: string) => void;
   busy: boolean;
@@ -28,18 +31,28 @@ export function ResourceMap({
 
   return (
     <section>
-      <SectionTitle>Mapa de recursos</SectionTitle>
+      <SectionTitle>Quién se sienta dónde</SectionTitle>
       <div className="flex flex-col gap-3">
         {groups.map((group) => (
           <Card key={group.id}>
             <div className="mb-4 flex min-w-0 items-baseline justify-between gap-3">
-              <p className="min-w-0 truncate font-semibold tracking-tight">{group.name}</p>
+              <div className="min-w-0">
+                <p className="truncate font-semibold tracking-tight">
+                  {group.ticketTypeId && typeNames[group.ticketTypeId]
+                    ? typeNames[group.ticketTypeId]
+                    : group.name}
+                </p>
+                {group.ticketTypeId && typeNames[group.ticketTypeId] ? (
+                  <p className="text-[13px] text-white/45">{group.name}</p>
+                ) : null}
+              </div>
               <p className="shrink-0 text-sm text-white/55">
-                <span className="font-semibold text-white">{group.assigned}</span> / {group.total} asignadas
+                <span className="font-semibold text-white">{group.assigned}</span> / {group.total} ocupadas
               </p>
             </div>
             <ResourceGrid
               columns={group.columns}
+              frontLabel={studioFrontLabel(group.name)}
               tiles={group.resources
                 // A retired unit stays on the map while a ticket holds it, so
                 // the organizer can still release or move that holder.
@@ -48,7 +61,9 @@ export function ResourceMap({
                   id: unit.id,
                   label: unit.label,
                   taken: Boolean(unit.ticket),
-                  caption: unit.ticket ? unit.ticket.holderName ?? unit.ticket.code : null,
+                  caption: unit.ticket
+                    ? unit.ticket.holderName ?? unit.ticket.code
+                    : null,
                 }))}
               onSelect={(tile) => {
                 const unit = group.resources.find((item) => item.id === tile.id);
@@ -58,6 +73,7 @@ export function ResourceMap({
                 }
               }}
             />
+            <SeatList group={group} />
           </Card>
         ))}
       </div>
@@ -126,5 +142,27 @@ export function ResourceMap({
         ) : null}
       </Modal>
     </section>
+  );
+}
+
+function SeatList({ group }: { group: ProviderResourceGroup }) {
+  const seated = group.resources.filter((unit) => unit.ticket);
+  if (seated.length === 0) {
+    return <p className="mt-4 text-[13px] text-white/40">Nadie ha elegido lugar.</p>;
+  }
+  return (
+    <ul className="mt-4 flex flex-col divide-y divide-white/[0.06]">
+      {seated.map((unit) => (
+        <li key={unit.id} className="flex items-baseline justify-between gap-3 py-2.5">
+          <div className="min-w-0">
+            <p className="truncate text-[14px] font-semibold tracking-tight">
+              {unit.ticket?.holderName ?? "Sin nombre"}
+            </p>
+            <p className="font-mono text-[12px] tracking-wide text-white/40">{unit.ticket?.code}</p>
+          </div>
+          <p className="shrink-0 text-[15px] font-bold tracking-tight">{unit.label}</p>
+        </li>
+      ))}
+    </ul>
   );
 }

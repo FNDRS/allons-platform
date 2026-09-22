@@ -128,6 +128,8 @@ export interface ProviderResourceGroup {
   sortOrder: number;
   total: number;
   assigned: number;
+  /** Schedule this map belongs to. Null covers every ticket type. */
+  ticketTypeId?: string | null;
   resources: ProviderResource[];
 }
 
