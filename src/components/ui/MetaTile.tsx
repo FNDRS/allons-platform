@@ -81,6 +81,22 @@ export function PinMark() {
   );
 }
 
+export function BikeMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" aria-hidden>
+      <circle cx="7" cy="16" r="3.25" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="17" cy="16" r="3.25" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M7 16 11 8h4l2 8M11 8 8.5 12.5H14"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function KitMark() {
   return (
     <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" aria-hidden>
