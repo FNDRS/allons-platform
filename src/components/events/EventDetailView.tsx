@@ -2,10 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
 import { useEventDetail } from "@/hooks/useEventDetail";
-import { PAYMENTS_PAUSED } from "@/lib/payments-paused";
-import { PaymentsPausedModal } from "@/components/pay/PaymentsPausedModal";
 import { Button } from "@/components/ui/Button";
 import { ErrorState } from "@/components/ui/States";
 import { formatPriceCents } from "@/lib/format";
@@ -33,7 +30,6 @@ export function EventDetailView({
 }) {
   const { event, reserve, isLoading, isPlaceholderData, error, refetch } =
     useEventDetail(id);
-  const [pausedOpen, setPausedOpen] = useState(false);
 
   if (isLoading) {
     return <EventDetailSkeleton />;
@@ -56,7 +52,6 @@ export function EventDetailView({
   const cheapest = event.entryTypes?.length
     ? Math.min(...event.entryTypes.map((type) => type.priceCents))
     : (event.minPriceCents ?? null);
-  const paymentsPaused = PAYMENTS_PAUSED && cheapest != null && cheapest > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -102,14 +97,6 @@ export function EventDetailView({
             <Button size="md" className="shrink-0 sm:!h-13 sm:!px-6 sm:!text-[15px]" loading>
               Reservar
             </Button>
-          ) : paymentsPaused && reserve?.kind === "open" ? (
-            <Button
-              size="md"
-              className="shrink-0 sm:!h-13 sm:!px-6 sm:!text-[15px]"
-              onClick={() => setPausedOpen(true)}
-            >
-              {reserve.label}
-            </Button>
           ) : reserve?.kind === "open" ? (
             <Link href={`/events/${encodeURIComponent(id)}/reservar`} className="shrink-0">
               <Button size="md" className="sm:!h-13 sm:!px-6 sm:!text-[15px]">
@@ -123,7 +110,6 @@ export function EventDetailView({
           )}
         </div>
       </div>
-      <PaymentsPausedModal open={pausedOpen} onClose={() => setPausedOpen(false)} />
     </div>
   );
 }
