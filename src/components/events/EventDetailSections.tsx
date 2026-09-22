@@ -95,13 +95,7 @@ export function EventMeta({ event }: { event: EventDetail }) {
   const instagram = instagramLink(event.provider?.instagramUrl);
   const email = event.provider?.email?.trim() || null;
 
-  if (
-    !when &&
-    !place &&
-    !(event.attendeeCount && event.attendeeCount > 0) &&
-    !instagram &&
-    !email
-  ) {
+  if (!when && !place && !instagram && !email) {
     return null;
   }
 
@@ -115,12 +109,6 @@ export function EventMeta({ event }: { event: EventDetail }) {
       {place ? (
         <MetaTile icon={<PinMark />} label="Dónde" href={mapsUrl}>
           {placeLabel}
-        </MetaTile>
-      ) : null}
-      {typeof event.attendeeCount === "number" && event.attendeeCount > 0 ? (
-        <MetaTile icon={<PeopleMark />} label="Asistencia">
-          {event.attendeeCount}{" "}
-          {event.attendeeCount === 1 ? "persona va" : "personas van"}
         </MetaTile>
       ) : null}
       {instagram ? (
@@ -138,27 +126,6 @@ export function EventMeta({ event }: { event: EventDetail }) {
         </MetaTile>
       ) : null}
     </ul>
-  );
-}
-
-function PeopleMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" aria-hidden>
-      <circle cx="9.2" cy="8.4" r="2.4" stroke="currentColor" strokeWidth="1.4" />
-      <path
-        d="M4.5 18.2c.4-2.8 2.4-4.4 4.7-4.4s4.3 1.6 4.7 4.4"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-      <circle cx="16.2" cy="9" r="2" stroke="currentColor" strokeWidth="1.4" />
-      <path
-        d="M15.2 13.9c1.9.2 3.5 1.5 3.9 4.3"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }
 
