@@ -20,6 +20,8 @@ export function AccountButton({ onOpen }: { onOpen: () => void }) {
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const avatar = useAccountAvatar();
+  const onLogin = pathname === "/login" || pathname.startsWith("/login/");
+  if (onLogin && (loading || !user)) return null;
   if (loading) {
     return <span className="size-7 rounded-full bg-surface-2 md:size-8" aria-hidden />;
   }
