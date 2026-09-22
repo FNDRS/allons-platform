@@ -8,7 +8,7 @@ import { AllonsLogo } from "@/components/AllonsLogo";
 import { useProviderRealtime } from "@/hooks/useProviderRealtime";
 import { isComercioUser } from "@/lib/role";
 import { useAuth } from "@/components/app/AuthProvider";
-import { LiveIndicator, ProviderLiveProvider } from "./ProviderLive";
+import { ProviderLiveProvider } from "./ProviderLive";
 import { AccountButton, AccountSheet } from "@/components/app/AccountSheet";
 import { BottomTabs } from "@/components/app/BottomTabs";
 import { isComercioNavActive } from "@/components/app/AppNav";
@@ -94,7 +94,6 @@ export function ComercioShellInner({ children }: { children: React.ReactNode }) 
               allonsapp.com/comercio
             </p>
             <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
-              <LiveIndicator />
               <AccountButton onOpen={() => setAccountOpen(true)} />
             </div>
           </div>
