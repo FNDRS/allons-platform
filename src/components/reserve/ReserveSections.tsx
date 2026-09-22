@@ -416,13 +416,13 @@ export function GovernmentIdField({
             inputMode="text"
             autoComplete="off"
             autoCapitalize="characters"
-            placeholder="0801199912345"
+            placeholder="0801-1999-12345"
             maxLength={30}
             value={value}
             aria-label="Número de identidad"
             aria-invalid={showError}
             onChange={(event) => onChange(event.target.value)}
-            className="max-w-xs"
+            className="max-w-xs tracking-[0.04em]"
           />
           {showError ? (
             <p className="mt-2 text-sm text-red-300">
