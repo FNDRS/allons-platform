@@ -2,14 +2,17 @@
 
 import Link from "next/link";
 import { ArrowLeft, Lock } from "lucide-react";
+import { useState } from "react";
 import { useCardCheckout } from "@/hooks/useCardCheckout";
 import { useReserveForm } from "@/hooks/useReserveForm";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { formatEventWhen } from "@/lib/allons-api";
+import { PAYMENTS_PAUSED } from "@/lib/payments-paused";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { EventCover, EventPosterWash } from "@/components/events/EventCover";
 import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
+import { PaymentsPausedModal } from "@/components/pay/PaymentsPausedModal";
 import { HoldCountdown } from "./HoldCountdown";
 import { ReserveBikePicker } from "./ReserveBikePicker";
 import {
@@ -26,17 +29,30 @@ export function ReserveView({ eventId }: { eventId: string }) {
   const { ready, user } = useRequireAuth();
   const form = useReserveForm(eventId);
   // Saved cards load only for a paid ticket; a free one never shows the step.
+  const paymentsPaused = PAYMENTS_PAUSED && !form.isFree;
+  const [pausedOpen, setPausedOpen] = useState(false);
+  const [pausedAnnounced, setPausedAnnounced] = useState(false);
+  if (paymentsPaused && form.event && !pausedAnnounced) {
+    setPausedAnnounced(true);
+    setPausedOpen(true);
+  }
   const checkout = useCardCheckout({
     userId: user?.id ?? null,
-    enabled: ready && !form.isFree && Boolean(form.entryType),
+    enabled: ready && !form.isFree && Boolean(form.entryType) && !PAYMENTS_PAUSED,
   });
-  const payInApp = !form.isFree && checkout.available && checkout.cardReady;
+  const payInApp = !paymentsPaused && !form.isFree && checkout.available && checkout.cardReady;
   // While the card list loads the CTA must not send anyone to the hosted
   // page: the buyer is about to be offered the in-app card.
-  const submitting = form.submitting || checkout.submitting || (!form.isFree && checkout.loading);
+  const submitting =
+    form.submitting ||
+    (!paymentsPaused && (checkout.submitting || (!form.isFree && checkout.loading)));
   const error = form.error ?? checkout.error;
 
   function onPay() {
+    if (paymentsPaused) {
+      setPausedOpen(true);
+      return;
+    }
     if (!payInApp) {
       void form.submit();
       return;
@@ -85,6 +101,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
 
   return (
     <div className="flex flex-col gap-10 pb-36 sm:gap-12">
+      <PaymentsPausedModal open={pausedOpen} onClose={() => setPausedOpen(false)} />
       <header>
         <Link
           href={back}
@@ -210,7 +227,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
         />
       </section>
 
-      {!form.isFree ? (
+      {!form.isFree && !paymentsPaused ? (
         <PaymentMethodStep
           step={(form.donationAllowed ? 6 : 5) + (form.hasResourceGroups ? 1 : 0)}
           checkout={checkout}
@@ -231,18 +248,21 @@ export function ReserveView({ eventId }: { eventId: string }) {
           </div>
           <Button
             size="lg"
+            variant={paymentsPaused ? "secondary" : "primary"}
             loading={submitting}
             onClick={onPay}
-            className="min-w-0 shrink-0 shadow-[0_10px_40px_rgba(246,112,16,0.28)] sm:min-w-[11.5rem]"
+            className={`min-w-0 shrink-0 sm:min-w-[11.5rem] ${paymentsPaused ? "" : "shadow-[0_10px_40px_rgba(246,112,16,0.28)]"}`}
           >
             {form.isFree
               ? "Confirmar"
-              : payInApp
-                ? `Pagar ${formatCents(form.totalCents)}`
-                : "Ir a pagar"}
+              : paymentsPaused
+                ? "Pagos en pausa"
+                : payInApp
+                  ? `Pagar ${formatCents(form.totalCents)}`
+                  : "Ir a pagar"}
           </Button>
         </div>
-        {!form.isFree ? (
+        {!form.isFree && !paymentsPaused ? (
           <p className="mx-auto mt-2 flex max-w-2xl items-center justify-center gap-1.5 text-[11px] text-white/30">
             <Lock className="size-3" strokeWidth={1.75} />
             {payInApp
