@@ -207,6 +207,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
           typeName={form.entryType?.name ?? ""}
           ticketsCents={form.ticketsCents}
           donationCents={form.donationAllowed ? form.donationCents : 0}
+          serviceChargeCents={form.serviceChargeCents}
           totalCents={form.totalCents}
           isFree={form.isFree}
         />

@@ -387,14 +387,12 @@ export function DonationField({
   );
 }
 
-/** Allons base commission, same 8% the API withholds from the comercio. */
-const PLATFORM_FEE_PCT = 8;
-
 export function ReserveSummary({
   quantity,
   typeName,
   ticketsCents,
   donationCents,
+  serviceChargeCents,
   totalCents,
   isFree,
 }: {
@@ -402,12 +400,17 @@ export function ReserveSummary({
   typeName: string;
   ticketsCents: number;
   donationCents: number;
+  /**
+   * Recargo que cotizó el servidor. Antes esto era un 8% calculado aquí que
+   * no se sumaba al total y que tampoco correspondía a nada que se cobrara:
+   * ese 8% es la comisión que se le retiene al comercio, no algo que pague
+   * quien compra.
+   */
+  serviceChargeCents: number;
   totalCents: number;
   isFree: boolean;
 }) {
-  const platformFeeCents = isFree
-    ? 0
-    : Math.round((ticketsCents * PLATFORM_FEE_PCT) / 100);
+  const platformFeeCents = isFree ? 0 : serviceChargeCents;
 
   return (
     <Shell>
@@ -418,7 +421,7 @@ export function ReserveSummary({
         />
         {platformFeeCents > 0 ? (
           <Row
-            label="Fee de plataforma"
+            label="Cargo por servicio"
             value={formatCents(platformFeeCents)}
           />
         ) : null}
