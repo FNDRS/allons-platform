@@ -9,6 +9,7 @@ import {
   eventKeys,
   getEventQuote,
   getEventResources,
+  resourceGroupsForTicketType,
   isEntryTypeOnSale,
   type EventEntryType,
   type EventQuestion,
@@ -190,14 +191,23 @@ export function useReserveForm(eventId: string) {
   const totalCents = quoteQuery.data?.totalCents ?? subtotalCents;
 
   const resourceQuery = useQuery({
-    queryKey: eventKeys.resources(eventId),
-    queryFn: () => getEventResources(eventId).then((res) => res.groups),
+    queryKey: eventKeys.resources(eventId, entryType?.id ?? null),
+    queryFn: () =>
+      getEventResources(eventId, entryType?.id ?? null).then(
+        (res) => res.groups,
+      ),
     enabled: Boolean(eventId),
     refetchInterval: 10_000,
     staleTime: 5_000,
   });
+  // El detalle del evento trae los mapas de todos los horarios: sirve de
+  // respaldo mientras carga el mapa en vivo, filtrado con la misma regla.
   const resourceGroups =
-    resourceQuery.data ?? event?.resourceGroups ?? [];
+    resourceQuery.data ??
+    resourceGroupsForTicketType(
+      event?.resourceGroups ?? [],
+      entryType?.id ?? null,
+    );
   const resources = useReserveResourceSelection({
     groups: resourceGroups,
     quantity,
