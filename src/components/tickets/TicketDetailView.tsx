@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { formatEventWhen } from "@/lib/allons-api";
 import { getMyTicket, ticketKeys } from "@/lib/api/tickets";
@@ -26,17 +26,6 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   const ticket = query.data;
   const [pickerGroup, setPickerGroup] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [autoOpened, setAutoOpened] = useState(false);
-
-  useEffect(() => {
-    if (!isNew || autoOpened || !ticket) return;
-    const pending = ticket.resourceGroups?.find((group) => group.required && !group.assigned);
-    if (pending) {
-      setPickerGroup(pending.id);
-      setPickerOpen(true);
-    }
-    setAutoOpened(true);
-  }, [isNew, autoOpened, ticket]);
 
   if (!ready || query.isLoading) {
     return (
