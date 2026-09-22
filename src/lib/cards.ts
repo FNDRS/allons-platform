@@ -93,14 +93,21 @@ export function formatCardholderName(value: string): string {
 }
 
 /**
- * A Honduran DNI is 13 digits. The field used to take 5 to 20 alphanumeric
- * characters, so a typo reached Paygate and came back as a generic rejection
- * the buyer could not act on.
+ * A Honduran DNI is 13 digits, shown as 0501-1999-15029. The field used to
+ * take 5 to 20 alphanumeric characters, so a typo reached Paygate and came
+ * back as a generic rejection the buyer could not act on.
  */
 export const ID_NUMBER_LENGTH = 13;
 
+/** Digits plus the two dashes: 0501-1999-15029. */
+export const ID_NUMBER_FORMATTED_LENGTH = 15;
+
+/** Groups of 4, 4 and 5. The API receives the 13 digits with no dashes. */
 export function formatIdNumber(value: string): string {
-  return digitsOnly(value).slice(0, ID_NUMBER_LENGTH);
+  const digits = digitsOnly(value).slice(0, ID_NUMBER_LENGTH);
+  return [digits.slice(0, 4), digits.slice(4, 8), digits.slice(8)]
+    .filter(Boolean)
+    .join("-");
 }
 
 export function parseExpiry(
@@ -157,7 +164,7 @@ export function validateCardDraft(
   if (!new RegExp(`^\\d{${cvvLength(brand)}}$`).test(draft.cvv)) {
     errors.cvv = `${cvvLength(brand)} dígitos`;
   }
-  if (needsIdNumber && !new RegExp(`^\\d{${ID_NUMBER_LENGTH}}$`).test(draft.idNumber.trim())) {
+  if (needsIdNumber && digitsOnly(draft.idNumber).length !== ID_NUMBER_LENGTH) {
     errors.idNumber = `Tu DNI tiene ${ID_NUMBER_LENGTH} dígitos`;
   }
   return errors;

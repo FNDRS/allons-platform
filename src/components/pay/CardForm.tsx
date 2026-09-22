@@ -13,7 +13,7 @@ import {
   formatExpiry,
   formatIdNumber,
   formattedNumberMaxLength,
-  ID_NUMBER_LENGTH,
+  ID_NUMBER_FORMATTED_LENGTH,
   maxDigits,
   type CardBrand,
   type CardDraft,
@@ -151,10 +151,10 @@ export function CardForm({
             <Input
               inputMode="numeric"
               autoComplete="off"
-              placeholder="0801199912345"
+              placeholder="0501-1999-15029"
               value={draft.idNumber}
               disabled={disabled}
-              maxLength={ID_NUMBER_LENGTH}
+              maxLength={ID_NUMBER_FORMATTED_LENGTH}
               aria-invalid={Boolean(error("idNumber"))}
               onChange={(event) => onChange({ idNumber: formatIdNumber(event.target.value) })}
             />

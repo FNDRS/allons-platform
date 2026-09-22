@@ -120,7 +120,7 @@ export function useCardCheckout({
           expMonth: expiry.month,
           expYear: expiry.year,
           cvv: draft.cvv,
-          ...(saved.needsIdNumber ? { idNumber: draft.idNumber.trim() } : {}),
+          ...(saved.needsIdNumber ? { idNumber: digitsOnly(draft.idNumber) } : {}),
         });
         enrolledId = card.id;
         paymentMethodId = card.id;
