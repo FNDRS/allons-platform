@@ -92,8 +92,15 @@ export function formatCardholderName(value: string): string {
   return value.replace(CARDHOLDER_ALLOWED, "").slice(0, 80);
 }
 
+/**
+ * A Honduran DNI is 13 digits. The field used to take 5 to 20 alphanumeric
+ * characters, so a typo reached Paygate and came back as a generic rejection
+ * the buyer could not act on.
+ */
+export const ID_NUMBER_LENGTH = 13;
+
 export function formatIdNumber(value: string): string {
-  return value.replace(/[^0-9A-Za-z-]/g, "").slice(0, 20);
+  return digitsOnly(value).slice(0, ID_NUMBER_LENGTH);
 }
 
 export function parseExpiry(
@@ -150,8 +157,8 @@ export function validateCardDraft(
   if (!new RegExp(`^\\d{${cvvLength(brand)}}$`).test(draft.cvv)) {
     errors.cvv = `${cvvLength(brand)} dígitos`;
   }
-  if (needsIdNumber && !/^[0-9A-Za-z-]{5,20}$/.test(draft.idNumber.trim())) {
-    errors.idNumber = "Escribe tu número de identidad";
+  if (needsIdNumber && !new RegExp(`^\\d{${ID_NUMBER_LENGTH}}$`).test(draft.idNumber.trim())) {
+    errors.idNumber = `Tu DNI tiene ${ID_NUMBER_LENGTH} dígitos`;
   }
   return errors;
 }
