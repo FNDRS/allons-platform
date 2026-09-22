@@ -7,6 +7,7 @@ import { deriveReserveState, useEventDetail } from "@/hooks/useEventDetail";
 import { isApiError } from "@/lib/api/client";
 import {
   eventKeys,
+  getEventQuote,
   getEventResources,
   isEntryTypeOnSale,
   type EventEntryType,
@@ -150,7 +151,7 @@ export function useReserveForm(eventId: string) {
   const donationCents = Math.max(0, Math.round((Number(donation) || 0) * 100));
   const donationAllowed = Boolean(entryType?.donationEnabled) && !isFree;
   const ticketsCents = (entryType?.priceCents ?? 0) * quantity;
-  const totalCents = ticketsCents + (donationAllowed ? donationCents : 0);
+  const subtotalCents = ticketsCents + (donationAllowed ? donationCents : 0);
 
   // The clock starts as soon as a paid ticket is selected and is not reset by
   // changing quantity or tier; it only clears when nothing paid is selected.
@@ -164,6 +165,29 @@ export function useReserveForm(eventId: string) {
     setHoldExpiresAt((current) => current ?? holdDeadline());
   }, [hasPaidSelection]);
   const restartHold = () => setHoldExpiresAt(holdDeadline());
+
+  /**
+   * El total lo cotiza el servidor, que es quien cobra. Mientras la cotización
+   * carga se muestra el subtotal, para no enseñar un total que luego salta.
+   */
+  const quoteQuery = useQuery({
+    queryKey: eventKeys.quote(
+      eventId,
+      entryType?.id ?? null,
+      quantity,
+      donationAllowed ? donationCents : 0,
+    ),
+    queryFn: () =>
+      getEventQuote(eventId, {
+        entryTypeId: entryType?.id ?? null,
+        quantity,
+        donationCents: donationAllowed ? donationCents : 0,
+      }),
+    enabled: Boolean(eventId) && Boolean(entryType) && !isFree,
+    staleTime: 60_000,
+  });
+  const serviceChargeCents = quoteQuery.data?.serviceChargeCents ?? 0;
+  const totalCents = quoteQuery.data?.totalCents ?? subtotalCents;
 
   const resourceQuery = useQuery({
     queryKey: eventKeys.resources(eventId),
@@ -356,6 +380,8 @@ export function useReserveForm(eventId: string) {
     setDonation,
     ticketsCents,
     donationCents,
+    subtotalCents,
+    serviceChargeCents,
     totalCents,
     holdExpiresAt,
     restartHold,

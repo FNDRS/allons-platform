@@ -114,6 +114,41 @@ export function getEvent(id: string) {
   });
 }
 
+/** Lo que costaría una compra, con el recargo que calcula el servidor. */
+export interface EventQuote {
+  feeMode: "provider_absorbs" | "buyer_pays_gateway" | "buyer_pays_all";
+  quantity: number;
+  unitPriceCents: number;
+  /** Boletos más aporte, el precio que publicó el comercio. */
+  subtotalCents: number;
+  /** Cargo agregado al total del comprador. Cero cuando lo absorbe el comercio. */
+  serviceChargeCents: number;
+  /** Lo que se le cobra a la tarjeta. */
+  totalCents: number;
+}
+
+/**
+ * El total lo calcula el servidor, no la web.
+ *
+ * La pasarela cobra su tasa sobre la captura completa, recargo incluido, así
+ * que sumar un porcentaje plano aquí daría una cifra distinta de la que se
+ * cobra. Una sola fórmula, del lado que cobra.
+ */
+export function getEventQuote(
+  id: string,
+  params: { entryTypeId?: string | null; quantity: number; donationCents: number },
+) {
+  const query = new URLSearchParams({
+    quantity: String(params.quantity),
+    donationCents: String(params.donationCents),
+  });
+  if (params.entryTypeId) query.set("entryTypeId", params.entryTypeId);
+  return apiFetch<EventQuote>(
+    `/events/${encodeURIComponent(id)}/quote?${query.toString()}`,
+    { auth: false },
+  );
+}
+
 export function getEventResources(id: string) {
   return apiFetch<{ groups: PublicResourceGroup[] }>(
     `/events/${encodeURIComponent(id)}/resources`,
@@ -125,6 +160,12 @@ export const eventKeys = {
   list: ["events"] as const,
   detail: (id: string) => ["events", id] as const,
   resources: (id: string) => ["events", id, "resources"] as const,
+  quote: (
+    id: string,
+    entryTypeId: string | null,
+    quantity: number,
+    donationCents: number,
+  ) => ["events", id, "quote", entryTypeId ?? "any", quantity, donationCents] as const,
 };
 
 export function isEntryTypeOnSale(type: EventEntryType, now = Date.now()) {
