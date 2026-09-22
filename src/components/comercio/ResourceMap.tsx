@@ -158,7 +158,9 @@ function SeatList({ group }: { group: ProviderResourceGroup }) {
             <p className="truncate text-[14px] font-semibold tracking-tight">
               {unit.ticket?.holderName ?? "Sin nombre"}
             </p>
-            <p className="font-mono text-[12px] tracking-wide text-white/40">{unit.ticket?.code}</p>
+            {unit.ticket?.code ? (
+              <p className="font-mono text-[12px] tracking-wide text-white/40">{unit.ticket.code}</p>
+            ) : null}
           </div>
           <p className="shrink-0 text-[15px] font-bold tracking-tight">{unit.label}</p>
         </li>
