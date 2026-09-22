@@ -52,6 +52,9 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   }
 
   const when = formatEventWhen(ticket.event?.startsAt ?? null);
+  const eventTitle = ticket.event?.title ?? ticket.title;
+  const typeName = ticket.ticketTypeName?.trim() || null;
+  const showType = Boolean(typeName && typeName !== eventTitle);
 
   return (
     <div className="flex flex-col gap-8">
@@ -70,8 +73,13 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
           Tu pase
         </p>
         <h1 className="mt-2 break-words text-[26px] font-bold leading-[1.05] tracking-[-0.035em] sm:text-[36px]">
-          {ticket.event?.title ?? ticket.title}
+          {eventTitle}
         </h1>
+        {showType ? (
+          <p className="mt-2 text-[16px] font-semibold tracking-tight text-white/72">
+            {typeName}
+          </p>
+        ) : null}
         {ticket.holderName ? (
           <p className="mt-2 text-[15px] text-white/50">{ticket.holderName}</p>
         ) : null}

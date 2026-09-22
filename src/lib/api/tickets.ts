@@ -21,6 +21,8 @@ export interface TicketListItem {
   attendeeCount: number;
   holderName?: string | null;
   holderEmail?: string | null;
+  /** Nombre de la entrada comprada, no el del evento. */
+  ticketTypeName?: string | null;
   tab: "eventos" | "clases";
   eventId?: string | null;
   event?: TicketEventInfo | null;

@@ -22,8 +22,8 @@ export function TicketCard({
   const time = formatTicketTime(event?.startsAt ?? null);
   const ticketsLabel =
     ticket.attendeeCount === 1 ? "1 ticket" : `${ticket.attendeeCount} tickets`;
-  const typeLabel =
-    ticket.title && ticket.title !== title ? ticket.title : null;
+  const typeName = ticket.ticketTypeName?.trim() || null;
+  const typeLabel = typeName && typeName !== title ? typeName : null;
   const handle = event?.provider?.handle
     ? `@${event.provider.handle.replace(/^@/, "")}`
     : event?.provider?.name ?? null;
