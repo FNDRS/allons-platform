@@ -17,7 +17,6 @@ import {
   EventMeta,
   KitPickupCard,
   RefundPolicyNote,
-  ResourcePreviewCard,
 } from "./EventDetailSections";
 
 export function EventDetailView({
@@ -71,7 +70,6 @@ export function EventDetailView({
         <>
           <EntryTypesCard types={event.entryTypes ?? []} />
           <EventDescription text={event.description} />
-          <ResourcePreviewCard groups={event.resourceGroups ?? []} />
           <KitPickupCard info={event.kitPickupInfo} />
           <RefundPolicyNote event={event} />
         </>
