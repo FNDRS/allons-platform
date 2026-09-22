@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Banknote,
   CalendarDays,
@@ -38,7 +39,15 @@ export function ActivityFeed({
 }) {
   return (
     <section>
-      <SectionTitle>Actividad</SectionTitle>
+      <SectionTitle
+        action={
+          <Link href="/comercio/actividades" className="text-[12px] font-semibold text-white/45 transition hover:text-white">
+            Ver todas
+          </Link>
+        }
+      >
+        Actividad
+      </SectionTitle>
       {loading ? (
         <Card className="flex flex-col gap-3">
           {Array.from({ length: 4 }).map((_, index) => (
@@ -58,7 +67,8 @@ export function ActivityFeed({
             {rows.map((row) => {
               const Icon = ICON[row.type] ?? CalendarDays;
               return (
-                <li key={row.id} className="flex items-center gap-3.5 px-5 py-3.5">
+                <li key={row.id}>
+                  <Link href={`/comercio/actividades/${row.id}`} className="flex items-center gap-3.5 px-5 py-3.5 transition hover:bg-white/[0.03]">
                   <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/[0.05] text-white/50">
                     <Icon className="size-3.5" strokeWidth={1.5} aria-hidden />
                   </span>
@@ -71,6 +81,7 @@ export function ActivityFeed({
                   >
                     {formatRelativeTime(row.date)}
                   </time>
+                  </Link>
                 </li>
               );
             })}

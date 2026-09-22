@@ -11,7 +11,7 @@ import { useProviderLive } from "@/components/comercio/ProviderLive";
 export function useProviderActivity(enabled: boolean, limit = 12) {
   const { live } = useProviderLive();
   return useQuery({
-    queryKey: providerKeys.activity,
+    queryKey: [...providerKeys.activity, limit],
     queryFn: () => getProviderActivity(limit),
     enabled,
     refetchInterval: live ? false : 60_000,

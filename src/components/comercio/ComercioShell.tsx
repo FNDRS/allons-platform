@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { ArrowUpRight, LayoutDashboard, Smartphone, Users, Wallet } from "lucide-react";
+import { Activity, ArrowUpRight, LayoutDashboard, Smartphone, Users, Wallet } from "lucide-react";
 import { AllonsLogo } from "@/components/AllonsLogo";
 import { useProviderRealtime } from "@/hooks/useProviderRealtime";
 import { isComercioUser } from "@/lib/role";
@@ -16,12 +16,14 @@ import { PageTransition } from "@/components/app/PageTransition";
 
 const NAV = [
   { href: "/comercio", label: "Resumen", Icon: LayoutDashboard, exact: false },
+  { href: "/comercio/actividades", label: "Actividades", Icon: Activity, exact: false },
   { href: "/comercio/finanzas", label: "Finanzas", Icon: Wallet, exact: true },
   { href: "/comercio/staff", label: "Personal", Icon: Users, exact: true },
 ];
 
 const TABS = [
   { href: "/comercio", label: "Resumen", Icon: LayoutDashboard },
+  { href: "/comercio/actividades", label: "Actividad", Icon: Activity },
   { href: "/comercio/finanzas", label: "Finanzas", Icon: Wallet },
   { href: "/comercio/staff", label: "Personal", Icon: Users },
 ];
