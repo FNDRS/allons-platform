@@ -64,7 +64,10 @@ export function PaymentView({ orderId }: { orderId: string }) {
   const eventId = params.get("event");
   // Clinpays devuelve al comprador aquí con el resultado de su formulario.
   // La orden manda igual (la confirma el webhook), pero la página ya sabe
-  // qué decir mientras tanto y no vuelve a abrir el pago.
+  // qué decir mientras tanto. Con un resultado en mano el formulario no se
+  // vuelve a ofrecer, ni tras un rechazo: ese intento pertenece a una orden
+  // que el webhook está por cerrar, y pagar en él sería pagar una orden
+  // cerrada. Un nuevo intento es una compra nueva desde el evento.
   const estado = params.get("estado");
   const returnedOk = estado === "exito";
   const returnedFailed = estado === "error";
@@ -184,7 +187,7 @@ export function PaymentView({ orderId }: { orderId: string }) {
           {returnedOk
             ? "Clinpays aprobó el cargo. En cuanto nos confirme, tu ticket aparece aquí."
             : returnedFailed
-              ? "Clinpays no aprobó el cargo y no se cobró nada. Puedes volver a abrir el pago con otra tarjeta."
+              ? "Clinpays no aprobó el cargo y no se cobró nada. En cuanto nos lo confirme podrás intentarlo de nuevo desde el evento."
               : "El pago es de Paygate (Clinpays). Se abre en su página; aquí confirmamos el ticket."}
         </p>
       </div>
@@ -201,15 +204,13 @@ export function PaymentView({ orderId }: { orderId: string }) {
             El enlace de pago vence en <span className="font-semibold text-white">{countdown}</span>
           </p>
         ) : null}
-        {link ? (
+        {estado ? null : link ? (
           <Button size="lg" full onClick={() => setCheckoutOpen(true)}>
-            {checkoutOpen ? "Pago en curso" : returnedFailed ? "Volver a abrir el pago" : "Abrir pago"}
+            {checkoutOpen ? "Pago en curso" : "Abrir pago"}
           </Button>
-        ) : returnedOk ? null : (
+        ) : (
           <p className="text-sm text-amber-200">
-            {returnedFailed
-              ? "Vuelve al evento para iniciar la compra otra vez."
-              : "No encontramos el enlace de pago. Vuelve al evento e inicia la compra otra vez."}
+            No encontramos el enlace de pago. Vuelve al evento e inicia la compra otra vez.
           </p>
         )}
       </Card>
