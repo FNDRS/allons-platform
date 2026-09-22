@@ -15,6 +15,7 @@ import { ReserveBikePicker } from "./ReserveBikePicker";
 import {
   DonationField,
   EntryTypePicker,
+  GovernmentIdField,
   HolderCard,
   QuantityStepper,
   ReserveSummary,
@@ -35,6 +36,8 @@ export function ReserveView({ eventId }: { eventId: string }) {
   // page: the buyer is about to be offered the in-app card.
   const submitting = form.submitting || checkout.submitting || (!form.isFree && checkout.loading);
   const error = form.error ?? checkout.error;
+  // Un paso más cuando la pasarela pide identidad; corre la numeración de abajo.
+  const idStep = form.needsGovernmentId ? 1 : 0;
 
   function onPay() {
     if (!payInApp) {
@@ -183,18 +186,27 @@ export function ReserveView({ eventId }: { eventId: string }) {
         ) : null}
       </section>
 
+      {form.needsGovernmentId ? (
+        <GovernmentIdField
+          value={form.governmentId}
+          onChange={form.setGovernmentId}
+          step={4 + (form.hasResourceGroups ? 1 : 0)}
+          showError={form.touched && !form.governmentIdValid}
+        />
+      ) : null}
+
       {form.donationAllowed ? (
         <DonationField
           value={form.donation}
           onChange={form.setDonation}
-          step={4 + (form.hasResourceGroups ? 1 : 0)}
+          step={4 + (form.hasResourceGroups ? 1 : 0) + idStep}
         />
       ) : null}
 
       <section>
         <StepHeading
           n={
-            (form.donationAllowed ? 5 : 4) + (form.hasResourceGroups ? 1 : 0)
+            (form.donationAllowed ? 5 : 4) + (form.hasResourceGroups ? 1 : 0) + idStep
           }
         >
           Tu compra
@@ -212,7 +224,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
 
       {!form.isFree ? (
         <PaymentMethodStep
-          step={(form.donationAllowed ? 6 : 5) + (form.hasResourceGroups ? 1 : 0)}
+          step={(form.donationAllowed ? 6 : 5) + (form.hasResourceGroups ? 1 : 0) + idStep}
           checkout={checkout}
         />
       ) : null}

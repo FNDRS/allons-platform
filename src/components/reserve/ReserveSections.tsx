@@ -387,6 +387,54 @@ export function DonationField({
   );
 }
 
+/**
+ * Identidad de quien paga. Clinpays no abre su formulario sin ella, así que se
+ * pide aquí, antes de salir al pago, y no como un rechazo después.
+ */
+export function GovernmentIdField({
+  value,
+  onChange,
+  step,
+  showError,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  step: number;
+  /** Tras intentar pagar con el campo vacío o mal escrito. */
+  showError: boolean;
+}) {
+  return (
+    <section>
+      <StepHeading n={step}>Tu identidad</StepHeading>
+      <Shell>
+        <p className="text-[14px] leading-6 text-white/50">
+          Clinpays pide el número de identidad de quien paga para abrir el
+          formulario. Se manda a la pasarela; Allons no lo guarda.
+        </p>
+        <div className="mt-3">
+          <Input
+            inputMode="text"
+            autoComplete="off"
+            autoCapitalize="characters"
+            placeholder="0801199912345"
+            maxLength={30}
+            value={value}
+            aria-label="Número de identidad"
+            aria-invalid={showError}
+            onChange={(event) => onChange(event.target.value)}
+            className="max-w-xs"
+          />
+          {showError ? (
+            <p className="mt-2 text-sm text-red-300">
+              Escríbelo tal como aparece en el documento.
+            </p>
+          ) : null}
+        </div>
+      </Shell>
+    </section>
+  );
+}
+
 export function ReserveSummary({
   quantity,
   typeName,

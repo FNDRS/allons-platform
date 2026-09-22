@@ -62,6 +62,12 @@ export function PaymentView({ orderId }: { orderId: string }) {
     setLink(trustedLink(orderId, params.get("link")));
   }, [orderId, params]);
   const eventId = params.get("event");
+  // Clinpays devuelve al comprador aquí con el resultado de su formulario.
+  // La orden manda igual (la confirma el webhook), pero la página ya sabe
+  // qué decir mientras tanto y no vuelve a abrir el pago.
+  const estado = params.get("estado");
+  const returnedOk = estado === "exito";
+  const returnedFailed = estado === "error";
   const { order, phase, error, resume } = usePaymentOrder(ready ? orderId : "");
   const countdown = useCountdown(order?.expiresAt);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -69,7 +75,7 @@ export function PaymentView({ orderId }: { orderId: string }) {
   const celebrated = useRef(false);
 
   useEffect(() => {
-    if (!link || opened.current) return;
+    if (!link || opened.current || estado) return;
     if (phase !== "waiting" && phase !== "still_pending") return;
     opened.current = true;
     setCheckoutOpen(true);
@@ -166,10 +172,20 @@ export function PaymentView({ orderId }: { orderId: string }) {
 
       <div>
         <h1 className="break-words text-[28px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[40px]">
-          {phase === "still_pending" ? "Tu pago sigue pendiente" : "Completa tu pago"}
+          {returnedOk
+            ? "Confirmando tu pago"
+            : returnedFailed
+              ? "El pago no se completó"
+              : phase === "still_pending"
+                ? "Tu pago sigue pendiente"
+                : "Completa tu pago"}
         </h1>
         <p className="mt-2 text-sm text-muted">
-          El pago es de Paygate (Clinpays). Se abre en su página; aquí confirmamos el ticket.
+          {returnedOk
+            ? "Clinpays aprobó el cargo. En cuanto nos confirme, tu ticket aparece aquí."
+            : returnedFailed
+              ? "Clinpays no aprobó el cargo y no se cobró nada. Puedes volver a abrir el pago con otra tarjeta."
+              : "El pago es de Paygate (Clinpays). Se abre en su página; aquí confirmamos el ticket."}
         </p>
       </div>
 
@@ -187,11 +203,13 @@ export function PaymentView({ orderId }: { orderId: string }) {
         ) : null}
         {link ? (
           <Button size="lg" full onClick={() => setCheckoutOpen(true)}>
-            {checkoutOpen ? "Pago en curso" : "Abrir pago"}
+            {checkoutOpen ? "Pago en curso" : returnedFailed ? "Volver a abrir el pago" : "Abrir pago"}
           </Button>
-        ) : (
+        ) : returnedOk ? null : (
           <p className="text-sm text-amber-200">
-            No encontramos el enlace de pago. Vuelve al evento e inicia la compra otra vez.
+            {returnedFailed
+              ? "Vuelve al evento para iniciar la compra otra vez."
+              : "No encontramos el enlace de pago. Vuelve al evento e inicia la compra otra vez."}
           </p>
         )}
       </Card>
