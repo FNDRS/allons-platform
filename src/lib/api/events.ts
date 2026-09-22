@@ -133,6 +133,11 @@ export interface EventQuote {
   serviceChargeCents: number;
   /** Lo que se le cobra a la tarjeta. */
   totalCents: number;
+  /**
+   * Si el pago alojado necesita el número de identidad del comprador. Lo
+   * exige Clinpays cuando el cobro sale por su RedirectLink.
+   */
+  requiresGovernmentId?: boolean;
 }
 
 /**

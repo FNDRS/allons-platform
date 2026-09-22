@@ -6,6 +6,11 @@ import { displayNameOf, useAuth } from "@/components/app/AuthProvider";
 import { deriveReserveState, useEventDetail } from "@/hooks/useEventDetail";
 import { isApiError } from "@/lib/api/client";
 import {
+  GOVERNMENT_ID_REQUIRED_CODE,
+  formatGovernmentId,
+  isValidGovernmentId,
+} from "@/lib/governmentId";
+import {
   eventKeys,
   getEventQuote,
   getEventResources,
@@ -126,6 +131,10 @@ export function useReserveForm(eventId: string) {
   const [touched, setTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Identidad de quien paga. Clinpays la exige para abrir su formulario. */
+  const [governmentId, setGovernmentIdState] = useState("");
+  /** La API la pidió al iniciar: la cotización no lo sabía o cambió la pasarela. */
+  const [governmentIdDemanded, setGovernmentIdDemanded] = useState(false);
 
   const availableTypes = useMemo(() => {
     // Same gate as the detail CTA: a finished or sold-out event sells nothing,
@@ -268,6 +277,12 @@ export function useReserveForm(eventId: string) {
   });
   const serviceChargeCents = quoteQuery.data?.serviceChargeCents ?? 0;
   const totalCents = quoteQuery.data?.totalCents ?? subtotalCents;
+  // Clinpays no abre su formulario sin identidad. La cotización lo avisa de
+  // antemano; si fue la API quien lo pidió, el formulario lo recuerda.
+  const needsGovernmentId =
+    !isFree &&
+    (quoteQuery.data?.requiresGovernmentId === true || governmentIdDemanded);
+  const governmentIdValid = isValidGovernmentId(governmentId);
 
   const resourceQuery = useQuery({
     queryKey: eventKeys.resources(eventId, entryType?.id ?? null),
@@ -352,6 +367,10 @@ export function useReserveForm(eventId: string) {
       setError("Cada ticket necesita un correo distinto.");
       return null;
     }
+    if (needsGovernmentId && !governmentIdValid) {
+      setError("Escribe tu número de identidad para abrir el pago.");
+      return null;
+    }
     if (!valid) {
       setError(
         resources.missingGroupName
@@ -384,6 +403,7 @@ export function useReserveForm(eventId: string) {
       answers: draft.firstAnswers,
       ...(donationAllowed && donationCents > 0 ? { donationCents } : {}),
       resourceIds: resources.selectedIds.length ? resources.selectedIds : null,
+      ...(needsGovernmentId ? { governmentId: governmentId.trim() } : {}),
     };
   }
 
@@ -434,6 +454,11 @@ export function useReserveForm(eventId: string) {
         `/pagar/${encodeURIComponent(order.orderId)}?link=${encodeURIComponent(order.paymentLink)}&event=${encodeURIComponent(event.id)}`,
       );
     } catch (err) {
+      // La pasarela cambió de canal sin que la cotización lo dijera: se
+      // muestra el campo y el siguiente intento ya lo lleva.
+      if (isApiError(err) && err.code === GOVERNMENT_ID_REQUIRED_CODE) {
+        setGovernmentIdDemanded(true);
+      }
       setError(
         isApiError(err) ? err.message : "No pudimos crear la reserva. Intenta de nuevo.",
       );
@@ -478,6 +503,10 @@ export function useReserveForm(eventId: string) {
     onToggleResource: resources.toggle,
     hasResourceGroups: resources.hasGroups,
     missingGroupName: resources.missingGroupName,
+    needsGovernmentId,
+    governmentId,
+    governmentIdValid,
+    setGovernmentId: (value: string) => setGovernmentIdState(formatGovernmentId(value)),
     submit,
     preparePaidOrder,
     submitting,

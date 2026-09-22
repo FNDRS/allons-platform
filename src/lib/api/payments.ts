@@ -23,6 +23,12 @@ export interface InitiatePaymentInput {
   answers: AnswerInput[];
   donationCents?: number;
   resourceIds?: string[] | null;
+  /**
+   * Buyer's national id, forwarded to Clinpays when its RedirectLink opens
+   * the hosted form. The API never stores it and answers
+   * `government_id_required` when it is needed and missing.
+   */
+  governmentId?: string | null;
 }
 
 export interface InitiatePaymentResponse {
