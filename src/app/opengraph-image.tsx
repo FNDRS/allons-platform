@@ -42,34 +42,49 @@ function QrMark() {
             position: "absolute",
             left: 0,
             top: 0,
-            width: 36,
-            height: 36,
-            border: "8px solid #050505",
+            width: 38,
+            height: 38,
+            border: "7px solid #050505",
             borderRadius: 6,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
-        />
+        >
+          <div style={{ width: 12, height: 12, background: "#050505", borderRadius: 2 }} />
+        </div>
         <div
           style={{
             position: "absolute",
             right: 0,
             top: 0,
-            width: 36,
-            height: 36,
-            border: "8px solid #050505",
+            width: 38,
+            height: 38,
+            border: "7px solid #050505",
             borderRadius: 6,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
-        />
+        >
+          <div style={{ width: 12, height: 12, background: "#050505", borderRadius: 2 }} />
+        </div>
         <div
           style={{
             position: "absolute",
             left: 0,
             bottom: 0,
-            width: 36,
-            height: 36,
-            border: "8px solid #050505",
+            width: 38,
+            height: 38,
+            border: "7px solid #050505",
             borderRadius: 6,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
-        />
+        >
+          <div style={{ width: 12, height: 12, background: "#050505", borderRadius: 2 }} />
+        </div>
         <div
           style={{
             position: "absolute",
