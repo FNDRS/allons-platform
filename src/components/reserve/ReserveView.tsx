@@ -121,10 +121,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
 
         {form.holdExpiresAt ? (
           <div className="mt-5">
-            <HoldCountdown
-              expiresAt={form.holdExpiresAt}
-              onRestart={form.restartHold}
-            />
+            <HoldCountdown expiresAt={form.holdExpiresAt} />
           </div>
         ) : null}
       </header>

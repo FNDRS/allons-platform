@@ -49,7 +49,12 @@ function readStoredHold(eventId: string): string | null {
     const raw = window.sessionStorage.getItem(holdStorageKey(eventId));
     if (!raw) return null;
     const time = new Date(raw).getTime();
-    return Number.isFinite(time) ? new Date(time).toISOString() : null;
+    // An expired deadline is not a state to show. Coming back starts a new one.
+    if (!Number.isFinite(time) || time <= Date.now()) {
+      clearStoredHold(eventId);
+      return null;
+    }
+    return new Date(time).toISOString();
   } catch {
     return null;
   }
@@ -188,9 +193,9 @@ export function useReserveForm(eventId: string) {
   const subtotalCents = ticketsCents + (donationAllowed ? donationCents : 0);
 
   // The clock starts as soon as a paid ticket is selected and is not reset by
-  // changing quantity, tier, or a reload. It only clears when nothing paid is
-  // selected. The deadline is stored per event so a refresh cannot buy another
-  // 30 minutes; an expired deadline stays expired.
+  // changing quantity, tier, or a reload while it is still running. It only
+  // clears when nothing paid is selected. A deadline that already passed is
+  // dropped, so leaving and coming back starts a fresh 30 minutes.
   const [hold, setHold] = useState<{ eventId: string; expiresAt: string } | null>(
     null,
   );
@@ -223,11 +228,23 @@ export function useReserveForm(eventId: string) {
     });
   }, [selectionKnown, hasPaidSelection, paidTypesExist, entryTypeId, eventId]);
   const holdExpiresAt = hold?.eventId === eventId ? hold.expiresAt : null;
-  const restartHold = () => {
-    const expiresAt = holdDeadline();
-    writeStoredHold(eventId, expiresAt);
-    setHold({ eventId, expiresAt });
-  };
+
+  // The clock ran out on this visit. Leave the form and land on the event.
+  useEffect(() => {
+    if (!holdExpiresAt) return;
+    const remaining = new Date(holdExpiresAt).getTime() - Date.now();
+    if (!Number.isFinite(remaining)) return;
+    const leave = () => {
+      clearStoredHold(eventId);
+      router.replace(`/events/${encodeURIComponent(eventId)}`);
+    };
+    if (remaining <= 0) {
+      leave();
+      return;
+    }
+    const timer = window.setTimeout(leave, remaining);
+    return () => window.clearTimeout(timer);
+  }, [holdExpiresAt, eventId, router]);
 
   /**
    * El total lo cotiza el servidor, que es quien cobra. Mientras la cotización
@@ -456,7 +473,6 @@ export function useReserveForm(eventId: string) {
     serviceChargeCents,
     totalCents,
     holdExpiresAt,
-    restartHold,
     resourceGroups,
     selectedResourceByGroup: resources.selected,
     onToggleResource: resources.toggle,

@@ -1,39 +1,15 @@
 "use client";
 
 import { useCountdown } from "@/hooks/useCountdown";
-import { Button } from "@/components/ui/Button";
 
 /**
- * Shown as soon as a paid ticket is selected: how long the buyer has to
- * finish, then a nudge to start over once it runs out.
+ * How long the buyer has to finish. When it hits zero the form leaves for
+ * the event, so this only renders while time is left.
  */
-export function HoldCountdown({
-  expiresAt,
-  onRestart,
-}: {
-  expiresAt: string;
-  onRestart: () => void;
-}) {
+export function HoldCountdown({ expiresAt }: { expiresAt: string }) {
   const countdown = useCountdown(expiresAt);
 
-  if (countdown === null) {
-    return (
-      <div
-        role="alert"
-        className="flex flex-col gap-3 rounded-[24px] border border-red-500/25 bg-red-500/[0.08] px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div>
-          <p className="font-semibold text-red-200">Reserva vencida</p>
-          <p className="mt-0.5 text-sm text-white/60">
-            El tiempo para completar tu compra terminó.
-          </p>
-        </div>
-        <Button variant="secondary" size="sm" onClick={onRestart}>
-          Empezar de nuevo
-        </Button>
-      </div>
-    );
-  }
+  if (countdown === null) return null;
 
   const secondsLeft = Math.max(
     0,
