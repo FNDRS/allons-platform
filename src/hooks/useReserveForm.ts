@@ -38,6 +38,39 @@ function holdDeadline(): string {
   return new Date(Date.now() + HOLD_COUNTDOWN_MS).toISOString();
 }
 
+/** Same tab, including a reload. A fresh 30 minutes on refresh would be a way to stall. */
+function holdStorageKey(eventId: string) {
+  return `allons-hold:${eventId}`;
+}
+
+function readStoredHold(eventId: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(holdStorageKey(eventId));
+    if (!raw) return null;
+    const time = new Date(raw).getTime();
+    return Number.isFinite(time) ? new Date(time).toISOString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredHold(eventId: string, iso: string) {
+  try {
+    window.sessionStorage.setItem(holdStorageKey(eventId), iso);
+  } catch {
+    /* private mode: the in-memory clock still runs until the tab closes */
+  }
+}
+
+function clearStoredHold(eventId: string) {
+  try {
+    window.sessionStorage.removeItem(holdStorageKey(eventId));
+  } catch {
+    /* nothing to clear */
+  }
+}
+
 function emptyHolder(): HolderDraft {
   return { name: "", email: "", answers: {} };
 }
@@ -155,17 +188,46 @@ export function useReserveForm(eventId: string) {
   const subtotalCents = ticketsCents + (donationAllowed ? donationCents : 0);
 
   // The clock starts as soon as a paid ticket is selected and is not reset by
-  // changing quantity or tier; it only clears when nothing paid is selected.
-  const [holdExpiresAt, setHoldExpiresAt] = useState<string | null>(null);
+  // changing quantity, tier, or a reload. It only clears when nothing paid is
+  // selected. The deadline is stored per event so a refresh cannot buy another
+  // 30 minutes; an expired deadline stays expired.
+  const [hold, setHold] = useState<{ eventId: string; expiresAt: string } | null>(
+    null,
+  );
   const hasPaidSelection = Boolean(entryType) && !isFree;
+  const selectionKnown =
+    !detail.isLoading && !detail.isPlaceholderData && Boolean(event);
+  const paidTypesExist = availableTypes.some((type) => type.priceCents > 0);
   useEffect(() => {
-    if (!hasPaidSelection) {
-      setHoldExpiresAt(null);
+    if (!selectionKnown) return;
+    // The tier is chosen in another effect. Clearing here, before that lands,
+    // would drop the saved deadline and a reload would start 30 minutes again.
+    if (!entryTypeId) {
+      if (!paidTypesExist) {
+        setHold(null);
+        clearStoredHold(eventId);
+      }
       return;
     }
-    setHoldExpiresAt((current) => current ?? holdDeadline());
-  }, [hasPaidSelection]);
-  const restartHold = () => setHoldExpiresAt(holdDeadline());
+    if (!hasPaidSelection) {
+      setHold(null);
+      clearStoredHold(eventId);
+      return;
+    }
+    setHold((current) => {
+      if (current?.eventId === eventId) return current;
+      const stored = readStoredHold(eventId);
+      const expiresAt = stored ?? holdDeadline();
+      if (!stored) writeStoredHold(eventId, expiresAt);
+      return { eventId, expiresAt };
+    });
+  }, [selectionKnown, hasPaidSelection, paidTypesExist, entryTypeId, eventId]);
+  const holdExpiresAt = hold?.eventId === eventId ? hold.expiresAt : null;
+  const restartHold = () => {
+    const expiresAt = holdDeadline();
+    writeStoredHold(eventId, expiresAt);
+    setHold({ eventId, expiresAt });
+  };
 
   /**
    * El total lo cotiza el servidor, que es quien cobra. Mientras la cotización
