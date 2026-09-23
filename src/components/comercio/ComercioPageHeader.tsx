@@ -7,11 +7,13 @@ export function ComercioPageHeader({
   subtitle?: React.ReactNode;
 }) {
   return (
-    <div className="mb-8">
-      <h1 className="break-words text-[26px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[38px]">
+    <div className="mb-4">
+      <h1 className="break-words text-[26px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[32px]">
         {title}
       </h1>
-      {subtitle ? <p className="mt-2 text-[15px] text-muted">{subtitle}</p> : null}
+      {subtitle ? (
+        <p className="mt-1 text-[14px] text-muted">{subtitle}</p>
+      ) : null}
     </div>
   );
 }

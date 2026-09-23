@@ -71,7 +71,7 @@ export function ComercioDashboard() {
     });
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4">
       {dashboardLoading ? (
         <section>
           <SectionTitle>Totales</SectionTitle>
@@ -84,14 +84,20 @@ export function ComercioDashboard() {
       ) : dashboard ? (
         <section>
           <SectionTitle>Totales</SectionTitle>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <KpiTile label="Tickets vendidos" value={formatNumber(sold)} />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-7">
             <KpiTile
+              dense
+              label="Tickets vendidos"
+              value={formatNumber(sold)}
+            />
+            <KpiTile
+              dense
               label="Ingresos"
               value={formatHNL(dashboard.totals.net)}
               hint="Después del evento"
             />
             <KpiTile
+              dense
               label="Ocupación"
               value={
                 events.isLoading
@@ -107,6 +113,7 @@ export function ComercioDashboard() {
               }
             />
             <KpiTile
+              dense
               label="Escaneados"
               value={formatNumber(dashboard.totals.scans)}
               hint={
@@ -115,9 +122,8 @@ export function ComercioDashboard() {
                   : undefined
               }
             />
-          </div>
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <KpiTile
+              dense
               label="Cupos libres"
               value={
                 events.isLoading
@@ -128,11 +134,13 @@ export function ComercioDashboard() {
               }
             />
             <KpiTile
+              dense
               label="Promedio"
               value={average === null ? "Sin ventas" : formatHNL(average)}
               hint={average === null ? undefined : "Por ticket"}
             />
             <KpiTile
+              dense
               label="Próximo"
               value={
                 events.isLoading
@@ -165,11 +173,11 @@ export function ComercioDashboard() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Buscar un evento"
-          className="mb-4 h-12"
+          className="mb-3"
           actionLabel="Filtrar"
         />
         {events.isLoading ? (
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 4 }).map((_, index) => (
               <Skeleton
                 key={index}
@@ -192,7 +200,7 @@ export function ComercioDashboard() {
             }
           />
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {sorted.map((event) => (
               <ProviderEventCard key={event.id} event={event} />
             ))}

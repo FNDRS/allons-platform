@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Activity, ArrowUpRight, LayoutDashboard, Smartphone, Users, Wallet } from "lucide-react";
+import {
+  Activity,
+  ArrowUpRight,
+  LayoutDashboard,
+  Smartphone,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { AllonsLogo } from "@/components/AllonsLogo";
 import { useProviderRealtime } from "@/hooks/useProviderRealtime";
 import { isComercioUser } from "@/lib/role";
@@ -16,7 +23,12 @@ import { PageTransition } from "@/components/app/PageTransition";
 
 const NAV = [
   { href: "/comercio", label: "Resumen", Icon: LayoutDashboard, exact: false },
-  { href: "/comercio/actividades", label: "Actividades", Icon: Activity, exact: false },
+  {
+    href: "/comercio/actividades",
+    label: "Actividades",
+    Icon: Activity,
+    exact: false,
+  },
   { href: "/comercio/finanzas", label: "Finanzas", Icon: Wallet, exact: true },
   { href: "/comercio/staff", label: "Personal", Icon: Users, exact: true },
 ];
@@ -38,16 +50,23 @@ function isNavActive(pathname: string, href: string, exact: boolean) {
  * bar on phones, and a header with the account control. Pages render their
  * own heading (see `ComercioPageHeader`).
  */
-export function ComercioShellInner({ children }: { children: React.ReactNode }) {
+export function ComercioShellInner({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const [accountOpen, setAccountOpen] = useState(false);
 
   return (
     <div className="app-canvas min-h-dvh text-white lg:flex">
-      <aside className="hidden w-[248px] shrink-0 flex-col border-r border-border px-4 pb-6 pt-6 lg:sticky lg:top-0 lg:flex lg:h-dvh">
-        <Link href="/events" aria-label="Allons, ir a eventos" className="px-3">
-          <AllonsLogo className="h-auto w-[92px]" variant="orange" />
-        </Link>
+      <aside className="hidden w-[248px] shrink-0 flex-col border-r border-border px-4 pb-6 pt-5 lg:sticky lg:top-0 lg:flex lg:h-dvh">
+        <div className="flex items-center justify-between gap-3 px-3">
+          <Link href="/events" aria-label="Allons, ir a eventos">
+            <AllonsLogo className="h-auto w-[92px]" variant="orange" />
+          </Link>
+          <AccountButton onOpen={() => setAccountOpen(true)} />
+        </div>
         <p className="mt-2 px-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-dim">
           Comercio
         </p>
@@ -87,10 +106,17 @@ export function ComercioShellInner({ children }: { children: React.ReactNode }) 
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="glass sticky top-0 z-40 border-b border-border pt-[env(safe-area-inset-top)]">
+        <header className="glass sticky top-0 z-40 border-b border-border pt-[env(safe-area-inset-top)] lg:hidden">
           <div className="mx-auto flex h-16 w-full max-w-[1200px] items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
-            <Link href="/events" aria-label="Allons, ir a eventos" className="min-w-0 shrink-0 lg:hidden">
-              <AllonsLogo className="h-auto w-[72px] sm:w-[84px]" variant="orange" />
+            <Link
+              href="/events"
+              aria-label="Allons, ir a eventos"
+              className="min-w-0 shrink-0 lg:hidden"
+            >
+              <AllonsLogo
+                className="h-auto w-[72px] sm:w-[84px]"
+                variant="orange"
+              />
             </Link>
             <p className="hidden min-w-0 truncate text-[13px] font-semibold text-dim lg:block">
               allonsapp.com/comercio
@@ -101,7 +127,7 @@ export function ComercioShellInner({ children }: { children: React.ReactNode }) 
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-32 pt-6 sm:px-6 sm:pt-8 lg:px-8">
+        <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-28 pt-4 sm:px-6 md:pb-5 md:pt-5 lg:px-8 lg:pt-5">
           <PageTransition>{children}</PageTransition>
         </main>
 
