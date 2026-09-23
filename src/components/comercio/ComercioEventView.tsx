@@ -83,7 +83,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
           href="/comercio"
           className="inline-flex w-fit items-center gap-1.5 text-[13px] font-semibold text-white/45 transition hover:text-white"
         >
-          <ArrowLeft className="size-4" /> Resumen
+          <ArrowLeft className="size-4" /> Dashboard
         </Link>
 
         <div className="flex flex-wrap items-start justify-between gap-4">

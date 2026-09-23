@@ -22,7 +22,7 @@ import { isComercioNavActive } from "@/components/app/AppNav";
 import { PageTransition } from "@/components/app/PageTransition";
 
 const NAV = [
-  { href: "/comercio", label: "Resumen", Icon: LayoutDashboard, exact: false },
+  { href: "/comercio", label: "Dashboard", Icon: LayoutDashboard, exact: false },
   {
     href: "/comercio/actividades",
     label: "Actividades",
@@ -34,7 +34,7 @@ const NAV = [
 ];
 
 const TABS = [
-  { href: "/comercio", label: "Resumen", Icon: LayoutDashboard },
+  { href: "/comercio", label: "Dashboard", Icon: LayoutDashboard },
   { href: "/comercio/actividades", label: "Actividad", Icon: Activity },
   { href: "/comercio/finanzas", label: "Finanzas", Icon: Wallet },
   { href: "/comercio/staff", label: "Personal", Icon: Users },
@@ -104,7 +104,7 @@ export function ComercioShellInner({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="glass sticky top-0 z-40 border-b border-border pt-[env(safe-area-inset-top)]">
-          <div className="mx-auto flex h-16 w-full max-w-[1200px] items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex h-12 w-full max-w-[1200px] items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
             <Link
               href="/events"
               aria-label="Allons, ir a eventos"
@@ -124,7 +124,7 @@ export function ComercioShellInner({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-28 pt-6 sm:px-6 sm:pt-8 md:pb-10 lg:px-8">
+        <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-24 pt-4 sm:px-6 md:pb-8 lg:px-8">
           <PageTransition>{children}</PageTransition>
         </main>
 

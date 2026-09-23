@@ -71,7 +71,7 @@ export function ComercioDashboard() {
     });
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {dashboardLoading ? (
         <section>
           <SectionTitle>Totales</SectionTitle>

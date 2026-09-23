@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ComercioPage() {
   return (
     <>
-      <ComercioPageHeader title="Resumen" subtitle="Ventas, asistentes y saldo de tus eventos." />
+      <ComercioPageHeader title="Dashboard" subtitle="Ventas, asistentes y saldo de tus eventos." />
       <ComercioDashboard />
     </>
   );
