@@ -17,11 +17,10 @@ export default function NotFoundPage() {
           Esta página no existe.
         </h1>
         <p className="mt-5 max-w-md text-base leading-7 tracking-tight text-white/58 sm:text-lg">
-          El enlace pudo cambiar o estar incompleto. Vuelve al inicio para unirte
-          a la lista de espera de Allons.
+          El enlace pudo cambiar o estar incompleto. Vuelve a los eventos.
         </p>
         <Link
-          href="/"
+          href="/events"
           className={`mt-9 inline-flex items-center justify-center px-7 py-4 text-sm ${glassCtaClass}`}
         >
           Volver al inicio
