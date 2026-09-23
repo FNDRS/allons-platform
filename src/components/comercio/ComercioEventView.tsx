@@ -14,6 +14,7 @@ import {
 import { formatCardDay, formatCardTime, formatHNL, formatNumber } from "@/lib/format";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { glassCtaClass } from "@/components/ui/cta";
+import { ShareEventButton } from "./ShareEventButton";
 import { PaymentsTable, TicketTypeTable } from "./EventTables";
 import { HourlySalesChart } from "./HourlySalesChart";
 import { KpiTile } from "./KpiTile";
@@ -110,13 +111,16 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
               ) : null}
             </div>
           </div>
-          <Link
-            href={`/events/${encodeURIComponent(eventId)}`}
-            className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-1.5 px-4 text-[13px] sm:w-auto ${glassCtaClass}`}
-          >
-            Ver página pública
-            <ArrowUpRight className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
-          </Link>
+          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+            <ShareEventButton eventId={eventId} title={data.title} />
+            <Link
+              href={`/events/${encodeURIComponent(eventId)}`}
+              className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-1.5 px-4 text-[13px] sm:w-auto ${glassCtaClass}`}
+            >
+              Ver página pública
+              <ArrowUpRight className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
+            </Link>
+          </div>
         </div>
       </div>
 

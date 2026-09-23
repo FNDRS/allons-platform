@@ -20,6 +20,7 @@ import {
   formatNumber,
 } from "@/lib/format";
 import { glassCtaClass } from "@/components/ui/cta";
+import { Progress } from "@/components/ui/Stat";
 
 const STATUS: Record<string, string> = {
   published: "Publicado",
@@ -38,10 +39,6 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
     event.capacity > 0
       ? `${formatNumber(event.ticketsSold)} / ${formatNumber(event.capacity)}`
       : formatNumber(event.ticketsSold);
-  const fill =
-    event.capacity > 0
-      ? Math.min(100, Math.round((event.ticketsSold / event.capacity) * 100))
-      : 0;
 
   return (
     <Link
@@ -88,11 +85,8 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
         </div>
 
         {event.capacity > 0 ? (
-          <div
-            className="mt-4 h-px w-full overflow-hidden rounded-full bg-white/[0.08]"
-            aria-hidden
-          >
-            <div className="h-full bg-white/40" style={{ width: `${fill}%` }} />
+          <div className="mt-4">
+            <Progress value={event.ticketsSold} max={event.capacity} />
           </div>
         ) : (
           <div className="mt-4 h-px w-full bg-white/[0.06]" aria-hidden />

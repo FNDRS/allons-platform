@@ -3,6 +3,7 @@ import type { ProviderPaymentRow, ProviderTicketType } from "@/lib/api/provider"
 import { formatCents, formatDateTime, formatHNL, formatNumber } from "@/lib/format";
 import { SectionTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/States";
+import { Progress } from "@/components/ui/Stat";
 
 export function TicketTypeTable({ types }: { types: ProviderTicketType[] }) {
   return (
@@ -13,10 +14,6 @@ export function TicketTypeTable({ types }: { types: ProviderTicketType[] }) {
       ) : (
         <div className="flex flex-col gap-3">
           {types.map((type) => {
-            const fill =
-              type.total > 0
-                ? Math.min(100, Math.round((type.sold / type.total) * 100))
-                : 0;
             return (
               <article
                 key={type.id}
@@ -47,11 +44,8 @@ export function TicketTypeTable({ types }: { types: ProviderTicketType[] }) {
                   </div>
                 </div>
                 {type.total > 0 ? (
-                  <div
-                    className="mt-4 h-px w-full overflow-hidden rounded-full bg-white/[0.08]"
-                    aria-hidden
-                  >
-                    <div className="h-full bg-white/40" style={{ width: `${fill}%` }} />
+                  <div className="mt-4">
+                    <Progress value={type.sold} max={type.total} />
                   </div>
                 ) : null}
               </article>

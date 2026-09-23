@@ -35,30 +35,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       .filter(Boolean)
       .join(" · ") || GENERIC_DESCRIPTION;
 
-  const image = event?.coverImageUrl
-    ? { url: event.coverImageUrl, alt: event.title }
-    : {
-        url: `${SITE_URL}/opengraph-image`,
-        alt: "Allons Eventos sin fricción",
-      };
-
   return {
     title: event ? event.title : "Evento",
     description,
     alternates: {
       canonical: path,
     },
+    // The image comes from events/[id]/opengraph-image so WhatsApp and
+    // Instagram get the event banner, not the site card or a raw cover crop.
     openGraph: {
       title,
       description,
       url: `${SITE_URL}${path}`,
-      images: [{ ...image, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [image.url],
     },
   };
 }
