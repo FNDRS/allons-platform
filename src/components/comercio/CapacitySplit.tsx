@@ -28,21 +28,23 @@ export function CapacitySplit({
       {loading ? (
         <Skeleton className="h-40" />
       ) : capacity === 0 ? (
-        <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
-          <p className="text-[14px] text-white/50">
+        <div className="rounded-[22px] bg-white/[0.04] px-4 py-3.5 ring-1 ring-inset ring-white/[0.08]">
+          <p className="text-[15px] text-white/50">
             Estos eventos no tienen cupo definido.
           </p>
         </div>
       ) : (
-        <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
-          <p className="text-[28px] font-bold leading-none tracking-[-0.03em] tabular-nums sm:text-[32px]">
-            {soldPct}%
-          </p>
-          <p className="mt-2 text-[13px] text-white/50">
-            {formatNumber(sold)} vendidos de {formatNumber(capacity)}
-          </p>
+        <div className="rounded-[22px] bg-white/[0.04] px-4 py-4 ring-1 ring-inset ring-white/[0.08]">
+          <div className="flex items-end justify-between gap-3">
+            <p className="text-[34px] font-bold leading-none tracking-[-0.04em] tabular-nums">
+              {soldPct}%
+            </p>
+            <p className="pb-1 text-[13px] text-white/40">
+              {formatNumber(sold)} de {formatNumber(capacity)}
+            </p>
+          </div>
           <div
-            className="mt-4 flex h-2 w-full overflow-hidden rounded-full bg-white/[0.08]"
+            className="mt-4 flex h-[3px] w-full overflow-hidden rounded-full bg-white/[0.08]"
             role="img"
             aria-label={`${soldPct}% de los cupos ya se vendió`}
           >
@@ -51,20 +53,16 @@ export function CapacitySplit({
               style={{ width: `${soldPct}%` }}
             />
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-2 border-t border-white/[0.06] pt-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
-                Vendidos
-              </p>
-              <p className="mt-1 text-[18px] font-semibold tabular-nums">
+              <p className="text-[12px] font-medium text-white/40">Vendidos</p>
+              <p className="mt-0.5 text-[17px] font-semibold tabular-nums">
                 {formatNumber(sold)}
               </p>
             </div>
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
-                Libres
-              </p>
-              <p className="mt-1 text-[18px] font-semibold tabular-nums">
+            <div className="border-l border-white/[0.08] pl-4">
+              <p className="text-[12px] font-medium text-white/40">Libres</p>
+              <p className="mt-0.5 text-[17px] font-semibold tabular-nums">
                 {formatNumber(free)}
               </p>
             </div>

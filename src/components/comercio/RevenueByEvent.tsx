@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import type { ProviderEventListItem } from "@/lib/api/provider";
 import { formatHNL, formatNumber } from "@/lib/format";
 import { SectionTitle } from "@/components/ui/Card";
@@ -30,43 +31,54 @@ export function RevenueByEvent({
           className="py-10"
         />
       ) : (
-        <div className="flex flex-col gap-3 rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
+        <ul className="overflow-hidden rounded-[22px] bg-white/[0.04] ring-1 ring-inset ring-white/[0.08]">
           {rows.map((event) => {
             const share =
               total > 0 ? Math.round((event.revenue / total) * 100) : 0;
-            const width = Math.max(4, Math.round((event.revenue / max) * 100));
+            const width = Math.max(8, Math.round((event.revenue / max) * 100));
             return (
-              <Link
+              <li
                 key={event.id}
-                href={`/comercio/events/${encodeURIComponent(event.id)}`}
-                className="group block"
+                className="border-b border-white/[0.06] last:border-b-0"
               >
-                <div className="flex items-baseline justify-between gap-3">
-                  <p className="min-w-0 truncate text-[14px] font-semibold tracking-tight group-hover:text-white">
-                    {event.title}
-                  </p>
-                  <p className="shrink-0 text-[14px] font-semibold tabular-nums">
-                    {formatHNL(event.revenue)}
-                  </p>
-                </div>
-                <p className="mt-0.5 text-[12px] text-white/45">
-                  {formatNumber(event.ticketsSold)}{" "}
-                  {event.ticketsSold === 1 ? "ticket" : "tickets"} · {share}%
-                  del total
-                </p>
-                <div
-                  className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.08]"
-                  aria-hidden
+                <Link
+                  href={`/comercio/events/${encodeURIComponent(event.id)}`}
+                  className="block px-4 py-3.5 transition active:bg-white/[0.05]"
                 >
+                  <div className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[16px] font-semibold tracking-tight">
+                        {event.title}
+                      </p>
+                      <p className="mt-0.5 text-[13px] text-white/40">
+                        {formatNumber(event.ticketsSold)}{" "}
+                        {event.ticketsSold === 1 ? "ticket" : "tickets"} ·{" "}
+                        {share}%
+                      </p>
+                    </div>
+                    <p className="shrink-0 text-[16px] font-semibold tabular-nums tracking-tight">
+                      {formatHNL(event.revenue)}
+                    </p>
+                    <ChevronRight
+                      className="size-4 shrink-0 text-white/25"
+                      strokeWidth={2}
+                      aria-hidden
+                    />
+                  </div>
                   <div
-                    className="h-full rounded-full bg-accent"
-                    style={{ width: `${width}%` }}
-                  />
-                </div>
-              </Link>
+                    className="mt-3 h-[3px] w-full overflow-hidden rounded-full bg-white/[0.08]"
+                    aria-hidden
+                  >
+                    <div
+                      className="h-full rounded-full bg-accent"
+                      style={{ width: `${width}%` }}
+                    />
+                  </div>
+                </Link>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </section>
   );

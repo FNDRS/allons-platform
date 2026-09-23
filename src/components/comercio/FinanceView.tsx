@@ -5,14 +5,15 @@ import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useProviderLive } from "./ProviderLive";
 import { listProviderEvents, providerKeys } from "@/lib/api/provider";
 import { formatHNL, formatNumber } from "@/lib/format";
-import { SectionTitle } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/States";
 import { CapacitySplit } from "./CapacitySplit";
-import { KpiTile } from "./KpiTile";
 import { RecentSales } from "./RecentSales";
 import { RevenueByEvent } from "./RevenueByEvent";
 
-/** The deposit, and the two figures that explain it. */
+const GROUP =
+  "overflow-hidden rounded-[22px] bg-white/[0.04] ring-1 ring-inset ring-white/[0.08]";
+
+/** One balance, then the two numbers that explain it. Reads like a wallet screen. */
 export function FinanceBalances({
   available,
   soldTickets,
@@ -26,27 +27,34 @@ export function FinanceBalances({
 }) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {Array.from({ length: 3 }).map((_, index) => (
-          <Skeleton key={index} className="h-28" />
-        ))}
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-16 w-48" />
+        <Skeleton className="h-[72px]" />
       </div>
     );
   }
   const average = soldTickets > 0 ? net / soldTickets : null;
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-      <KpiTile
-        label="Por depositar"
-        value={formatHNL(available)}
-        hint="Después del evento"
-      />
-      <KpiTile label="Tickets vendidos" value={formatNumber(soldTickets)} />
-      <KpiTile
-        label="Promedio"
-        value={average === null ? "Sin ventas" : formatHNL(average)}
-        hint={average === null ? undefined : "Por ticket"}
-      />
+    <div>
+      <p className="text-[13px] font-medium text-white/45">Por depositar</p>
+      <p className="mt-1 text-[40px] font-bold leading-none tracking-[-0.045em] tabular-nums sm:text-[52px]">
+        {formatHNL(available)}
+      </p>
+      <p className="mt-2 text-[13px] text-white/40">Después del evento</p>
+      <div className={`mt-5 grid grid-cols-2 ${GROUP}`}>
+        <div className="px-4 py-3.5">
+          <p className="text-[12px] font-medium text-white/40">Tickets</p>
+          <p className="mt-0.5 text-[20px] font-semibold tabular-nums tracking-tight">
+            {formatNumber(soldTickets)}
+          </p>
+        </div>
+        <div className="border-l border-white/[0.08] px-4 py-3.5">
+          <p className="text-[12px] font-medium text-white/40">Promedio</p>
+          <p className="mt-0.5 text-[20px] font-semibold tabular-nums tracking-tight">
+            {average === null ? "Sin ventas" : formatHNL(average)}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -65,23 +73,16 @@ export function FinanceView() {
   const catalog = events.data ?? [];
 
   return (
-    <div className="flex flex-col gap-6">
-      <section>
-        <SectionTitle>Depósito</SectionTitle>
-        <FinanceBalances
-          available={dashboard?.availableBalance ?? 0}
-          soldTickets={dashboard?.totals.soldTickets ?? 0}
-          net={dashboard?.totals.net ?? 0}
-          loading={dashboardLoading}
-        />
-      </section>
-      <div className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <RevenueByEvent events={catalog} loading={events.isLoading} />
-        </div>
-        <div className="lg:col-span-2">
-          <CapacitySplit events={catalog} loading={events.isLoading} />
-        </div>
+    <div className="flex flex-col gap-8">
+      <FinanceBalances
+        available={dashboard?.availableBalance ?? 0}
+        soldTickets={dashboard?.totals.soldTickets ?? 0}
+        net={dashboard?.totals.net ?? 0}
+        loading={dashboardLoading}
+      />
+      <div className="grid items-start gap-8 lg:grid-cols-2">
+        <RevenueByEvent events={catalog} loading={events.isLoading} />
+        <CapacitySplit events={catalog} loading={events.isLoading} />
       </div>
       <RecentSales enabled={ready} />
     </div>
