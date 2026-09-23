@@ -86,11 +86,6 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         address={ticket.event?.address}
         city={ticket.event?.city}
         kitPickupInfo={ticket.kitPickupInfo}
-        picks={(ticket.resourceGroups ?? []).flatMap((group) =>
-          group.assigned
-            ? [{ id: group.id, name: group.name, label: group.assigned.label }]
-            : [],
-        )}
       />
 
       <p className="text-center text-[13px] leading-relaxed text-white/32">

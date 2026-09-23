@@ -1,5 +1,4 @@
 import {
-  BikeMark,
   CalendarMark,
   KitMark,
   MetaTile,
@@ -12,14 +11,12 @@ export function TicketMeta({
   address,
   city,
   kitPickupInfo,
-  picks = [],
 }: {
   when: string | null;
   venue?: string | null;
   address?: string | null;
   city?: string | null;
   kitPickupInfo?: string | null;
-  picks?: Array<{ id: string; name: string; label: string }>;
 }) {
   const place = placeLabel(venue, address, city);
   const maps =
@@ -30,11 +27,6 @@ export function TicketMeta({
       : null;
   return (
     <ul className="flex flex-col gap-2">
-      {picks.map((pick) => (
-        <MetaTile key={pick.id} icon={<BikeMark />} label={pick.name}>
-          {pick.label}
-        </MetaTile>
-      ))}
       {when ? (
         <MetaTile icon={<CalendarMark />} label="Cuándo">
           {when}
