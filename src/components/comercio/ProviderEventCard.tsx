@@ -51,7 +51,7 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
       onTouchStart={warm}
       className="group block h-full w-full"
     >
-      <article className="flex h-full flex-col rounded-[20px] border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.14] hover:bg-white/[0.05] sm:p-4">
+      <article className="flex h-full flex-col rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.14] hover:bg-white/[0.05] sm:p-5">
         <div className="flex min-w-0 items-start gap-3">
           {event.coverImageUrl ? (
             <img
@@ -68,7 +68,7 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
           </div>
         </div>
 
-        <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-white/55">
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-white/55">
           {event.city ? (
             <Stat icon={<Building2 className="size-3.5" strokeWidth={1.5} />}>
               {event.city}
@@ -89,16 +89,16 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
 
         {event.capacity > 0 ? (
           <div
-            className="mt-2.5 h-px w-full overflow-hidden rounded-full bg-white/[0.08]"
+            className="mt-4 h-px w-full overflow-hidden rounded-full bg-white/[0.08]"
             aria-hidden
           >
             <div className="h-full bg-white/40" style={{ width: `${fill}%` }} />
           </div>
         ) : (
-          <div className="mt-2.5 h-px w-full bg-white/[0.06]" aria-hidden />
+          <div className="mt-4 h-px w-full bg-white/[0.06]" aria-hidden />
         )}
 
-        <div className="mt-2.5 flex items-center justify-between gap-3">
+        <div className="mt-4 flex items-center justify-between gap-3">
           <p className="text-[15px] font-semibold tabular-nums tracking-tight">
             {formatHNL(event.revenue)}
           </p>
