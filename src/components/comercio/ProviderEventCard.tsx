@@ -16,9 +16,10 @@ import type { ProviderEventListItem } from "@/lib/api/provider";
 import {
   formatCardDay,
   formatCardTime,
-  formatHNL,
+  formatDashboardHNL,
   formatNumber,
 } from "@/lib/format";
+import { DashboardFigure } from "./DashboardFigure";
 import { glassCtaClass } from "@/components/ui/cta";
 import { Progress } from "@/components/ui/Stat";
 
@@ -94,7 +95,7 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
 
         <div className="mt-4 flex items-center justify-between gap-3">
           <p className="text-[15px] font-semibold tabular-nums tracking-tight">
-            {formatHNL(event.revenue)}
+            <DashboardFigure value={formatDashboardHNL(event.revenue)} secret />
           </p>
           <span
             className={`inline-flex h-9 shrink-0 items-center gap-1.5 pl-4 pr-3 text-[13px] ${glassCtaClass}`}

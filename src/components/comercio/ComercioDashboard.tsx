@@ -13,11 +13,13 @@ import {
 import {
   formatCardDay,
   formatCardTime,
-  formatHNL,
+  formatDashboardHNL,
   formatNumber,
 } from "@/lib/format";
 import { SectionTitle } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
+import { DashboardFigure } from "./DashboardFigure";
+import { DashboardPrivacy, HideMoneyButton } from "./dashboardPrivacy";
 import { KpiTile } from "./KpiTile";
 import { ProviderEventCard } from "./ProviderEventCard";
 
@@ -71,34 +73,41 @@ export function ComercioDashboard() {
     });
 
   return (
+    <DashboardPrivacy>
     <div className="flex flex-col gap-6">
-      {dashboardLoading ? (
+      {dashboardLoading || dashboard ? (
         <section>
-          <SectionTitle>Totales</SectionTitle>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={index} className="h-28" />
-            ))}
-          </div>
-        </section>
-      ) : dashboard ? (
-        <section>
-          <SectionTitle>Totales</SectionTitle>
+          <SectionTitle action={<HideMoneyButton />}>Totales</SectionTitle>
+          {dashboardLoading || !dashboard ? (
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className="h-28" />
+              ))}
+            </div>
+          ) : (
+            <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <KpiTile label="Tickets vendidos" value={formatNumber(sold)} />
+            <KpiTile
+              label="Tickets vendidos"
+              value={<DashboardFigure value={formatNumber(sold)} />}
+            />
             <KpiTile
               label="Ingresos"
-              value={formatHNL(dashboard.totals.net)}
+              value={<DashboardFigure value={formatDashboardHNL(dashboard.totals.net)} secret />}
               hint="Después del evento"
             />
             <KpiTile
               label="Ocupación"
               value={
-                events.isLoading
-                  ? "…"
-                  : occupancy === null
-                    ? "Sin cupo"
-                    : `${occupancy}%`
+                <DashboardFigure
+                  value={
+                    events.isLoading
+                      ? "…"
+                      : occupancy === null
+                        ? "Sin cupo"
+                        : `${occupancy}%`
+                  }
+                />
               }
               hint={
                 occupancy === null
@@ -108,7 +117,7 @@ export function ComercioDashboard() {
             />
             <KpiTile
               label="Escaneados"
-              value={formatNumber(dashboard.totals.scans)}
+              value={<DashboardFigure value={formatNumber(dashboard.totals.scans)} />}
               hint={
                 sold > 0
                   ? `${Math.round((dashboard.totals.scans / sold) * 100)}% asistencia`
@@ -120,26 +129,40 @@ export function ComercioDashboard() {
             <KpiTile
               label="Cupos libres"
               value={
-                events.isLoading
-                  ? "…"
-                  : capacity > 0
-                    ? formatNumber(free)
-                    : "Sin cupo"
+                <DashboardFigure
+                  value={
+                    events.isLoading
+                      ? "…"
+                      : capacity > 0
+                        ? formatNumber(free)
+                        : "Sin cupo"
+                  }
+                />
               }
             />
             <KpiTile
               label="Promedio"
-              value={average === null ? "Sin ventas" : formatHNL(average)}
+              value={
+                average === null ? (
+                  "Sin ventas"
+                ) : (
+                  <DashboardFigure value={formatDashboardHNL(average)} secret />
+                )
+              }
               hint={average === null ? undefined : "Por ticket"}
             />
             <KpiTile
               label="Próximo"
               value={
-                events.isLoading
-                  ? "…"
-                  : upcoming
-                    ? (formatCardDay(upcoming.startsAt) ?? "Sin fecha")
-                    : "Ninguno"
+                <DashboardFigure
+                  value={
+                    events.isLoading
+                      ? "…"
+                      : upcoming
+                        ? (formatCardDay(upcoming.startsAt) ?? "Sin fecha")
+                        : "Ninguno"
+                  }
+                />
               }
               hint={
                 upcoming
@@ -148,6 +171,8 @@ export function ComercioDashboard() {
               }
             />
           </div>
+            </>
+          )}
         </section>
       ) : null}
 
@@ -200,5 +225,6 @@ export function ComercioDashboard() {
         )}
       </section>
     </div>
+    </DashboardPrivacy>
   );
 }

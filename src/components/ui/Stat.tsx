@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
 /**
@@ -13,7 +14,7 @@ export function Stat({
   className = "",
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   /** Percent change; sign decides the color. */
   delta?: number | null;
   hint?: string;

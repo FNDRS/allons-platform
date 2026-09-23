@@ -9,6 +9,17 @@ export function formatHNL(lempiras: number): string {
   return hnl.format(Number.isFinite(lempiras) ? lempiras : 0);
 }
 
+const hnlAmount = new Intl.NumberFormat("es-HN", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/** "HNL 1,250.00". The dashboard asks for the code, not the lempira sign. */
+export function formatDashboardHNL(lempiras: number): string {
+  const amount = Number.isFinite(lempiras) ? lempiras : 0;
+  return `HNL ${hnlAmount.format(amount)}`;
+}
+
 /** "L 1,250.00" from cents. */
 export function formatCents(cents: number | null | undefined): string {
   return formatHNL((cents ?? 0) / 100);
