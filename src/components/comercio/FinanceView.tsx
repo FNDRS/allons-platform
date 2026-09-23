@@ -1,10 +1,16 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
+import { useProviderLive } from "./ProviderLive";
+import { listProviderEvents, providerKeys } from "@/lib/api/provider";
 import { formatHNL, formatNumber } from "@/lib/format";
 import { SectionTitle } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/States";
+import { CapacitySplit } from "./CapacitySplit";
 import { KpiTile } from "./KpiTile";
+import { RecentSales } from "./RecentSales";
+import { RevenueByEvent } from "./RevenueByEvent";
 
 /** The deposit, and the two figures that explain it. */
 export function FinanceBalances({
@@ -46,12 +52,20 @@ export function FinanceBalances({
 }
 
 export function FinanceView() {
-  const { dashboard, dashboardLoading } = useProviderAccess({
+  const { dashboard, dashboardLoading, ready } = useProviderAccess({
     withDashboard: true,
   });
+  const { live } = useProviderLive();
+  const events = useQuery({
+    queryKey: providerKeys.events,
+    queryFn: listProviderEvents,
+    enabled: ready,
+    refetchInterval: live ? false : 60_000,
+  });
+  const catalog = events.data ?? [];
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <section>
         <SectionTitle>Depósito</SectionTitle>
         <FinanceBalances
@@ -61,6 +75,15 @@ export function FinanceView() {
           loading={dashboardLoading}
         />
       </section>
+      <div className="grid gap-6 lg:grid-cols-5">
+        <div className="lg:col-span-3">
+          <RevenueByEvent events={catalog} loading={events.isLoading} />
+        </div>
+        <div className="lg:col-span-2">
+          <CapacitySplit events={catalog} loading={events.isLoading} />
+        </div>
+      </div>
+      <RecentSales enabled={ready} />
     </div>
   );
 }
