@@ -48,7 +48,7 @@ export function ComercioShellInner({ children }: { children: React.ReactNode }) 
         <Link href="/events" aria-label="Allons, ir a eventos" className="px-3">
           <AllonsLogo className="h-auto w-[92px]" variant="orange" />
         </Link>
-        <p className="mt-6 px-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-dim">
+        <p className="mt-2 px-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-dim">
           Comercio
         </p>
         <nav className="mt-2 flex flex-col gap-1" aria-label="Comercio">
