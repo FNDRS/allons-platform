@@ -76,13 +76,16 @@ export function Stat({
 export function Progress({ value, max }: { value: number; max: number }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
-    <div
-      className="h-1 w-full overflow-hidden rounded-full bg-white/[0.08]"
-      aria-hidden
-    >
+    <div className="relative h-[3px] w-full rounded-full bg-white/[0.08]" aria-hidden>
       <div
-        className="h-full rounded-full bg-accent transition-[width]"
-        style={{ width: `${pct}%` }}
+        className="absolute inset-y-0 left-0 rounded-full transition-[width]"
+        style={{
+          width: `${pct}%`,
+          minWidth: pct > 0 ? 8 : 0,
+          background:
+            "linear-gradient(90deg, #ffc48a 0%, #ff8c32 46%, #f67010 100%)",
+          boxShadow: "0 0 8px rgba(246,112,16,0.45)",
+        }}
       />
     </div>
   );
