@@ -4,13 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { SearchPill } from "@/components/ui/Pill";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
-import { useProviderActivity } from "@/hooks/useProviderActivity";
 import { useProviderLive } from "./ProviderLive";
 import { listProviderEvents, providerKeys } from "@/lib/api/provider";
 import { formatHNL, formatNumber } from "@/lib/format";
 import { SectionTitle } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
-import { ActivityFeed } from "./ActivityFeed";
 import { FinanceBalances } from "./FinanceView";
 import { KpiTile } from "./KpiTile";
 import { ProviderEventCard } from "./ProviderEventCard";
@@ -27,7 +25,6 @@ export function ComercioDashboard() {
     enabled: ready,
     refetchInterval: live ? false : 60_000,
   });
-  const activity = useProviderActivity(ready);
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
   const sorted = [...(events.data ?? [])]
@@ -63,13 +60,6 @@ export function ComercioDashboard() {
           </div>
         </section>
       ) : null}
-
-      <ActivityFeed
-        rows={activity.data ?? []}
-        loading={activity.isLoading}
-        error={activity.error as Error | null}
-        onRetry={() => void activity.refetch()}
-      />
 
       <section>
         <SectionTitle
