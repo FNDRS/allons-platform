@@ -1,17 +1,21 @@
 "use client";
 
 import { useProviderAccess } from "@/hooks/useProviderAccess";
-import { formatHNL } from "@/lib/format";
+import { formatHNL, formatNumber } from "@/lib/format";
 import { SectionTitle } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/States";
 import { KpiTile } from "./KpiTile";
 
-/** What the comercio is owed, and the two things the contract does not offer yet. */
+/** The deposit, and the two figures that explain it. */
 export function FinanceBalances({
   available,
+  soldTickets,
+  net,
   loading = false,
 }: {
   available: number;
+  soldTickets: number;
+  net: number;
   loading?: boolean;
 }) {
   if (loading) {
@@ -23,6 +27,7 @@ export function FinanceBalances({
       </div>
     );
   }
+  const average = soldTickets > 0 ? net / soldTickets : null;
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       <KpiTile
@@ -30,8 +35,12 @@ export function FinanceBalances({
         value={formatHNL(available)}
         hint="Después del evento"
       />
-      <KpiTile label="Reembolsos" value="No hay" hint="No están en el contrato" />
-      <KpiTile label="Retiros" value="Aún no" hint="El retiro no está activo" />
+      <KpiTile label="Tickets vendidos" value={formatNumber(soldTickets)} />
+      <KpiTile
+        label="Promedio"
+        value={average === null ? "Sin ventas" : formatHNL(average)}
+        hint={average === null ? undefined : "Por ticket"}
+      />
     </div>
   );
 }
@@ -47,6 +56,8 @@ export function FinanceView() {
         <SectionTitle>Depósito</SectionTitle>
         <FinanceBalances
           available={dashboard?.availableBalance ?? 0}
+          soldTickets={dashboard?.totals.soldTickets ?? 0}
+          net={dashboard?.totals.net ?? 0}
           loading={dashboardLoading}
         />
       </section>
