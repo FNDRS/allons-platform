@@ -53,11 +53,34 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  // Supabase reports a failed email link either in the query (PKCE) or in
+  // the hash (implicit). An expired confirmation link is not a Google error.
   useEffect(() => {
-    if (params.get("oauth_error") || params.get("error_code") || params.get("error")) {
-      setError("No se pudo entrar con Google. Inténtalo de nuevo.");
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const code = params.get("error_code") ?? hash.get("error_code");
+    const description =
+      params.get("error_description") ?? hash.get("error_description") ?? "";
+    const failed =
+      params.get("oauth_error") || params.get("error") || hash.get("error") || code;
+    if (!failed) return;
+    if (code === "otp_expired" || /expired|invalid/i.test(description)) {
+      setError(
+        "El enlace ya no sirve. Vuelve a crear la cuenta o usa Olvidé mi contraseña.",
+      );
+      return;
     }
+    setError("No se pudo entrar con Google. Inténtalo de nuevo.");
   }, [params]);
+
+  // The confirmation link lands here with ?code=. supabase-js only exchanges
+  // it when the PKCE verifier is in this browser's storage; opened from a
+  // different browser (mail app) there is no session, but the email is
+  // already confirmed by then, so a password login gets them in.
+  useEffect(() => {
+    if (loading || user || !params.get("code")) return;
+    setMode("login");
+    setNotice("Tu correo quedó confirmado. Entra con tu contraseña para continuar.");
+  }, [loading, user, params]);
 
   // A recovery link lands here with a session already open. Supabase raises
   // PASSWORD_RECOVERY for it; switch to the new-password form instead of
@@ -118,14 +141,21 @@ export function LoginForm() {
         const { data, error: err } = await supabase.auth.signUp({
           email: email.trim().toLowerCase(),
           password,
-          options: { data: { full_name: name.trim() } },
+          options: {
+            data: { full_name: name.trim() },
+            // Without this the link follows the project Site URL, which is
+            // shared with the app, and the user never comes back here.
+            emailRedirectTo: `${window.location.origin}/login`,
+          },
         });
         if (err) throw err;
         if (data.session) {
           router.replace(homeFor(data.user, next));
         } else {
+          // The link opens /login with a session; this is where it goes next.
+          rememberLoginNext(next);
           setNotice(
-            "Te enviamos un correo para confirmar tu cuenta. Al confirmarlo podrás entrar.",
+            "Te enviamos un correo para confirmar tu cuenta. Al abrir el enlace entrarás directo.",
           );
           setMode("login");
         }
