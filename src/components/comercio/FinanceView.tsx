@@ -6,7 +6,7 @@ import { useProviderLive } from "./ProviderLive";
 import { listProviderEvents, providerKeys } from "@/lib/api/provider";
 import { formatHNL } from "@/lib/format";
 import { Skeleton } from "@/components/ui/States";
-import { EarningsChart } from "./EarningsChart";
+import { EventRevenueChart } from "./EventRevenueChart";
 import { SeatsChart } from "./SeatsChart";
 
 /** The one number that matters: what the comercio will be paid. */
@@ -49,7 +49,12 @@ export function FinanceView() {
       />
       <div className="grid items-start gap-8 lg:grid-cols-5">
         <div className="lg:col-span-3">
-          <EarningsChart enabled={ready} />
+          <EventRevenueChart
+            events={events.data ?? []}
+            loading={events.isLoading}
+            error={events.error ? (events.error as Error).message : undefined}
+            onRetry={() => void events.refetch()}
+          />
         </div>
         <div className="lg:col-span-2">
           <SeatsChart events={events.data ?? []} loading={events.isLoading} />
