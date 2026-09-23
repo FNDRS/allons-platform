@@ -3,12 +3,10 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { formatEventWhen } from "@/lib/allons-api";
 import { getMyTicket, ticketKeys } from "@/lib/api/tickets";
 import { ErrorState, Skeleton } from "@/components/ui/States";
-import { ResourcePicker } from "./ResourcePicker";
 import { TicketCode } from "./TicketCode";
 import { TicketMeta } from "./TicketMeta";
 import { TicketQr } from "./TicketQr";
@@ -24,8 +22,6 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
     enabled: ready && Boolean(ticketId),
   });
   const ticket = query.data;
-  const [pickerGroup, setPickerGroup] = useState<string | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
 
   if (!ready || query.isLoading) {
     return (
@@ -76,13 +72,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
           .filter((group) => group.assigned)
           .map((group) => (
             <div key={group.id} className="mt-5">
-              <TicketResourceCard
-                group={group}
-                onPick={() => {
-                  setPickerGroup(group.id);
-                  setPickerOpen(true);
-                }}
-              />
+              <TicketResourceCard group={group} />
             </div>
           ))}
       </div>
@@ -106,13 +96,6 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
       <p className="text-center text-[13px] leading-relaxed text-white/32">
         Este ticket también está en la app de Allons con la misma cuenta.
       </p>
-
-      <ResourcePicker
-        ticketId={ticket.id}
-        groupId={pickerGroup}
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-      />
     </div>
   );
 }

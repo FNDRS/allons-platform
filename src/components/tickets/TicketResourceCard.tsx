@@ -1,19 +1,7 @@
-"use client";
-
 import type { TicketResourceSummary } from "@/lib/api/tickets";
-import { Button } from "@/components/ui/Button";
 
-/**
- * The unit already chosen at checkout. Picking happens before pay, so a
- * ticket never asks for it again.
- */
-export function TicketResourceCard({
-  group,
-  onPick,
-}: {
-  group: TicketResourceSummary;
-  onPick: () => void;
-}) {
+/** The unit chosen at checkout. It stays on the pass and cannot be moved. */
+export function TicketResourceCard({ group }: { group: TicketResourceSummary }) {
   if (!group.assigned) return null;
   const name = group.name.toLowerCase();
   return (
@@ -24,9 +12,6 @@ export function TicketResourceCard({
       <p className="text-[28px] font-bold leading-none tracking-[-0.04em] text-white sm:text-[34px]">
         {group.assigned.label}
       </p>
-      <Button variant="glass" size="sm" onClick={onPick}>
-        Cambiar
-      </Button>
     </div>
   );
 }
