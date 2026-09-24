@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { AppNav } from "./app/AppNav";
+import { LegalLinks } from "./app/LegalLinks";
 import { PageTransition } from "./app/PageTransition";
 
 interface Props {
@@ -17,7 +17,7 @@ export function LegalPage({ title, updated, children }: Props) {
   return (
     <div className="app-canvas min-h-dvh text-white">
       <AppNav />
-      <main className="relative z-10 mx-auto w-full max-w-2xl px-4 pb-24 pt-8 sm:px-6">
+      <main id="contenido" tabIndex={-1} className="relative z-10 mx-auto w-full max-w-2xl px-4 pb-24 pt-8 sm:px-6">
         <PageTransition>
           <h1 className="break-words text-3xl font-extrabold leading-tight">{title}</h1>
           {updated ? (
@@ -26,25 +26,7 @@ export function LegalPage({ title, updated, children }: Props) {
 
           <div className="legal-prose mt-8">{children}</div>
 
-          <footer className="mt-14 flex flex-wrap gap-x-2 gap-y-1 border-t border-border pt-6 text-sm text-muted">
-            <span>© 2026 Allons</span>
-            <span aria-hidden>·</span>
-            <Link href="/privacidad" className="text-muted hover:text-fg">
-              Privacidad
-            </Link>
-            <span aria-hidden>·</span>
-            <Link href="/terminos" className="text-muted hover:text-fg">
-              Términos
-            </Link>
-            <span aria-hidden>·</span>
-            <Link href="/soporte" className="text-muted hover:text-fg">
-              Soporte
-            </Link>
-            <span aria-hidden>·</span>
-            <Link href="/eliminar-cuenta" className="text-muted hover:text-fg">
-              Eliminar cuenta
-            </Link>
-          </footer>
+          <LegalLinks className="mt-14 border-t border-border pt-6" />
         </PageTransition>
       </main>
     </div>

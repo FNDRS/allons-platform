@@ -50,7 +50,7 @@ export function ComercioHero({
             {profile.logoUrl ? (
               <img
                 src={profile.logoUrl}
-                alt=""
+                alt={`Logo de ${profile.name}`}
                 className="absolute inset-0 size-full object-cover object-center"
               />
             ) : (
@@ -92,7 +92,7 @@ export function ComercioHero({
             <a
               href={profile.websiteUrl}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="inline-flex h-11 items-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-5 text-sm font-semibold text-white/85 transition hover:bg-white/[0.12] hover:text-white"
             >
               <Globe className="size-4" aria-hidden />
@@ -103,7 +103,7 @@ export function ComercioHero({
             <a
               href={instagram.href}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="inline-flex h-11 items-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-5 text-sm font-semibold text-white/85 transition hover:bg-white/[0.12] hover:text-white"
             >
               <InstagramMark />
@@ -114,7 +114,7 @@ export function ComercioHero({
             <a
               href={whatsapp.href}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="inline-flex h-11 items-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-5 text-sm font-semibold text-white/85 transition hover:bg-white/[0.12] hover:text-white"
             >
               <WhatsAppMark />

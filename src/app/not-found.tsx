@@ -4,7 +4,7 @@ import { glassCtaClass } from "@/components/ui/cta";
 
 export default function NotFoundPage() {
   return (
-    <main className="relative flex min-h-dvh overflow-hidden bg-[#050505] px-5 py-8 text-white sm:px-8">
+    <main id="contenido" tabIndex={-1} className="relative flex min-h-dvh overflow-hidden bg-[#050505] px-5 py-8 text-white sm:px-8">
       <div className="absolute inset-x-[-25%] top-[-24%] h-[520px] rounded-full bg-[#f67010]/20 blur-[120px]" />
       <div className="absolute inset-x-[12%] top-16 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
 

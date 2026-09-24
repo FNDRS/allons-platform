@@ -124,7 +124,7 @@ export function ComercioShellInner({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-24 pt-4 sm:px-6 md:pb-8 lg:px-8">
+        <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-24 pt-4 sm:px-6 md:pb-8 lg:px-8">
           <PageTransition>{children}</PageTransition>
         </main>
 

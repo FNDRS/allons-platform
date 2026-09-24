@@ -61,7 +61,7 @@ export function OptionRow({
             : "border border-white/18"
         }`}
       >
-        {selected ? <Check className="size-2.5" strokeWidth={3} /> : null}
+        {selected ? <Check className="size-2.5" strokeWidth={3} aria-hidden /> : null}
       </span>
     </button>
   );
@@ -91,7 +91,8 @@ export function SavedCardRow({
       leading={<CardBrandMark brand={brand} framed />}
       title={
         <span className="font-mono text-[15px] tabular-nums tracking-[0.18em] text-white/92">
-          •••• {card.last4 ?? "????"}
+          <span className="sr-only">Terminada en </span>
+          <span aria-hidden>••••</span> {card.last4 ?? "????"}
         </span>
       }
       subtitle={expiry ? `Vence ${expiry}` : "Tarjeta guardada"}

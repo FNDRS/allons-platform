@@ -14,19 +14,23 @@ export default function PrivacidadPage() {
   return (
     <LegalPage
       title="Política de Privacidad"
-      updated="Última actualización: 24 de junio de 2026"
+      updated="Última actualización: 24 de septiembre de 2026"
     >
       <p>
         En Allons valoramos tu privacidad. Esta política explica qué información
-        recopilamos a través de la aplicación móvil Allons (la &quot;App&quot;) y
-        nuestros servicios, cómo la usamos y cuáles son tus derechos. Al usar la
-        App aceptas las prácticas descritas aquí.
+        recopilamos a través de la aplicación móvil Allons (la &quot;App&quot;),
+        el sitio web <strong>allonsapp.com</strong> (incluido el panel de
+        comercios) y nuestros servicios, cómo la usamos, con quién la
+        compartimos y cuáles son tus derechos. Al usar la App o el sitio
+        aceptas las prácticas descritas aquí.
       </p>
 
       <div className="card">
         <strong>Responsable del tratamiento:</strong> Allons
         <br />
         <strong>Contacto:</strong> <a href={`mailto:${CONTACT}`}>{CONTACT}</a>
+        <br />
+        <strong>País:</strong> Honduras
       </div>
 
       <h2>1. Información que recopilamos</h2>
@@ -56,8 +60,33 @@ export default function PrivacidadPage() {
           </tr>
           <tr>
             <td>Compras</td>
-            <td>Historial de boletos y órdenes</td>
+            <td>
+              Historial de boletos y órdenes; datos de los asistentes y
+              respuestas a las preguntas que el organizador configure
+            </td>
             <td>Entregar y validar tus boletos</td>
+          </tr>
+          <tr>
+            <td>Pagos</td>
+            <td>
+              Nombre del titular, marca, últimos 4 dígitos y vencimiento de la
+              tarjeta; número de identidad cuando el procesador lo exige para
+              guardar tu primera tarjeta
+            </td>
+            <td>Procesar pagos y prevenir fraude</td>
+          </tr>
+          <tr>
+            <td>Lista de espera y contacto</td>
+            <td>
+              Correo, teléfono (opcional), código QR o enlace de origen,
+              dirección IP, navegador y página de referencia
+            </td>
+            <td>Avisarte del lanzamiento, medir qué canales funcionan y evitar registros abusivos</td>
+          </tr>
+          <tr>
+            <td>Datos técnicos del sitio</td>
+            <td>Dirección IP, tipo de navegador, reportes de errores sin datos personales</td>
+            <td>Seguridad del sitio y corrección de errores</td>
           </tr>
           <tr>
             <td>Uso</td>
@@ -90,9 +119,16 @@ export default function PrivacidadPage() {
       <h2>3. Pagos</h2>
       <p>
         Los pagos de boletos se procesan a través de nuestro proveedor de
-        pasarela de pago externo (Paygate) en su propio entorno seguro.{" "}
-        <strong>Allons no almacena los datos completos de tu tarjeta.</strong> La
-        información de pago se rige también por las políticas del procesador.
+        pasarela de pago externo (Paygate). Cuando pagas con tarjeta en el
+        sitio, los datos viajan cifrados (HTTPS) y se envían al procesador,
+        que los tokeniza.{" "}
+        <strong>
+          Allons no almacena el número completo de tu tarjeta ni su código de
+          seguridad (CVV).
+        </strong>{" "}
+        De una tarjeta guardada conservamos solo la marca, los últimos cuatro
+        dígitos y el vencimiento, para que la reconozcas. La información de
+        pago se rige también por las políticas del procesador.
       </p>
 
       <h2>4. Servicios de terceros</h2>
@@ -116,7 +152,39 @@ export default function PrivacidadPage() {
           <strong>Expo / proveedores de notificaciones push</strong> — entrega
           de notificaciones.
         </li>
+        <li>
+          <strong>Vercel y Amazon Web Services</strong> — alojamiento del sitio
+          web y de nuestra API.
+        </li>
+        <li>
+          <strong>Sentry</strong> — reportes de errores técnicos, configurado
+          para no enviar datos personales ni grabar sesiones.
+        </li>
+        <li>
+          <strong>Google Fonts</strong> — tipografía del sitio web (recibe tu
+          dirección IP al descargarla).
+        </li>
       </ul>
+      <p>
+        Estos proveedores solo pueden usar tus datos para prestarnos el
+        servicio y deben protegerlos con medidas de seguridad adecuadas.
+      </p>
+
+      <h2>4.1. Transferencias internacionales</h2>
+      <p>
+        Algunos de estos proveedores almacenan o procesan datos fuera de
+        Honduras, principalmente en los Estados Unidos. Elegimos proveedores
+        que ofrecen garantías de seguridad reconocidas y que se comprometen
+        contractualmente a proteger tu información.
+      </p>
+
+      <h2>4.2. Cookies y almacenamiento local</h2>
+      <p>
+        El sitio no usa cookies de publicidad ni de rastreo. Solo guarda en tu
+        navegador lo necesario para mantener tu sesión y tu compra en curso.
+        Los detalles están en nuestra{" "}
+        <a href="/cookies">Política de Cookies y Almacenamiento</a>.
+      </p>
 
       <h2>5. Permisos del dispositivo</h2>
       <ul>
@@ -144,8 +212,10 @@ export default function PrivacidadPage() {
       <p>
         No vendemos tus datos personales. Compartimos información únicamente con:
         los proveedores listados arriba; los organizadores del evento al que
-        compras un boleto (para validar tu acceso); y autoridades cuando la ley
-        lo exija.
+        compras un boleto (para validar tu acceso y gestionar el evento, por
+        ejemplo tu nombre, tu tipo de entrada y tus respuestas a sus
+        preguntas); y autoridades cuando la ley lo exija. Los organizadores
+        solo pueden usar esos datos para el evento correspondiente.
       </p>
 
       <h2>7. Conservación</h2>
@@ -154,7 +224,9 @@ export default function PrivacidadPage() {
         necesario para cumplir obligaciones legales, contables y de prevención
         de fraude. Al eliminar tu cuenta, borramos o anonimizamos tus datos
         según lo descrito en nuestra{" "}
-        <a href="/eliminar-cuenta">página de eliminación de cuenta</a>.
+        <a href="/eliminar-cuenta">página de eliminación de cuenta</a>. Los
+        datos de la lista de espera se conservan hasta que pidas la baja o,
+        como máximo, 24 meses desde tu registro.
       </p>
 
       <h2>8. Tus derechos</h2>
@@ -163,13 +235,26 @@ export default function PrivacidadPage() {
         una copia de los mismos, escribiendo a{" "}
         <a href={`mailto:${CONTACT}`}>{CONTACT}</a>. También puedes eliminar tu
         cuenta directamente (ver <a href="/eliminar-cuenta">Eliminar cuenta</a>).
+        También puedes oponerte al envío de comunicaciones promocionales o
+        retirar tu consentimiento en cualquier momento. Respondemos las
+        solicitudes en un plazo máximo de 30 días y podemos pedirte verificar
+        tu identidad para proteger tu cuenta.
+      </p>
+      <p>
+        Estos derechos se reconocen conforme a la Constitución de la República
+        de Honduras (garantía de hábeas data, artículo 182) y demás legislación
+        aplicable. Si consideras que no atendimos tu solicitud, puedes acudir
+        a las autoridades competentes.
       </p>
 
       <h2>9. Seguridad</h2>
       <p>
-        Aplicamos medidas técnicas y organizativas razonables para proteger tu
-        información. Ningún sistema es 100% seguro, pero trabajamos para mantener
-        tus datos protegidos.
+        Aplicamos medidas técnicas y organizativas para proteger tu
+        información: cifrado en tránsito, control de acceso por rol,
+        tokenización de pagos y monitoreo, entre otras. Si ocurre un incidente
+        que afecte tus datos, te lo notificaremos sin demora indebida. Ningún
+        sistema es 100% seguro; los detalles están en nuestra{" "}
+        <a href="/seguridad">Política de Seguridad</a>.
       </p>
 
       <h2>10. Menores</h2>
@@ -182,7 +267,8 @@ export default function PrivacidadPage() {
       <h2>11. Cambios a esta política</h2>
       <p>
         Podemos actualizar esta política. Publicaremos la versión vigente en esta
-        página con su fecha de actualización.
+        página con su fecha de actualización y, si el cambio es importante, te
+        avisaremos por correo o dentro de la App.
       </p>
 
       <h2>12. Contacto</h2>

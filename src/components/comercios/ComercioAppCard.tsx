@@ -38,7 +38,7 @@ export function ComercioAppCard({
           <a
             href={appStoreLink}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="inline-flex h-10 items-center justify-center rounded-full border border-white/12 text-[13px] font-semibold text-white/75 transition hover:bg-white/[0.08] hover:text-white"
           >
             Descargar en el App Store

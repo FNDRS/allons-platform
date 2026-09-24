@@ -94,13 +94,13 @@ export function PaygateModal({
             aria-label="Cerrar"
             className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white/60 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white"
           >
-            <X className="size-4" strokeWidth={1.6} />
+            <X className="size-4" strokeWidth={1.6} aria-hidden />
           </button>
         </div>
 
         <div className="mt-8 flex flex-col items-center text-center">
           <Loader2 className="size-6 animate-spin text-accent" aria-hidden />
-          <p className="mt-5 text-[15px] font-semibold tracking-tight">
+          <p className="mt-5 text-[15px] font-semibold tracking-tight" role="status">
             {blocked
               ? "El navegador bloqueó la ventana de pago"
               : "Paygate se abrió en otra pestaña"}

@@ -80,7 +80,7 @@ export function EventDetailView({
           Abrir en la app
         </a>
         <span aria-hidden>·</span>
-        <a href={appStoreLink} target="_blank" rel="noreferrer" className="hover:text-white">
+        <a href={appStoreLink} target="_blank" rel="noopener noreferrer" className="hover:text-white">
           App Store
         </a>
       </div>

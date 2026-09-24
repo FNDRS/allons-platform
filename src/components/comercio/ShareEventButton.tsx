@@ -43,7 +43,7 @@ export function ShareEventButton({
       className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-1.5 px-4 text-[13px] sm:w-auto ${glassCtaClass}`}
     >
       <Share className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
-      {copied ? "Enlace copiado" : "Compartir"}
+      <span aria-live="polite">{copied ? "Enlace copiado" : "Compartir"}</span>
     </button>
   );
 }

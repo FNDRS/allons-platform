@@ -34,7 +34,7 @@ export function MetaTile({
         <a
           href={href}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           className={`${className} transition hover:bg-white/[0.03]`}
         >
           {inner}

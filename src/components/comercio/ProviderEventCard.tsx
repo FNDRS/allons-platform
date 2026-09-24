@@ -116,7 +116,7 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
 function Stat({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-1.5">
-      <span className="shrink-0 text-white/35">{icon}</span>
+      <span className="shrink-0 text-white/35" aria-hidden>{icon}</span>
       <span className="truncate">{children}</span>
     </span>
   );

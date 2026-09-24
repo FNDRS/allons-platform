@@ -321,6 +321,7 @@ export function SmoothInput({
           className="pointer-events-none invisible absolute left-0 top-0 whitespace-pre"
         />
         <motion.div
+          aria-hidden
           className="pointer-events-none col-start-1 col-end-2 row-start-1 row-end-2 h-4 w-0.5 self-center rounded-full bg-accent"
           style={{ x: springCaretX, opacity: caretOpacity }}
         />
@@ -333,7 +334,7 @@ export function SmoothInput({
           onClick={() => setRevealed((open) => !open)}
           className="shrink-0 text-dim transition-colors duration-300 hover:text-white"
         >
-          {revealed ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          {revealed ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
         </button>
       ) : null}
     </div>

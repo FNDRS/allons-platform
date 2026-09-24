@@ -45,7 +45,7 @@ export default function HomePage() {
       <div className="grain" aria-hidden />
 
       <div className="relative z-10 flex flex-col pt-16 sm:pt-20">
-        <main className="mx-auto flex w-full max-w-6xl flex-col items-center px-5 pb-0 pt-10 text-center sm:px-8 sm:pb-0 sm:pt-14">
+        <main id="contenido" tabIndex={-1} className="mx-auto flex w-full max-w-6xl flex-col items-center px-5 pb-0 pt-10 text-center sm:px-8 sm:pb-0 sm:pt-14">
           <h1 className="fade-up delay-2 mt-7 max-w-5xl bg-gradient-to-b from-white via-white/95 to-white/60 bg-clip-text text-[40px] font-semibold leading-[0.95] tracking-[-0.075em] text-transparent sm:text-[72px] lg:text-[96px]">
             La próxima forma de vivir eventos.
           </h1>
@@ -98,7 +98,7 @@ export default function HomePage() {
                 <a
                   href="https://thefndrs.com"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="text-white/90 underline decoration-white/45 underline-offset-2 transition-all duration-300 ease-out hover:text-white hover:decoration-white/80 hover:[text-shadow:0_0_14px_rgba(255,255,255,0.9),0_0_30px_rgba(255,255,255,0.55)]"
                 >
                   FNDRS
@@ -125,7 +125,7 @@ function SocialLink({
     <a
       href={href}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       aria-label={label}
       className="flex size-9 items-center justify-center rounded-full text-white/70 transition-colors hover:text-white"
     >
@@ -136,7 +136,7 @@ function SocialLink({
 
 function InstagramIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
       <rect
         x="3"
         y="3"
@@ -154,7 +154,7 @@ function InstagramIcon() {
 
 function TikTokIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M14 3v10.4a3.6 3.6 0 1 1-3.6-3.6"
         stroke="currentColor"
@@ -175,7 +175,7 @@ function TikTokIcon() {
 
 function LinkedInIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M7.2 9.5V20M12 20v-5.6c0-3.1 5-3.4 5 0V20M7.2 5.2v.1M4 20h16"
         stroke="currentColor"

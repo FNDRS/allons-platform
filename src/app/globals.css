@@ -792,3 +792,29 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* "Saltar al contenido": the first stop for keyboard and screen reader users,
+   hidden until it takes focus (WCAG 2.4.1). */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #fff;
+  color: #000;
+  font-weight: 600;
+  font-size: 14px;
+  transform: translateY(-200%);
+  transition: transform 0.15s ease;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid rgba(246, 112, 16, 0.9);
+  outline-offset: 2px;
+}
+main[tabindex="-1"]:focus {
+  outline: none;
+}

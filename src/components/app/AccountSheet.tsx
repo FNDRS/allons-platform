@@ -42,6 +42,7 @@ export function AccountButton({ onOpen }: { onOpen: () => void }) {
       type="button"
       onClick={onOpen}
       aria-label="Tu cuenta"
+      aria-haspopup="dialog"
       className="flex size-7 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-2 transition hover:bg-white/[0.1] md:size-8"
     >
       <ProfileAvatar
@@ -99,7 +100,7 @@ export function AccountSheet({
               <a
                 href={APP_STORE}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="transition hover:text-white"
               >
                 iOS
@@ -107,7 +108,7 @@ export function AccountSheet({
               <a
                 href={PLAY_STORE}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="transition hover:text-white"
               >
                 Android

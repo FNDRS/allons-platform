@@ -54,7 +54,7 @@ export function HideMoneyButton() {
       type="button"
       onClick={toggle}
       disabled={!ready}
-      aria-pressed={concealed}
+      aria-label={concealed ? "Mostrar montos" : "Ocultar montos"}
       className={`inline-flex h-8 items-center gap-1.5 px-3 text-[12px] disabled:opacity-60 ${glassCtaClass}`}
     >
       {concealed ? (
