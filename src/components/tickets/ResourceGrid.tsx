@@ -119,7 +119,8 @@ function UnitTile({
       <div
         className={className}
         style={style}
-        aria-label={`${tile.label}${tile.taken ? ", ocupada" : ""}`}
+        role="img"
+        aria-label={`${tile.label}${tile.caption ? `, ${tile.caption}` : ""}${tile.taken ? ", ocupada" : ""}`}
       >
         {content}
       </div>

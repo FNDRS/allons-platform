@@ -34,6 +34,16 @@ const SIZE: Record<Size, string> = {
   "icon-sm": "size-9 rounded-full",
 };
 
+/** The button's look, for a `<Link>` that must stay a link (no <button> in <a>). */
+export function buttonClass({
+  variant = "primary",
+  size = "md",
+  full = false,
+  className = "",
+}: { variant?: Variant; size?: Size; full?: boolean; className?: string } = {}) {
+  return `inline-flex shrink-0 items-center justify-center gap-2 font-bold tracking-tight transition duration-150 active:scale-[0.98] ${VARIANT[variant]} ${SIZE[size]} ${full ? "w-full" : ""} ${className}`;
+}
+
 export function Button({
   variant = "primary",
   size = "md",
@@ -48,6 +58,7 @@ export function Button({
     <button
       {...rest}
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       className={`inline-flex shrink-0 items-center justify-center gap-2 font-bold tracking-tight transition duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT[variant]} ${SIZE[size]} ${full ? "w-full" : ""} ${className}`}
     >
       {loading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}

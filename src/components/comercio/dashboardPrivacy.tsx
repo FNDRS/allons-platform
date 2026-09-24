@@ -54,6 +54,9 @@ export function HideMoneyButton() {
       type="button"
       onClick={toggle}
       disabled={!ready}
+      // A toggle keeps one name and reports its state, so a screen reader
+      // hears "Ocultar montos, activado" instead of a label that flips.
+      aria-label="Ocultar montos"
       aria-pressed={concealed}
       className={`inline-flex h-8 items-center gap-1.5 px-3 text-[12px] disabled:opacity-60 ${glassCtaClass}`}
     >

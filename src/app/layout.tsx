@@ -1,9 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { Providers } from "@/components/app/Providers";
+import { HONDURAS_KEYWORDS, jsonLd, SITE_URL } from "@/lib/seo";
 
-const SITE_URL = "https://allonsapp.com";
+export const viewport: Viewport = {
+  themeColor: "#000000",
+  colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
+  // No maximum-scale: people must be able to pinch-zoom (WCAG 1.4.4).
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -20,27 +27,18 @@ export const metadata: Metadata = {
     telephone: false,
   },
   title: {
-    default: "Allons",
-    template: "%s Allons",
+    default: "Allons: eventos y boletos en Honduras",
+    template: "%s | Allons",
   },
   description:
-    "Compra entradas, guarda tu QR y vive eventos en Honduras. La misma cuenta que usas en la app.",
-  keywords: [
-    "Allons",
-    "eventos Honduras",
-    "ticketing Honduras",
-    "venta de entradas",
-    "boletos",
-    "QR",
-    "Tegucigalpa",
-    "San Pedro Sula",
-  ],
-  alternates: {
-    canonical: "/",
-    languages: {
-      "es-HN": "/",
-      es: "/",
-    },
+    "Descubre eventos en Honduras y compra tus boletos en línea: conciertos, fiestas, clases y más en Tegucigalpa, San Pedro Sula y todo el país. Tu entrada con QR en la app o en la web.",
+  keywords: HONDURAS_KEYWORDS,
+  // No site-wide canonical: a child page without its own would inherit it and
+  // tell Google it is a duplicate of the home page. Each public page sets one.
+  other: {
+    "geo.region": "HN",
+    "geo.placename": "Honduras",
+    "content-language": "es-HN",
   },
   icons: {
     icon: [
@@ -57,9 +55,9 @@ export const metadata: Metadata = {
     locale: "es_HN",
     url: SITE_URL,
     siteName: "Allons",
-    title: "Allons",
+    title: "Allons: eventos y boletos en Honduras",
     description:
-      "Todos tus eventos en un solo lugar. Compra tu entrada y guarda tu QR.",
+      "Todos los eventos de Honduras en un solo lugar. Compra tu entrada y guarda tu QR.",
     images: [
       {
         url: `${SITE_URL}/opengraph-image`,
@@ -71,8 +69,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Allons",
-    description: "Todos tus eventos en un solo lugar.",
+    title: "Allons: eventos y boletos en Honduras",
+    description: "Todos los eventos de Honduras en un solo lugar.",
     images: [`${SITE_URL}/opengraph-image`],
   },
   robots: {
@@ -93,13 +91,25 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const jsonLd = {
+  const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
         name: "Allons",
         url: SITE_URL,
+        logo: `${SITE_URL}/allons-logo.png`,
+        email: "soporte@allonsapp.com",
+        areaServed: { "@type": "Country", name: "Honduras" },
+        address: { "@type": "PostalAddress", addressCountry: "HN" },
+        contactPoint: {
+          "@type": "ContactPoint",
+          contactType: "customer support",
+          email: "soporte@allonsapp.com",
+          areaServed: "HN",
+          availableLanguage: ["es"],
+        },
         sameAs: [
           "https://www.instagram.com/allons.hn/",
           "https://www.tiktok.com/@allons.hn?_r=1&_t=ZS-97bZpRR00Up",
@@ -108,33 +118,37 @@ export default function RootLayout({
       },
       {
         "@type": "WebSite",
+        "@id": `${SITE_URL}/#website`,
         name: "Allons",
+        alternateName: "Allons Honduras",
         url: SITE_URL,
         inLanguage: "es-HN",
+        publisher: { "@id": `${SITE_URL}/#organization` },
       },
       {
         "@type": "SoftwareApplication",
         name: "Allons",
-        applicationCategory: "BusinessApplication",
+        applicationCategory: "EntertainmentApplication",
         operatingSystem: "iOS, Android, Web",
         url: SITE_URL,
         inLanguage: "es-HN",
+        countriesSupported: "HN",
         offers: {
           "@type": "Offer",
           price: "0",
-          priceCurrency: "USD",
+          priceCurrency: "HNL",
         },
       },
     ],
   };
 
   return (
-    <html lang="es" className="dark">
+    <html lang="es-HN" className="dark">
       <head>
         <script
           type="application/ld+json"
           // JSON-LD needs a raw string payload.
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={jsonLd(structuredData)}
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -148,6 +162,9 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <a href="#contenido" className="skip-link">
+          Saltar al contenido
+        </a>
         <Providers>{children}</Providers>
         <Toaster
           position="top-center"

@@ -41,7 +41,17 @@ export function Textarea({
   return <textarea {...rest} className={`${BASE} min-h-24 py-3 ${className}`} />;
 }
 
-export function FieldError({ children }: { children?: React.ReactNode }) {
+export function FieldError({
+  children,
+  id,
+}: {
+  children?: React.ReactNode;
+  id?: string;
+}) {
   if (!children) return null;
-  return <p className="mt-1.5 text-[13px] text-red-300">{children}</p>;
+  return (
+    <p id={id} role="alert" className="mt-1.5 text-[13px] text-red-300">
+      {children}
+    </p>
+  );
 }

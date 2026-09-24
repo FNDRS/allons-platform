@@ -69,7 +69,7 @@ export function EntryTypePicker({
   return (
     <section>
       <StepHeading n={1}>Entrada</StepHeading>
-      <div role="radiogroup" className="flex flex-col gap-2.5">
+      <div role="radiogroup" aria-label="Tipo de entrada" className="flex flex-col gap-2.5">
         {types.map((type) => {
           const active = type.id === value;
           return (
@@ -92,7 +92,7 @@ export function EntryTypePicker({
                       }`}
                     >
                       {active ? (
-                        <Check className="size-3.5" strokeWidth={2.5} />
+                        <Check className="size-3.5" strokeWidth={2.5} aria-hidden />
                       ) : null}
                     </span>
                     <div className="min-w-0">
@@ -135,7 +135,7 @@ export function QuantityStepper({
       <StepHeading n={2}>Cantidad</StepHeading>
       <Shell>
         <div className="flex items-center justify-between py-1">
-          <p className="text-[14px] text-white/50">
+          <p className="text-[14px] text-white/50" aria-live="polite">
             {value === 1 ? "1 ticket" : `${value} tickets`}
             {max < 10 ? ` · máx. ${max}` : ""}
           </p>
@@ -145,9 +145,9 @@ export function QuantityStepper({
               disabled={value <= 1}
               label="Quitar uno"
             >
-              <Minus className="size-4" strokeWidth={1.75} />
+              <Minus className="size-4" strokeWidth={1.75} aria-hidden />
             </StepButton>
-            <span className="w-7 text-center text-[20px] font-bold tabular-nums">
+            <span className="w-7 text-center text-[20px] font-bold tabular-nums" aria-hidden>
               {value}
             </span>
             <StepButton
@@ -155,7 +155,7 @@ export function QuantityStepper({
               disabled={value >= max}
               label="Agregar uno"
             >
-              <Plus className="size-4" strokeWidth={1.75} />
+              <Plus className="size-4" strokeWidth={1.75} aria-hidden />
             </StepButton>
           </div>
         </div>
@@ -226,6 +226,7 @@ export function HolderCard({
               value={holder.name}
               onChange={(event) => onChange({ name: event.target.value })}
               placeholder="Nombre completo"
+              aria-invalid={showErrors && Boolean(errors.name)}
               autoComplete={index === 0 ? "name" : "off"}
             />
             <FieldError>{showErrors ? errors.name : null}</FieldError>
@@ -238,6 +239,7 @@ export function HolderCard({
               value={holder.email}
               onChange={(event) => onChange({ email: event.target.value })}
               placeholder="correo@ejemplo.com"
+              aria-invalid={showErrors && Boolean(errors.email)}
               autoComplete={index === 0 ? "email" : "off"}
             />
             <FieldError>{showErrors ? errors.email : null}</FieldError>
@@ -288,6 +290,7 @@ function QuestionField({
           type="button"
           role="checkbox"
           aria-checked={checked}
+          aria-invalid={Boolean(error)}
           onClick={() => onChange(checked ? "No" : "Sí")}
           className="flex w-full items-start gap-3 text-left"
         >
@@ -296,7 +299,7 @@ function QuestionField({
               checked ? "border-accent bg-accent text-black" : "border-white/25"
             }`}
           >
-            {checked ? <Check className="size-3.5" strokeWidth={2.5} /> : null}
+            {checked ? <Check className="size-3.5" strokeWidth={2.5} aria-hidden /> : null}
           </span>
           <span className="text-[15px] leading-6 text-white/85">
             {question.label}
@@ -425,7 +428,7 @@ export function GovernmentIdField({
             className="max-w-xs tracking-[0.04em]"
           />
           {showError ? (
-            <p className="mt-2 text-sm text-red-300">
+            <p role="alert" className="mt-2 text-sm text-red-300">
               Escríbelo tal como aparece en el documento.
             </p>
           ) : null}

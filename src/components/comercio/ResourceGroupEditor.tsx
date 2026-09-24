@@ -119,7 +119,7 @@ export function ResourceGroupEditor({
     <section>
       <SectionTitle
         action={
-          <Button variant="ghost" size="sm" onClick={() => setOpen((value) => !value)}>
+          <Button variant="ghost" size="sm" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
             {open ? "Ocultar" : groups.length ? "Editar" : "Configurar"}
           </Button>
         }
@@ -141,9 +141,10 @@ export function ResourceGroupEditor({
                 <button
                   type="button"
                   onClick={() => setDrafts((current) => current.filter((_, idx) => idx !== index))}
+                  aria-label={`Quitar grupo ${index + 1}`}
                   className="flex items-center gap-1 text-sm text-red-300 hover:text-red-200"
                 >
-                  <Trash2 className="size-4" /> Quitar
+                  <Trash2 className="size-4" aria-hidden /> Quitar
                 </button>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -200,7 +201,7 @@ export function ResourceGroupEditor({
             onClick={() => setDrafts((current) => [...current, emptyDraft()])}
             className="flex items-center justify-center gap-2 rounded-[22px] border border-dashed border-white/15 py-4 text-sm font-semibold text-white/70 hover:bg-white/[0.04]"
           >
-            <Plus className="size-4" /> Agregar grupo
+            <Plus className="size-4" aria-hidden /> Agregar grupo
           </button>
 
           <FieldError>{error}</FieldError>
@@ -222,6 +223,7 @@ function ModeButton({ active, onClick, children }: { active: boolean; onClick: (
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={`rounded-full px-4 py-2 text-[13px] font-semibold ${active ? "bg-white text-black" : "border border-white/10 text-white/70"}`}
     >
       {children}

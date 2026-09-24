@@ -190,6 +190,7 @@ export function ComercioDashboard() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Buscar un evento"
+          aria-label="Buscar un evento"
           className="mb-4"
           actionLabel="Filtrar"
         />

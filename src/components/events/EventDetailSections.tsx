@@ -33,7 +33,7 @@ export function EventHero({ event }: { event: EventDetail }) {
           {event.coverImageUrl ? (
             <EventCover
               src={event.coverImageUrl}
-              alt=""
+              alt={`Portada de ${event.title}`}
               themeColor={event.themeColor}
             />
           ) : (

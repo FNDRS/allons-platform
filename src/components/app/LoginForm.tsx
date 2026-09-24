@@ -297,7 +297,7 @@ export function LoginForm() {
 
         <FieldError>{error}</FieldError>
         {notice ? (
-          <p className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+          <p role="status" className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
             {notice}
           </p>
         ) : null}

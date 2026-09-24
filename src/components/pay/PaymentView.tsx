@@ -10,7 +10,7 @@ import { usePaymentOrder } from "@/hooks/usePaymentOrder";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { paymentLinkStorageKey } from "@/lib/api/payments";
 import { formatCents } from "@/lib/format";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { PaygateModal } from "./PaygateModal";
@@ -119,8 +119,11 @@ export function PaymentView({ orderId }: { orderId: string }) {
         <p className="mt-2 max-w-sm text-[14px] leading-relaxed text-white/50">
           Pagaste {formatCents(order.amountCents)}. Tu ticket ya está en tu cuenta.
         </p>
-        <Link href={`/tickets/${encodeURIComponent(ticketId)}?nuevo=1`} className="mt-8 w-full max-w-xs">
-          <Button size="lg" full>Ver mi ticket</Button>
+        <Link
+          href={`/tickets/${encodeURIComponent(ticketId)}?nuevo=1`}
+          className={buttonClass({ size: "lg", full: true, className: "mt-8 max-w-xs" })}
+        >
+          Ver mi ticket
         </Link>
         <Link href="/tickets" className="mt-4 text-[13px] text-white/40 transition hover:text-white">
           Ir a mis tickets
@@ -139,8 +142,11 @@ export function PaymentView({ orderId }: { orderId: string }) {
         <p className="mt-2 max-w-sm text-sm text-muted">
           No se hizo ningún cargo. Puedes intentarlo de nuevo cuando quieras.
         </p>
-        <Link href={retryHref} className="mt-7 w-full max-w-xs">
-          <Button size="lg" full variant="secondary">Intentar de nuevo</Button>
+        <Link
+          href={retryHref}
+          className={buttonClass({ size: "lg", full: true, variant: "secondary", className: "mt-7 max-w-xs" })}
+        >
+          Intentar de nuevo
         </Link>
       </Card>
     );
@@ -154,8 +160,8 @@ export function PaymentView({ orderId }: { orderId: string }) {
         <p className="mt-2 max-w-sm text-sm text-muted">
           El pago entró. En unos segundos aparecerá en Mis tickets; si tarda, revisa ahí en un momento.
         </p>
-        <Link href="/tickets" className="mt-7">
-          <Button variant="secondary">Ir a mis tickets</Button>
+        <Link href="/tickets" className={buttonClass({ variant: "secondary", className: "mt-7" })}>
+          Ir a mis tickets
         </Link>
       </Card>
     );

@@ -14,12 +14,17 @@ export default function TerminosPage() {
   return (
     <LegalPage
       title="Términos y Condiciones"
-      updated="Última actualización: 24 de junio de 2026"
+      updated="Última actualización: 24 de septiembre de 2026"
     >
       <p>
         Estos Términos y Condiciones (&quot;Términos&quot;) regulan el uso de la
-        aplicación Allons (la &quot;App&quot;) y sus servicios. Al crear una
-        cuenta o usar la App, aceptas estos Términos.
+        aplicación Allons (la &quot;App&quot;), del sitio web{" "}
+        <strong>allonsapp.com</strong> (incluido el panel de comercios) y sus
+        servicios. Al crear una cuenta, comprar un boleto o usar la App o el
+        sitio, aceptas estos Términos, nuestra{" "}
+        <a href="/privacidad">Política de Privacidad</a>, nuestra{" "}
+        <a href="/cookies">Política de Cookies</a> y nuestra{" "}
+        <a href="/seguridad">Política de Seguridad</a>.
       </p>
 
       <h2>1. El servicio</h2>
@@ -38,6 +43,10 @@ export default function TerminosPage() {
           tus credenciales.
         </li>
         <li>Eres responsable de la actividad realizada desde tu cuenta.</li>
+        <li>
+          Si sospechas que alguien accedió a tu cuenta, cambia tu contraseña y
+          avísanos de inmediato a <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
+        </li>
         <li>
           Debes ser mayor de edad o contar con autorización de un adulto
           responsable.
@@ -64,8 +73,10 @@ export default function TerminosPage() {
       <p>
         Los precios se muestran en Lempiras (HNL). Los pagos se procesan mediante
         un proveedor de pasarela externo (Paygate). Allons puede aplicar una
-        comisión de servicio por boleto, que se refleja al momento de la compra.
-        Los cargos del procesador de pago no son reembolsables.
+        comisión de servicio por boleto, que se refleja antes de confirmar la
+        compra. Salvo lo que disponga la ley, los cargos del procesador de pago
+        no son reembolsables. Podemos rechazar o anular pagos que el procesador
+        o nuestros controles identifiquen como fraudulentos.
       </p>
 
       <h2>5. Reembolsos y cancelaciones</h2>
@@ -74,6 +85,8 @@ export default function TerminosPage() {
         de cada evento. Si un evento se cancela o reprograma, el organizador es
         responsable de gestionar el reembolso correspondiente conforme a la ley.
         Para solicitudes, escribe a <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
+        Nada en estos Términos limita los derechos que te reconoce la Ley de
+        Protección al Consumidor de Honduras.
       </p>
 
       <h2>6. Organizadores</h2>
@@ -89,6 +102,32 @@ export default function TerminosPage() {
         No debes usar la App para fines ilícitos, fraudulentos, ni para publicar
         contenido ofensivo, engañoso o que infrinja derechos de terceros.
         Podemos suspender cuentas que incumplan estos Términos.
+      </p>
+
+      <h2>7.1. Uso aceptable y seguridad</h2>
+      <p>Al usar Allons no debes:</p>
+      <ul>
+        <li>
+          Intentar acceder a cuentas, datos o sistemas que no te pertenecen, ni
+          eludir los controles de seguridad o de acceso.
+        </li>
+        <li>
+          Usar bots, scripts o medios automatizados para comprar, reservar o
+          acaparar boletos, ni para extraer datos del servicio de forma masiva.
+        </li>
+        <li>
+          Interferir con el funcionamiento del servicio, sobrecargarlo o
+          introducir código malicioso.
+        </li>
+        <li>
+          Suplantar a Allons, a un organizador o a otra persona, ni usar la
+          marca Allons para engañar a terceros (phishing).
+        </li>
+      </ul>
+      <p>
+        Las investigaciones de seguridad de buena fe que sigan nuestro programa
+        de <a href="/seguridad#divulgacion-responsable">divulgación
+        responsable</a> no se consideran una infracción de esta sección.
       </p>
 
       <h2>8. Propiedad intelectual</h2>
@@ -108,6 +147,9 @@ export default function TerminosPage() {
       <h2>10. Ley aplicable</h2>
       <p>
         Estos Términos se rigen por las leyes de la República de Honduras.
+        Cualquier controversia se someterá a los tribunales competentes de
+        Honduras, sin perjuicio de los derechos que la ley te otorgue como
+        consumidor.
       </p>
 
       <h2>11. Cambios</h2>

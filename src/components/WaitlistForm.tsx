@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
@@ -54,6 +54,7 @@ export function WaitlistForm({
   const [phoneRaw, setPhoneRaw] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const errorId = useId();
   const [successTotal, setSuccessTotal] = useState<number>(WAITLIST_BASE_SUBSCRIBERS);
   const [animatedSuccessTotal, setAnimatedSuccessTotal] = useState<number>(WAITLIST_BASE_SUBSCRIBERS);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -329,6 +330,10 @@ export function WaitlistForm({
               autoComplete="email"
               enterKeyHint="next"
               placeholder="tu@email.com"
+              aria-label="Correo electrónico"
+              aria-invalid={status === "error" && inputStep === "email"}
+              aria-describedby={errorMsg ? errorId : undefined}
+              tabIndex={inputStep === "email" ? undefined : -1}
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -358,6 +363,10 @@ export function WaitlistForm({
               autoComplete="tel"
               enterKeyHint="send"
               placeholder="+504 9999 9999"
+              aria-label="Teléfono"
+              aria-invalid={status === "error" && inputStep === "phone"}
+              aria-describedby={errorMsg ? errorId : undefined}
+              tabIndex={inputStep === "phone" ? undefined : -1}
               value={phone}
               onChange={(e) => {
                 const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
@@ -381,6 +390,13 @@ export function WaitlistForm({
         <button
           type="submit"
           disabled={status === "loading"}
+          aria-label={
+            status === "loading"
+              ? "Enviando"
+              : inputStep === "email"
+                ? "Continuar"
+                : undefined
+          }
           className="h-12 px-6 rounded-full bg-[var(--color-accent)] text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-all duration-200 active:scale-[0.97] hover:bg-[var(--color-accent-deep)]"
         >
           {status === "loading" ? (
@@ -395,7 +411,11 @@ export function WaitlistForm({
 
       <div className="flex items-center justify-center min-h-[18px]">
         {errorMsg ? (
-          <p className={"text-[11px] tracking-wide " + (isDark ? "text-red-300" : "text-red-500")}>
+          <p
+            id={errorId}
+            role="alert"
+            className={"text-[11px] tracking-wide " + (isDark ? "text-red-300" : "text-red-500")}
+          >
             {errorMsg}
           </p>
         ) : inputStep === "phone" ? (
@@ -410,7 +430,7 @@ export function WaitlistForm({
               (isDark ? "text-white/40 hover:text-white" : "text-black/40 hover:text-black")
             }
           >
-            ← regresar
+            <span aria-hidden>←</span> regresar
           </button>
         ) : !expanded ? (
           <button
@@ -421,7 +441,7 @@ export function WaitlistForm({
               (isDark ? "text-white/40 hover:text-white" : "text-black/40 hover:text-black")
             }
           >
-            ← regresar
+            <span aria-hidden>←</span> regresar
           </button>
         ) : (
           <p className={"text-[11px] tracking-wide " + (isDark ? "text-white/45" : "text-black/45")}>
@@ -441,6 +461,7 @@ function ArrowIcon() {
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
     >
       <path
         d="M5 12h14m-6-6 6 6-6 6"
@@ -461,6 +482,7 @@ function CheckIcon() {
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
     >
       <path
         d="M5 13l4 4L19 7"
@@ -481,6 +503,7 @@ function Spinner() {
       height="18"
       viewBox="0 0 24 24"
       fill="none"
+      aria-hidden
     >
       <circle
         cx="12"

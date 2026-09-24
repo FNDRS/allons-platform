@@ -75,7 +75,7 @@ export function Modal({
             aria-label="Cerrar"
             className="flex size-10 items-center justify-center rounded-full bg-surface-2 text-muted hover:bg-white/10 hover:text-white"
           >
-            <X className="size-4" />
+            <X className="size-4" aria-hidden />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-5 pb-5">{children}</div>

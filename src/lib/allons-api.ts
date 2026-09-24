@@ -50,8 +50,22 @@ export type PublicEvent = {
   title: string;
   city: string | null;
   startsAt: string | null;
+  endsAt: string | null;
+  venue: string | null;
+  address: string | null;
+  description: string | null;
   coverImageUrl: string | null;
   providerName: string | null;
+  providerHandle: string | null;
+  /** Lowest entry price in cents (HNL), from the entry types. */
+  minPriceCents: number | null;
+  status: string | null;
+};
+
+/** What the sitemap needs from `GET /events`. */
+export type PublicEventSummary = {
+  id: string;
+  startsAt: string | null;
 };
 
 function getApiUrl() {
@@ -93,10 +107,9 @@ export async function getPublicEvent(id: string): Promise<PublicEvent | null> {
     const title = readString(raw.title);
     if (!title) return null;
 
-    const provider = raw.provider;
-    const providerName =
-      provider && typeof provider === "object"
-        ? readString((provider as Record<string, unknown>).name)
+    const provider =
+      raw.provider && typeof raw.provider === "object"
+        ? (raw.provider as Record<string, unknown>)
         : null;
 
     return {
@@ -104,11 +117,55 @@ export async function getPublicEvent(id: string): Promise<PublicEvent | null> {
       title,
       city: readString(raw.city),
       startsAt: readString(raw.startsAt),
+      endsAt: readString(raw.endsAt),
+      venue: readString(raw.venue),
+      address: readString(raw.address),
+      description: readString(raw.description),
       coverImageUrl: readString(raw.coverImageUrl),
-      providerName,
+      providerName: provider ? readString(provider.name) : null,
+      providerHandle: provider ? readString(provider.handle) : null,
+      minPriceCents: readMinPrice(raw),
+      status: readString(raw.status),
     };
   } catch {
     return null;
+  }
+}
+
+function readMinPrice(raw: Record<string, unknown>): number | null {
+  if (typeof raw.minPriceCents === "number") return raw.minPriceCents;
+  if (!Array.isArray(raw.entryTypes)) return null;
+  const prices = raw.entryTypes
+    .map((entry) =>
+      entry && typeof entry === "object"
+        ? (entry as Record<string, unknown>).priceCents
+        : null,
+    )
+    .filter((price): price is number => typeof price === "number");
+  return prices.length ? Math.min(...prices) : null;
+}
+
+/**
+ * Public event ids for the sitemap. An empty list on any problem: the
+ * sitemap still lists the static pages when the API is down.
+ */
+export async function listPublicEvents(): Promise<PublicEventSummary[]> {
+  try {
+    const response = await fetch(`${getApiUrl()}/events`, {
+      next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!response.ok) return [];
+    const data: unknown = await response.json();
+    if (!Array.isArray(data)) return [];
+    return data.flatMap((item) => {
+      if (!item || typeof item !== "object") return [];
+      const raw = item as Record<string, unknown>;
+      const id = readString(raw.id);
+      return id ? [{ id, startsAt: readString(raw.startsAt) }] : [];
+    });
+  } catch {
+    return [];
   }
 }
 

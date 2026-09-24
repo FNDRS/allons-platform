@@ -71,7 +71,7 @@ export function StaffView() {
             </div>
             <FieldError>{error}</FieldError>
             <Button type="submit" loading={staff.invite.isPending} className="self-start">
-              <UserPlus className="size-4" /> Enviar invitación
+              <UserPlus className="size-4" aria-hidden /> Enviar invitación
             </Button>
           </form>
         </Card>

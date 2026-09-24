@@ -34,7 +34,7 @@ export function EventsBrowser() {
           onChange={(event) => setSearch(event.target.value)}
           placeholder="¿Qué plan buscas?"
           aria-label="Buscar eventos"
-          prefix={<Search className="size-4" />}
+          prefix={<Search className="size-4" aria-hidden />}
           wrapperClassName="max-w-xl !bg-[#070708] !border-white/10 focus-within:!bg-[#070708] focus-within:!border-white/20"
           className="[&::-webkit-search-cancel-button]:hidden"
         />

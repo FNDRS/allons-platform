@@ -1,5 +1,6 @@
 import { AppNav } from "./AppNav";
 import { BottomTabs } from "./BottomTabs";
+import { LegalLinks } from "./LegalLinks";
 import { PageTransition } from "./PageTransition";
 import { SpaceAtmosphere } from "./SpaceAtmosphere";
 import { StairsCoverProvider } from "./StairsCover";
@@ -60,9 +61,12 @@ function ShellFrame({
       {tone === "space" ? <SpaceAtmosphere /> : null}
       <AppNav />
       <main
+        id="contenido"
+        tabIndex={-1}
         className={`relative z-10 mx-auto w-full flex-1 px-4 pb-32 pt-6 sm:px-6 sm:pt-8 lg:px-8 ${max}`}
       >
         <PageTransition>{children}</PageTransition>
+        <LegalLinks className="mt-16 border-t border-border pt-6" />
       </main>
       <BottomTabs hidden={!bottomTabs} />
     </div>

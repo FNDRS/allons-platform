@@ -6,7 +6,7 @@ import { useCardCheckout } from "@/hooks/useCardCheckout";
 import { useReserveForm } from "@/hooks/useReserveForm";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { formatEventWhen } from "@/lib/allons-api";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { EventCover, EventPosterWash } from "@/components/events/EventCover";
 import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
@@ -78,8 +78,8 @@ export function ReserveView({ eventId }: { eventId: string }) {
         title="No hay entradas disponibles"
         body="Este evento está agotado o la venta está cerrada."
         action={
-          <Link href={back}>
-            <Button variant="secondary">Volver al evento</Button>
+          <Link href={back} className={buttonClass({ variant: "secondary" })}>
+            Volver al evento
           </Link>
         }
       />
@@ -93,7 +93,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
           href={back}
           className="inline-flex items-center gap-1.5 text-[13px] font-medium text-white/40 transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-white"
         >
-          <ArrowLeft className="size-3.5" strokeWidth={1.75} />
+          <ArrowLeft className="size-3.5" strokeWidth={1.75} aria-hidden />
           Volver al evento
         </Link>
 
@@ -231,6 +231,20 @@ export function ReserveView({ eventId }: { eventId: string }) {
 
       {error ? <ErrorState message={error} /> : null}
 
+      {/* Informed consent before paying: the terms, the privacy notice and the
+          event's own refund rules are linked right where the buyer commits. */}
+      <p className="text-center text-[12px] leading-relaxed text-white/45">
+        Al {form.isFree ? "confirmar" : "pagar"} aceptas los{" "}
+        <Link href="/terminos" target="_blank" className="underline underline-offset-2 hover:text-white">
+          Términos y Condiciones
+        </Link>{" "}
+        y la{" "}
+        <Link href="/privacidad" target="_blank" className="underline underline-offset-2 hover:text-white">
+          Política de Privacidad
+        </Link>{" "}
+        de Allons, y compartes con el organizador los datos de los asistentes.
+      </p>
+
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(14px,env(safe-area-inset-bottom))] sm:px-6">
         <div className="pointer-events-auto mx-auto flex max-w-2xl items-center gap-2 rounded-[28px] border border-white/10 bg-[#0a0a0b]/80 p-2 pl-4 shadow-[0_-20px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:gap-3 sm:p-2.5 sm:pl-5">
           <div className="min-w-0 flex-1">
@@ -256,7 +270,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
         </div>
         {!form.isFree ? (
           <p className="mx-auto mt-2 flex max-w-2xl items-center justify-center gap-1.5 text-[11px] text-white/30">
-            <Lock className="size-3" strokeWidth={1.75} />
+            <Lock className="size-3" strokeWidth={1.75} aria-hidden />
             {payInApp
               ? "Cifrado y procesado por Paygate (Clinpays)"
               : "Pago seguro en Paygate"}
