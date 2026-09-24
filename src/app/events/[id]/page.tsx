@@ -94,7 +94,7 @@ export default async function EventPage({ params }: Props) {
   const event = await loadEvent(id);
   return (
     <AppShell width="detail" bottomTabs={false}>
-      {event ? (
+      {isListable(event) ? (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={jsonLd(eventJsonLd(event))}
@@ -110,12 +110,26 @@ export default async function EventPage({ params }: Props) {
 }
 
 /**
+ * Only events still on sale get Event data. An ended one (or a status this
+ * page does not know) would tell Google it is scheduled and in stock.
+ */
+function isListable(event: PublicEvent | null): event is PublicEvent {
+  if (!event) return false;
+  if (event.status) {
+    return event.status === "published" || event.status === "sold_out";
+  }
+  // No status from the API: fall back to the date.
+  const end = Date.parse(event.endsAt ?? event.startsAt ?? "");
+  return Number.isFinite(end) && end > Date.now();
+}
+
+/**
  * schema.org Event, which is what gets an event into Google's event results
  * for searches like "eventos en Tegucigalpa este fin de semana".
  */
 function eventJsonLd(event: PublicEvent) {
   const url = `${SITE_URL}/events/${encodeURIComponent(event.id)}`;
-  const status =
+  const availability =
     event.status === "sold_out"
       ? "https://schema.org/SoldOut"
       : "https://schema.org/InStock";
@@ -159,7 +173,7 @@ function eventJsonLd(event: PublicEvent) {
       ...(event.minPriceCents !== null
         ? { price: (event.minPriceCents / 100).toFixed(2) }
         : {}),
-      availability: status,
+      availability,
     },
   };
 }

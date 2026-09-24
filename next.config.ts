@@ -12,11 +12,25 @@ function originOf(raw: string | undefined): string | null {
   }
 }
 
+/** Extra origins from a comma-separated env value, e.g. a media CDN. */
+function originsFrom(raw: string | undefined): string[] {
+  return (raw ?? "")
+    .split(",")
+    .map((value) => originOf(value))
+    .filter((value): value is string => Boolean(value));
+}
+
 /**
- * The CSP is mostly about `connect-src`: the checkout form holds a card
- * number, so the only places a script on this page may send data are this
- * site (Sentry goes through the `/monitoring` tunnel), Supabase (auth and
- * Realtime) and allons-api. An injected skimmer has nowhere to post to.
+ * The CSP is about where the page may send data: the checkout form holds a
+ * card number, and a script can leak it through any request it is allowed
+ * to make — fetch, but also an <img> or <video> beacon. So `connect-src`,
+ * `img-src` and `media-src` are allowlists of exact origins: this site
+ * (Sentry goes through the `/monitoring` tunnel), our Supabase project,
+ * allons-api and the media hosts we serve. No wildcard on shared hosting
+ * such as `*.supabase.co`, where anyone can open a project and receive data.
+ *
+ * Covers, logos and videos on another host (a bucket, a CDN) go in
+ * NEXT_PUBLIC_MEDIA_ORIGINS; until then the browser refuses to load them.
  *
  * `script-src` keeps 'unsafe-inline' because Next's App Router writes inline
  * bootstrap scripts, and a nonce would force every page to render per
@@ -24,32 +38,35 @@ function originOf(raw: string | undefined): string | null {
  * all closed.
  */
 function contentSecurityPolicy(): string {
-  const supabase = originOf(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  // Without the env var the build cannot know the project, so it falls back
+  // to the wildcard rather than breaking sign-in.
+  const supabase =
+    originOf(process.env.NEXT_PUBLIC_SUPABASE_URL) ?? "https://*.supabase.co";
+  const supabaseWs = supabase.replace(/^http/, "ws");
   const api =
     originOf(process.env.NEXT_PUBLIC_ALLONS_API_URL) ??
     (isDev ? "http://127.0.0.1:3000" : "https://api.allonsapp.com");
 
-  const connect = [
+  const connect = ["'self'", api, "https://api.allonsapp.com", supabase, supabaseWs];
+  if (isDev) connect.push("ws:", "http://localhost:*", "http://127.0.0.1:*");
+
+  const media = [
     "'self'",
+    supabase,
     api,
     "https://api.allonsapp.com",
-    "https://*.supabase.co",
-    "wss://*.supabase.co",
+    // Google sign-in profile photos.
+    "https://lh3.googleusercontent.com",
+    ...originsFrom(process.env.NEXT_PUBLIC_MEDIA_ORIGINS),
   ];
-  if (supabase) {
-    connect.push(supabase, supabase.replace(/^http/, "ws"));
-  }
-  if (isDev) connect.push("ws:", "http://localhost:*", "http://127.0.0.1:*");
 
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     "script-src": ["'self'", "'unsafe-inline'", ...(isDev ? ["'unsafe-eval'"] : [])],
     "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
     "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
-    // Event covers, avatars and comercio logos come from storage buckets and
-    // Instagram CDNs the API decides, so images and video accept any HTTPS.
-    "img-src": ["'self'", "data:", "blob:", "https:"],
-    "media-src": ["'self'", "blob:", "https:"],
+    "img-src": Array.from(new Set([...media, "data:", "blob:"])),
+    "media-src": Array.from(new Set([...media, "blob:"])),
     "connect-src": Array.from(new Set(connect)),
     "worker-src": ["'self'", "blob:"],
     "frame-src": ["'none'"],

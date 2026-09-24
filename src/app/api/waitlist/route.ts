@@ -9,8 +9,13 @@ export const dynamic = "force-dynamic";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SOURCE_RE = /^[a-z0-9][a-z0-9-_]{0,39}$/i;
-/** Digits with an optional leading +, spaces, dashes or parentheses. */
+/** An optional leading +, then digits with spaces, dashes or parentheses. */
 const PHONE_RE = /^\+?[0-9 ()-]{7,20}$/;
+/** Formatting alone is not a number: 7 to 15 digits (E.164 max). */
+function isValidPhone(value: string): boolean {
+  const digits = value.replace(/\D/g, "").length;
+  return PHONE_RE.test(value) && digits >= 7 && digits <= 15;
+}
 const MAX_EMAIL_LENGTH = 254;
 const MAX_BODY_BYTES = 2_048;
 /** Two posts per signup (email, then phone); room for typos, not for a bot. */
@@ -50,12 +55,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid content type" }, { status: 415 });
     }
 
+    const tooLarge = () =>
+      NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    // Refuse on the declared size before reading anything.
+    if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) {
+      return tooLarge();
+    }
+
     let body: { email?: unknown; phone?: unknown; source?: unknown };
     try {
-      const raw = await req.text();
-      if (raw.length > MAX_BODY_BYTES) {
-        return NextResponse.json({ error: "Payload too large" }, { status: 413 });
-      }
+      // Bytes, not UTF-16 units: "ñ" or an emoji is more than one byte.
+      const bytes = await req.arrayBuffer();
+      if (bytes.byteLength > MAX_BODY_BYTES) return tooLarge();
+      const raw = new TextDecoder().decode(bytes);
       body = JSON.parse(raw);
       if (!body || typeof body !== "object") throw new Error("not an object");
     } catch {
@@ -71,7 +83,7 @@ export async function POST(req: NextRequest) {
     const source = rawSource && SOURCE_RE.test(rawSource) ? rawSource.toLowerCase() : null;
 
     const rawPhone = typeof body.phone === "string" ? body.phone.trim() : "";
-    if (rawPhone && !PHONE_RE.test(rawPhone)) {
+    if (rawPhone && !isValidPhone(rawPhone)) {
       return NextResponse.json({ error: "Teléfono inválido" }, { status: 400 });
     }
     const phone = rawPhone || null;

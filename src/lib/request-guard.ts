@@ -44,8 +44,13 @@ export function isSameOrigin(req: NextRequest): boolean {
   const origin = req.headers.get("origin");
   if (!origin) return false;
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+  if (!host) return false;
+  // Scheme too, not only the host: `http://allonsapp.com` is another origin.
+  const proto =
+    req.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() ||
+    req.nextUrl.protocol.replace(/:$/, "");
   try {
-    return new URL(origin).host === host;
+    return new URL(origin).origin === new URL(`${proto}://${host}`).origin;
   } catch {
     return false;
   }

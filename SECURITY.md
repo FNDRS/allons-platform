@@ -11,8 +11,8 @@ también se publica en `/.well-known/security.txt` (RFC 9116).
 
 ## Controles en este repo
 
-- Cabeceras en `next.config.ts`: CSP (con `connect-src` cerrado a este sitio,
-  Supabase y allons-api), HSTS, `X-Frame-Options`, `nosniff`,
+- Cabeceras en `next.config.ts`: CSP (con `connect-src`, `img-src` y `media-src` cerrados a este sitio,
+  el proyecto de Supabase, allons-api y `NEXT_PUBLIC_MEDIA_ORIGINS`), HSTS, `X-Frame-Options`, `nosniff`,
   `Referrer-Policy`, `Permissions-Policy`, COOP.
 - `SUPABASE_SERVICE_ROLE_KEY` solo en route handlers del servidor; nunca con
   prefijo `NEXT_PUBLIC_`.
