@@ -318,9 +318,12 @@ export function useReserveForm(eventId: string) {
     setPromoError(null);
   }
   // Clinpays no abre su formulario sin identidad. La cotización lo avisa de
-  // antemano; si fue la API quien lo pidió, el formulario lo recuerda.
+  // antemano; si fue la API quien lo pidió, el formulario lo recuerda — pero
+  // un código que deja el total en 0 nunca abre ese formulario, así que
+  // anula el recuerdo aunque venga de un intento anterior sin el código.
   const needsGovernmentId =
     !isFree &&
+    !effectivelyFree &&
     (quoteQuery.data?.requiresGovernmentId === true || governmentIdDemanded);
   const governmentIdValid = isValidGovernmentId(governmentId);
 
