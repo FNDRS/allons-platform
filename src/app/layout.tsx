@@ -162,9 +162,6 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <a href="#contenido" className="skip-link">
-          Saltar al contenido
-        </a>
         <Providers>{children}</Providers>
         <Toaster
           position="top-center"
