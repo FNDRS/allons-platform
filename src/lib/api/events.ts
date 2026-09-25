@@ -133,6 +133,8 @@ export interface EventQuote {
   serviceChargeCents: number;
   /** Lo que se le cobra a la tarjeta. */
   totalCents: number;
+  /** Presente solo cuando `discountCode` coincidió con un código promocional vigente. */
+  discount: { code: string; percent: number; amountCents: number } | null;
   /**
    * Si el pago alojado necesita el número de identidad del comprador. Lo
    * exige Clinpays cuando el cobro sale por su RedirectLink.
@@ -149,13 +151,19 @@ export interface EventQuote {
  */
 export function getEventQuote(
   id: string,
-  params: { entryTypeId?: string | null; quantity: number; donationCents: number },
+  params: {
+    entryTypeId?: string | null;
+    quantity: number;
+    donationCents: number;
+    discountCode?: string | null;
+  },
 ) {
   const query = new URLSearchParams({
     quantity: String(params.quantity),
     donationCents: String(params.donationCents),
   });
   if (params.entryTypeId) query.set("entryTypeId", params.entryTypeId);
+  if (params.discountCode) query.set("discountCode", params.discountCode);
   return apiFetch<EventQuote>(
     `/events/${encodeURIComponent(id)}/quote?${query.toString()}`,
     { auth: false },
@@ -197,7 +205,17 @@ export const eventKeys = {
     entryTypeId: string | null,
     quantity: number,
     donationCents: number,
-  ) => ["events", id, "quote", entryTypeId ?? "any", quantity, donationCents] as const,
+    discountCode?: string | null,
+  ) =>
+    [
+      "events",
+      id,
+      "quote",
+      entryTypeId ?? "any",
+      quantity,
+      donationCents,
+      discountCode ?? null,
+    ] as const,
 };
 
 export function isEntryTypeOnSale(type: EventEntryType, now = Date.now()) {

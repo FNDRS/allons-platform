@@ -17,6 +17,7 @@ import {
   EntryTypePicker,
   GovernmentIdField,
   HolderCard,
+  PromoCodeField,
   QuantityStepper,
   ReserveSummary,
   StepHeading,
@@ -38,6 +39,10 @@ export function ReserveView({ eventId }: { eventId: string }) {
   const error = form.error ?? checkout.error;
   // Un paso más cuando la pasarela pide identidad; corre la numeración de abajo.
   const idStep = form.needsGovernmentId ? 1 : 0;
+  const donationStep = form.donationAllowed ? 1 : 0;
+  // El código promocional sólo aplica a lo que se cobra: no tiene sentido en
+  // una entrada gratuita.
+  const promoStep = form.isFree ? 0 : 1;
 
   function onPay() {
     if (!payInApp) {
@@ -203,10 +208,27 @@ export function ReserveView({ eventId }: { eventId: string }) {
         />
       ) : null}
 
+      {!form.isFree ? (
+        <PromoCodeField
+          step={4 + (form.hasResourceGroups ? 1 : 0) + idStep + donationStep}
+          value={form.promoCodeDraft}
+          onChange={form.setPromoCodeDraft}
+          onApply={form.applyPromoCode}
+          onRemove={form.removePromoCode}
+          applied={form.discount}
+          applying={form.promoApplying}
+          error={form.promoError}
+        />
+      ) : null}
+
       <section>
         <StepHeading
           n={
-            (form.donationAllowed ? 5 : 4) + (form.hasResourceGroups ? 1 : 0) + idStep
+            4 +
+            (form.hasResourceGroups ? 1 : 0) +
+            idStep +
+            donationStep +
+            promoStep
           }
         >
           Tu compra
@@ -217,6 +239,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
           ticketsCents={form.ticketsCents}
           donationCents={form.donationAllowed ? form.donationCents : 0}
           serviceChargeCents={form.serviceChargeCents}
+          discount={form.discount}
           totalCents={form.totalCents}
           isFree={form.isFree}
         />
@@ -224,7 +247,13 @@ export function ReserveView({ eventId }: { eventId: string }) {
 
       {!form.isFree ? (
         <PaymentMethodStep
-          step={(form.donationAllowed ? 6 : 5) + (form.hasResourceGroups ? 1 : 0) + idStep}
+          step={
+            5 +
+            (form.hasResourceGroups ? 1 : 0) +
+            idStep +
+            donationStep +
+            promoStep
+          }
           checkout={checkout}
         />
       ) : null}

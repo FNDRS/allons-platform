@@ -128,6 +128,11 @@ export function useReserveForm(eventId: string) {
   const [quantity, setQuantity] = useState(1);
   const [holders, setHolders] = useState<HolderDraft[]>([emptyHolder()]);
   const [donation, setDonation] = useState("");
+  /** Lo que el comprador está escribiendo, antes de confirmar "Aplicar". */
+  const [promoCodeDraft, setPromoCodeDraft] = useState("");
+  /** El código que de verdad viaja en la cotización, una vez confirmado. */
+  const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -265,18 +270,48 @@ export function useReserveForm(eventId: string) {
       entryType?.id ?? null,
       quantity,
       donationAllowed ? donationCents : 0,
+      promoCode,
     ),
     queryFn: () =>
       getEventQuote(eventId, {
         entryTypeId: entryType?.id ?? null,
         quantity,
         donationCents: donationAllowed ? donationCents : 0,
+        discountCode: promoCode,
       }),
     enabled: Boolean(eventId) && Boolean(entryType) && !isFree,
     staleTime: 60_000,
   });
   const serviceChargeCents = quoteQuery.data?.serviceChargeCents ?? 0;
   const totalCents = quoteQuery.data?.totalCents ?? subtotalCents;
+  const discount = quoteQuery.data?.discount ?? null;
+  const promoApplying = Boolean(promoCode) && quoteQuery.isFetching;
+
+  // Un código sólo se manda cuando el comprador presiona "Aplicar". Si el
+  // servidor lo rechaza (vencido, agotado, de otro comercio), la cotización
+  // vuelve a la de antes en vez de quedarse pegada a un pedido que falla.
+  useEffect(() => {
+    if (!promoCode || !quoteQuery.isError) return;
+    setPromoError(
+      isApiError(quoteQuery.error)
+        ? quoteQuery.error.message
+        : "No pudimos aplicar el código.",
+    );
+    setPromoCode(null);
+  }, [promoCode, quoteQuery.isError, quoteQuery.error]);
+
+  function applyPromoCode() {
+    const code = promoCodeDraft.trim().toUpperCase();
+    if (!code) return;
+    setPromoError(null);
+    setPromoCode(code);
+  }
+
+  function removePromoCode() {
+    setPromoCode(null);
+    setPromoCodeDraft("");
+    setPromoError(null);
+  }
   // Clinpays no abre su formulario sin identidad. La cotización lo avisa de
   // antemano; si fue la API quien lo pidió, el formulario lo recuerda.
   const needsGovernmentId =
@@ -402,6 +437,7 @@ export function useReserveForm(eventId: string) {
       holders: draft.holderPayload.map((holder) => ({ ...holder, invite: false })),
       answers: draft.firstAnswers,
       ...(donationAllowed && donationCents > 0 ? { donationCents } : {}),
+      ...(promoCode ? { discountCode: promoCode } : {}),
       resourceIds: resources.selectedIds.length ? resources.selectedIds : null,
       ...(needsGovernmentId ? { governmentId: governmentId.trim() } : {}),
     };
@@ -497,6 +533,13 @@ export function useReserveForm(eventId: string) {
     subtotalCents,
     serviceChargeCents,
     totalCents,
+    discount,
+    promoCodeDraft,
+    setPromoCodeDraft,
+    promoApplying,
+    promoError,
+    applyPromoCode,
+    removePromoCode,
     holdExpiresAt,
     resourceGroups,
     selectedResourceByGroup: resources.selected,
