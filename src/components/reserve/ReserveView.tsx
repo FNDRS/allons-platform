@@ -34,8 +34,14 @@ export function ReserveView({ eventId }: { eventId: string }) {
   });
   const payInApp = !form.isFree && checkout.available && checkout.cardReady;
   // While the card list loads the CTA must not send anyone to the hosted
-  // page: the buyer is about to be offered the in-app card.
-  const submitting = form.submitting || checkout.submitting || (!form.isFree && checkout.loading);
+  // page: the buyer is about to be offered the in-app card. Same while a
+  // promo code is being priced: the total on screen (and what `submit`
+  // would send) is still the pre-code figure until this settles.
+  const submitting =
+    form.submitting ||
+    checkout.submitting ||
+    (!form.isFree && checkout.loading) ||
+    form.promoApplying;
   const error = form.error ?? checkout.error;
   // Un paso más cuando la pasarela pide identidad; corre la numeración de abajo.
   const idStep = form.needsGovernmentId ? 1 : 0;
