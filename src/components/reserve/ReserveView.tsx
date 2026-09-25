@@ -27,12 +27,15 @@ import { formatCents } from "@/lib/format";
 export function ReserveView({ eventId }: { eventId: string }) {
   const { ready, user } = useRequireAuth();
   const form = useReserveForm(eventId);
+  // A promo code can cover the ticket in full; nothing is charged, so the
+  // card step is as pointless there as it is on a genuinely free entry.
+  const chargesNothing = form.isFree || form.effectivelyFree;
   // Saved cards load only for a paid ticket; a free one never shows the step.
   const checkout = useCardCheckout({
     userId: user?.id ?? null,
-    enabled: ready && !form.isFree && Boolean(form.entryType),
+    enabled: ready && !chargesNothing && Boolean(form.entryType),
   });
-  const payInApp = !form.isFree && checkout.available && checkout.cardReady;
+  const payInApp = !chargesNothing && checkout.available && checkout.cardReady;
   // While the card list loads the CTA must not send anyone to the hosted
   // page: the buyer is about to be offered the in-app card. Same while a
   // promo code is being priced: the total on screen (and what `submit`
@@ -40,7 +43,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
   const submitting =
     form.submitting ||
     checkout.submitting ||
-    (!form.isFree && checkout.loading) ||
+    (!chargesNothing && checkout.loading) ||
     form.promoApplying;
   const error = form.error ?? checkout.error;
   // Un paso más cuando la pasarela pide identidad; corre la numeración de abajo.
@@ -251,7 +254,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
         />
       </section>
 
-      {!form.isFree ? (
+      {!chargesNothing ? (
         <PaymentMethodStep
           step={
             5 +
@@ -269,7 +272,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
       {/* Informed consent before paying: the terms, the privacy notice and the
           event's own refund rules are linked right where the buyer commits. */}
       <p className="text-center text-[12px] leading-relaxed text-white/45">
-        Al {form.isFree ? "confirmar" : "pagar"} aceptas los{" "}
+        Al {chargesNothing ? "confirmar" : "pagar"} aceptas los{" "}
         <Link href="/terminos" target="_blank" className="underline underline-offset-2 hover:text-white">
           Términos y Condiciones
         </Link>{" "}
@@ -287,7 +290,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
               Total
             </p>
             <p className="truncate text-[18px] font-bold tracking-tight">
-              {form.isFree ? "Gratis" : formatCents(form.totalCents)}
+              {chargesNothing ? "Gratis" : formatCents(form.totalCents)}
             </p>
           </div>
           <Button
@@ -296,14 +299,14 @@ export function ReserveView({ eventId }: { eventId: string }) {
             onClick={onPay}
             className="min-w-0 shrink-0 shadow-[0_10px_40px_rgba(246,112,16,0.28)] sm:min-w-[11.5rem]"
           >
-            {form.isFree
+            {chargesNothing
               ? "Confirmar"
               : payInApp
                 ? `Pagar ${formatCents(form.totalCents)}`
                 : "Ir a pagar"}
           </Button>
         </div>
-        {!form.isFree ? (
+        {!chargesNothing ? (
           <p className="mx-auto mt-2 flex max-w-2xl items-center justify-center gap-1.5 text-[11px] text-white/30">
             <Lock className="size-3" strokeWidth={1.75} aria-hidden />
             {payInApp

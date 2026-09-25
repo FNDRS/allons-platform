@@ -35,7 +35,8 @@ export interface InitiatePaymentInput {
 
 export interface InitiatePaymentResponse {
   orderId: string;
-  paymentLink: string;
+  /** Null when a 100%-off code left nothing to charge: the order settles without a gateway. */
+  paymentLink: string | null;
   amountCents: number;
   currency: string;
   expiresAt: string | null;

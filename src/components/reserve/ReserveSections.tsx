@@ -491,7 +491,9 @@ export function ReserveSummary({
         <div className="mt-1 flex items-baseline justify-between border-t border-white/[0.06] pt-3">
           <span className="text-[13px] font-medium text-white/45">Total</span>
           <span className="text-[22px] font-bold tracking-tight">
-            {isFree ? "Gratis" : formatCents(totalCents)}
+            {/* A promo code can zero a paid ticket's total same as a free
+                one does; either way there's nothing to charge. */}
+            {totalCents === 0 ? "Gratis" : formatCents(totalCents)}
           </span>
         </div>
       </div>
