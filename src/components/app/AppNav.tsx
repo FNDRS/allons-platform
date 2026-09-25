@@ -47,6 +47,7 @@ const COMERCIO_BRANCHES = [
   "/comercio/staff",
   "/comercio/actividades",
   "/comercio/hub",
+  "/comercio/descuentos",
 ];
 
 export function isComercioNavActive(pathname: string, href: string): boolean {

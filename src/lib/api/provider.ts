@@ -142,6 +142,56 @@ export interface ResourceGroupInput {
   labels: string[];
 }
 
+export interface ProviderDiscount {
+  id: string;
+  code: string;
+  /** 1–100. */
+  percent: number;
+  uses: number;
+  maxUses: number;
+  active: boolean;
+  /** Null cuando el código aplica a todos los eventos del comercio. */
+  eventId: string | null;
+  eventTitle: string | null;
+  createdAt: string;
+}
+
+export interface ProviderDiscountInput {
+  code: string;
+  percent: number;
+  maxUses: number;
+  /** Omite o pasa null para que el código aplique a todos los eventos. */
+  eventId?: string | null;
+}
+
+export function listProviderDiscounts() {
+  return apiFetch<ProviderDiscount[]>("/provider/discounts");
+}
+
+export function createProviderDiscount(input: ProviderDiscountInput) {
+  return apiFetch<ProviderDiscount[]>("/provider/discounts", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export function updateProviderDiscount(
+  id: string,
+  patch: Partial<ProviderDiscountInput & { active: boolean }>,
+) {
+  return apiFetch<{ updated: true }>(
+    `/provider/discounts/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: patch },
+  );
+}
+
+export function deleteProviderDiscount(id: string) {
+  return apiFetch<{ deleted: true }>(
+    `/provider/discounts/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+  );
+}
+
 export type StaffRole = "scanner" | "admin";
 
 export interface StaffMember {
@@ -286,4 +336,5 @@ export const providerKeys = {
   payments: (id: string) => ["provider", "events", id, "payments"] as const,
   resources: (id: string) => ["provider", "events", id, "resources"] as const,
   staff: ["provider", "staff"] as const,
+  discounts: ["provider", "discounts"] as const,
 };

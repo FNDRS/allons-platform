@@ -22,6 +22,8 @@ export interface InitiatePaymentInput {
   holders: PaymentHolderInput[];
   answers: AnswerInput[];
   donationCents?: number;
+  /** Código promocional del comercio (`provider_discounts`); rebaja el precio del boleto. */
+  discountCode?: string | null;
   resourceIds?: string[] | null;
   /**
    * Buyer's national id, forwarded to Clinpays when its RedirectLink opens

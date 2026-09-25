@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   LayoutDashboard,
   Smartphone,
+  Tag,
   Users,
   Wallet,
 } from "lucide-react";
@@ -23,7 +24,8 @@ import { PageTransition } from "@/components/app/PageTransition";
 
 /**
  * A Hub comercio (la Semana del Emprendimiento) sees registrations across its
- * campaign instead of Finanzas — most of those events are never monetized.
+ * campaign instead of Finanzas — most of those events are never monetized,
+ * so it gets no Descuentos tab either: there is nothing there to discount.
  */
 function buildNav(isHub: boolean) {
   return [
@@ -50,6 +52,12 @@ function buildNav(isHub: boolean) {
             Icon: Wallet,
             exact: true,
           },
+          {
+            href: "/comercio/descuentos",
+            label: "Descuentos",
+            Icon: Tag,
+            exact: true,
+          },
         ]),
     { href: "/comercio/staff", label: "Personal", Icon: Users, exact: true },
   ];
@@ -61,7 +69,10 @@ function buildTabs(isHub: boolean) {
     { href: "/comercio/actividades", label: "Actividad", Icon: Activity },
     ...(isHub
       ? [{ href: "/comercio/hub", label: "Hub", Icon: Users }]
-      : [{ href: "/comercio/finanzas", label: "Finanzas", Icon: Wallet }]),
+      : [
+          { href: "/comercio/finanzas", label: "Finanzas", Icon: Wallet },
+          { href: "/comercio/descuentos", label: "Descuentos", Icon: Tag },
+        ]),
     { href: "/comercio/staff", label: "Personal", Icon: Users },
   ];
 }

@@ -444,6 +444,7 @@ export function ReserveSummary({
   ticketsCents,
   donationCents,
   serviceChargeCents,
+  discount,
   totalCents,
   isFree,
 }: {
@@ -458,6 +459,7 @@ export function ReserveSummary({
    * quien compra.
    */
   serviceChargeCents: number;
+  discount?: { code: string; percent: number; amountCents: number } | null;
   totalCents: number;
   isFree: boolean;
 }) {
@@ -470,6 +472,13 @@ export function ReserveSummary({
           label={`${quantity} × ${typeName}`}
           value={isFree ? "Gratis" : formatCents(ticketsCents)}
         />
+        {discount ? (
+          <Row
+            label={`Código ${discount.code} (-${discount.percent}%)`}
+            value={`-${formatCents(discount.amountCents)}`}
+            tone="accent"
+          />
+        ) : null}
         {platformFeeCents > 0 ? (
           <Row
             label="Cargo por servicio"
@@ -490,11 +499,111 @@ export function ReserveSummary({
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "accent";
+}) {
   return (
     <div className="flex items-center justify-between text-white/45">
-      <span>{label}</span>
-      <span className="font-medium text-white/85">{value}</span>
+      <span className="truncate">{label}</span>
+      <span
+        className={`shrink-0 pl-3 font-medium ${
+          tone === "accent" ? "text-accent" : "text-white/85"
+        }`}
+      >
+        {value}
+      </span>
     </div>
+  );
+}
+
+/**
+ * Un código sólo viaja al servidor cuando el comprador confirma "Aplicar":
+ * escribirlo no gasta un uso de un código que luego no se cobra.
+ */
+export function PromoCodeField({
+  value,
+  onChange,
+  onApply,
+  onRemove,
+  applied,
+  applying,
+  error,
+  step,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onApply: () => void;
+  onRemove: () => void;
+  applied: { code: string; percent: number } | null;
+  applying: boolean;
+  error: string | null;
+  step: number;
+}) {
+  return (
+    <section>
+      <StepHeading n={step} hint="opcional">
+        Código promocional
+      </StepHeading>
+      <Shell active={Boolean(applied)}>
+        {applied ? (
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-accent bg-accent/15 text-accent">
+                <Check className="size-4" strokeWidth={2.5} />
+              </span>
+              <p className="min-w-0 truncate text-[14px] font-semibold tracking-tight">
+                {applied.code}
+                <span className="font-medium text-white/40">
+                  {" "}
+                  · {applied.percent}% de descuento
+                </span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onRemove}
+              className="shrink-0 text-[13px] font-semibold text-white/40 transition hover:text-white"
+            >
+              Quitar
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2.5">
+            <div className="flex gap-2">
+              <Input
+                value={value}
+                onChange={(event) => onChange(event.target.value.toUpperCase())}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    onApply();
+                  }
+                }}
+                placeholder="Escribe tu código"
+                autoCapitalize="characters"
+                maxLength={64}
+                className="tracking-[0.06em]"
+                aria-label="Código promocional"
+              />
+              <button
+                type="button"
+                onClick={onApply}
+                disabled={!value.trim() || applying}
+                className="shrink-0 rounded-2xl border border-white/15 bg-white/[0.06] px-4 text-[13px] font-semibold text-white transition hover:bg-white/[0.1] disabled:opacity-40"
+              >
+                {applying ? "Aplicando…" : "Aplicar"}
+              </button>
+            </div>
+            <FieldError>{error}</FieldError>
+          </div>
+        )}
+      </Shell>
+    </section>
   );
 }
