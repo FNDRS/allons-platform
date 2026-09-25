@@ -34,10 +34,8 @@ export function DiscountsView() {
     const trimmedCode = code.trim().toUpperCase();
     if (trimmedCode.length < 3) return setError("El código debe tener al menos 3 caracteres.");
     const percentValue = Number(percent);
-    if (!Number.isFinite(percentValue) || percentValue <= 0 || percentValue > 99) {
-      return setError(
-        "El porcentaje debe estar entre 1 y 99 (100% dejaría el checkout en L 0).",
-      );
+    if (!Number.isFinite(percentValue) || percentValue <= 0 || percentValue > 100) {
+      return setError("El porcentaje debe estar entre 1 y 100.");
     }
     const maxUsesValue = Number(maxUses);
     if (!Number.isFinite(maxUsesValue) || maxUsesValue < 1) {
@@ -94,7 +92,7 @@ export function DiscountsView() {
                   type="number"
                   inputMode="numeric"
                   min={1}
-                  max={99}
+                  max={100}
                   value={percent}
                   onChange={(e) => setPercent(e.target.value)}
                 />

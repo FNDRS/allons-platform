@@ -286,6 +286,11 @@ export function useReserveForm(eventId: string) {
   const totalCents = quoteQuery.data?.totalCents ?? subtotalCents;
   const discount = quoteQuery.data?.discount ?? null;
   const promoApplying = Boolean(promoCode) && quoteQuery.isFetching;
+  // Un ticket pago cuyo código lo cubre al 100% se cobra L 0: el servidor lo
+  // liquida sin pasarela, así que el checkout se comporta como el de una
+  // entrada gratuita (sin tarjeta, sin identidad) aunque el tipo no lo sea.
+  const effectivelyFree =
+    !isFree && Boolean(quoteQuery.data) && totalCents === 0;
 
   // Un código sólo se manda cuando el comprador presiona "Aplicar". Si el
   // servidor lo rechaza (vencido, agotado, de otro comercio), la cotización
@@ -313,9 +318,12 @@ export function useReserveForm(eventId: string) {
     setPromoError(null);
   }
   // Clinpays no abre su formulario sin identidad. La cotización lo avisa de
-  // antemano; si fue la API quien lo pidió, el formulario lo recuerda.
+  // antemano; si fue la API quien lo pidió, el formulario lo recuerda — pero
+  // un código que deja el total en 0 nunca abre ese formulario, así que
+  // anula el recuerdo aunque venga de un intento anterior sin el código.
   const needsGovernmentId =
     !isFree &&
+    !effectivelyFree &&
     (quoteQuery.data?.requiresGovernmentId === true || governmentIdDemanded);
   const governmentIdValid = isValidGovernmentId(governmentId);
 
@@ -478,6 +486,15 @@ export function useReserveForm(eventId: string) {
       }
 
       const order = await initiatePayment(paidOrderInput(draft));
+      // Null when a promo code covered the total: the order is already
+      // settled, there is no Paygate link to open, and `/pagar` reads that
+      // straight off the order status without needing one.
+      if (!order.paymentLink) {
+        router.replace(
+          `/pagar/${encodeURIComponent(order.orderId)}?event=${encodeURIComponent(event.id)}`,
+        );
+        return;
+      }
       try {
         window.sessionStorage.setItem(
           paymentLinkStorageKey(order.orderId),
@@ -525,6 +542,7 @@ export function useReserveForm(eventId: string) {
     setAnswer,
     questions,
     isFree,
+    effectivelyFree,
     donationAllowed,
     donation,
     setDonation,
