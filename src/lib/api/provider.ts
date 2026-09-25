@@ -158,6 +158,19 @@ export function getProviderDashboard() {
   return apiFetch<ProviderDashboard>("/provider/dashboard");
 }
 
+/** One tagged campaign event, as the Hub dashboard shows it. */
+export interface HubOverviewRow {
+  eventId: string;
+  providerName: string;
+  eventTitle: string;
+  registered: number;
+  attended: number;
+}
+
+export function getHubOverview() {
+  return apiFetch<HubOverviewRow[]>("/provider/hub/overview");
+}
+
 export function listProviderEvents() {
   return apiFetch<ProviderEventListItem[]>("/provider/events");
 }
@@ -264,6 +277,7 @@ export function getProviderActivity(limit = 20) {
 
 export const providerKeys = {
   dashboard: ["provider", "dashboard"] as const,
+  hub: ["provider", "hub"] as const,
   activity: ["provider", "activity"] as const,
   payouts: ["provider", "payouts"] as const,
   events: ["provider", "events"] as const,
