@@ -42,7 +42,12 @@ export function customerLinksFor(user: User | null) {
  * summary and also covers the event pages, so it is active for anything
  * under /comercio that is not one of these.
  */
-const COMERCIO_BRANCHES = ["/comercio/finanzas", "/comercio/staff", "/comercio/actividades"];
+const COMERCIO_BRANCHES = [
+  "/comercio/finanzas",
+  "/comercio/staff",
+  "/comercio/actividades",
+  "/comercio/hub",
+];
 
 export function isComercioNavActive(pathname: string, href: string): boolean {
   if (href !== "/comercio") return isActivePath(pathname, href);

@@ -24,6 +24,10 @@ export function HubOverviewView() {
     queryKey: providerKeys.hub,
     queryFn: getHubOverview,
     enabled: ready,
+    // No realtime signal covers this key (the socket only invalidates the
+    // signed-in provider's own dashboard/events/activity), and these rows
+    // aggregate other comercios' signups, so it always polls.
+    refetchInterval: 60_000,
   });
 
   if (overview.isLoading) return <Skeleton className="h-64" />;
