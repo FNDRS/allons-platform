@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { Menu } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { AllonsLogo } from "@/components/AllonsLogo";
 import { isComercioUser } from "@/lib/role";
+import { Modal } from "@/components/ui/Modal";
 import { AccountButton, AccountSheet } from "./AccountSheet";
 import { useAuth } from "./AuthProvider";
 import { useStairsCovering } from "./StairsCover";
@@ -78,6 +80,7 @@ export function AppNav() {
   const { user, loading } = useAuth();
   const covering = useStairsCovering();
   const [accountOpen, setAccountOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const links = loading ? customerLinksFor(null) : customerLinksFor(user);
 
   useLayoutEffect(() => {
@@ -96,13 +99,60 @@ export function AppNav() {
 
           <NavLinks links={links} />
 
-          <div className="ml-auto md:ml-0 md:justify-self-end">
+          <div className="ml-auto flex items-center gap-2 md:ml-0 md:justify-self-end">
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Abrir menú"
+              aria-haspopup="dialog"
+              className="flex size-9 items-center justify-center rounded-full border border-border bg-surface-2 text-muted transition hover:bg-white/[0.1] hover:text-white md:hidden"
+            >
+              <Menu className="size-4" aria-hidden />
+            </button>
             <AccountButton onOpen={() => setAccountOpen(true)} />
           </div>
         </div>
       </header>
       <AccountSheet open={accountOpen} onClose={() => setAccountOpen(false)} />
+      <NavMenuSheet links={links} open={menuOpen} onClose={() => setMenuOpen(false)} />
     </>
+  );
+}
+
+/** Mobile-only sheet with the same links as the desktop nav. */
+function NavMenuSheet({
+  links,
+  open,
+  onClose,
+}: {
+  links: { href: string; label: string }[];
+  open: boolean;
+  onClose: () => void;
+}) {
+  const pathname = usePathname();
+  return (
+    <Modal open={open} onClose={onClose} title="Menú">
+      <nav aria-label="Principal" className="flex flex-col gap-1">
+        {links.map((link) => {
+          const active = isActivePath(pathname, link.href);
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onClose}
+              aria-current={active ? "page" : undefined}
+              className={`rounded-[14px] px-4 py-3 text-[15px] font-semibold transition ${
+                active
+                  ? "bg-white/[0.06] text-white"
+                  : "text-muted hover:bg-white/[0.03] hover:text-white"
+              }`}
+            >
+              {link.label}
+            </Link>
+          );
+        })}
+      </nav>
+    </Modal>
   );
 }
 
