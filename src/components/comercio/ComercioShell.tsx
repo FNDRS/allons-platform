@@ -57,7 +57,7 @@ function buildNav(isHub: boolean) {
             href: "/comercio/finanzas",
             label: "Finanzas",
             Icon: Wallet,
-            exact: true,
+            exact: false,
           },
           {
             href: "/comercio/descuentos",

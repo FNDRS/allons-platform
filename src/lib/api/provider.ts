@@ -76,6 +76,13 @@ export interface ProviderEventDetail extends ProviderEventListItem {
   ticketTypes: ProviderTicketType[];
   questions: Array<{ id: string; label: string; kind: string; required: boolean }>;
   kitPickupInfo?: string | null;
+  refundPolicy?: string;
+  refundPartialPct?: number | null;
+  refundDeadlineDays?: number | null;
+  minAge?: number | null;
+  smokingAllowed?: boolean;
+  petFriendly?: boolean;
+  parkingAvailable?: boolean;
 }
 
 export interface HourlySales {

@@ -131,10 +131,10 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-5">
         <Link
-          href="/comercio"
+          href="/comercio/finanzas"
           className="inline-flex w-fit items-center gap-1.5 text-[13px] font-semibold text-white/45 transition hover:text-white"
         >
-          <ArrowLeft className="size-4" aria-hidden /> Dashboard
+          <ArrowLeft className="size-4" aria-hidden /> Finanzas
         </Link>
 
         <div className="flex flex-wrap items-start justify-between gap-4">

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ComercioEventView } from "@/components/comercio/ComercioEventView";
+import { EventConfigView } from "@/components/comercio/EventConfigView";
 
 export const metadata: Metadata = {
   title: "Evento · Comercio",
@@ -12,5 +12,5 @@ export default async function ComercioEventPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <ComercioEventView eventId={id} />;
+  return <EventConfigView eventId={id} />;
 }

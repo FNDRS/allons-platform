@@ -220,7 +220,7 @@ export function ComercioDashboard() {
         ) : (
           <div className="grid gap-5 sm:grid-cols-2">
             {sorted.map((event) => (
-              <ProviderEventCard key={event.id} event={event} />
+              <ProviderEventCard key={event.id} event={event} basePath="/comercio/finanzas" />
             ))}
           </div>
         )}

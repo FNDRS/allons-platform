@@ -6,18 +6,21 @@ import { SearchPill } from "@/components/ui/Pill";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useProviderLive } from "./ProviderLive";
 import { listProviderEvents, providerKeys } from "@/lib/api/provider";
-import { SectionTitle } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
-import { DashboardPrivacy, HideMoneyButton } from "./dashboardPrivacy";
+import { DashboardPrivacy } from "./dashboardPrivacy";
 import { ProviderEventCard } from "./ProviderEventCard";
 
 /**
- * Every event this comercio has, newest first, with a search box. Opening one
- * goes to `/comercio/events/[id]` for that event's own finance and ticket
- * detail. There is no "crear evento" button here on purpose: for now events
- * are only created and edited from the Allons app.
+ * Every event this comercio has, newest first, with a search box. There is
+ * no "crear evento" button here on purpose: for now events are only created
+ * and edited from the Allons app.
  */
-export function ComercioEventsListView() {
+export function ComercioEventsListView({
+  basePath = "/comercio/events",
+}: {
+  /** Where a card opens: the event's own config, or its Finanzas detail. */
+  basePath?: string;
+}) {
   const { ready } = useProviderAccess();
   const { live } = useProviderLive();
   const events = useQuery({
@@ -40,18 +43,6 @@ export function ComercioEventsListView() {
     <DashboardPrivacy>
     <div className="flex flex-col gap-6">
       <section>
-        <SectionTitle
-          action={
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] font-semibold text-dim">
-                {events.data ? `${sorted.length} de ${events.data.length}` : ""}
-              </span>
-              <HideMoneyButton />
-            </div>
-          }
-        >
-          Tus eventos
-        </SectionTitle>
         <SearchPill
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -86,7 +77,7 @@ export function ComercioEventsListView() {
         ) : (
           <div className="grid gap-5 sm:grid-cols-2">
             {sorted.map((event) => (
-              <ProviderEventCard key={event.id} event={event} />
+              <ProviderEventCard key={event.id} event={event} basePath={basePath} />
             ))}
           </div>
         )}

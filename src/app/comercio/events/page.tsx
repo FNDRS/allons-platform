@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ComercioEventsPage() {
   return (
     <>
-      <ComercioPageHeader title="Eventos" subtitle="Entra a un evento para ver sus ventas y finanzas." />
+      <ComercioPageHeader title="Eventos" subtitle="Entra a un evento para ver sus detalles y configuración." />
       <ComercioEventsListView />
     </>
   );

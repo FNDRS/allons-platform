@@ -30,7 +30,14 @@ const STATUS: Record<string, string> = {
   ended: "Finalizado",
 };
 
-export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
+export function ProviderEventCard({
+  event,
+  basePath = "/comercio/events",
+}: {
+  event: ProviderEventListItem;
+  /** Where this card opens: `/comercio/events` for the event's own config, `/comercio/finanzas` for its sales and money. */
+  basePath?: string;
+}) {
   const status = STATUS[event.status] ?? event.status;
   const prefetch = usePrefetchProviderEvent();
   const warm = () => prefetch(event.id);
@@ -43,7 +50,7 @@ export function ProviderEventCard({ event }: { event: ProviderEventListItem }) {
 
   return (
     <Link
-      href={`/comercio/events/${encodeURIComponent(event.id)}`}
+      href={`${basePath}/${encodeURIComponent(event.id)}`}
       onMouseEnter={warm}
       onFocus={warm}
       onTouchStart={warm}

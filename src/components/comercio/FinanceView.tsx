@@ -102,7 +102,7 @@ export function FinanceView() {
         </button>
         {showEvents ? (
           <div className="mt-5">
-            <ComercioEventsListView />
+            <ComercioEventsListView basePath="/comercio/finanzas" />
           </div>
         ) : null}
       </section>
