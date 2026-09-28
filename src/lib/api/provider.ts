@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, downloadFile } from "./client";
 
 /** What Allons and the pasarela withhold from each sale, as percentages. */
 export interface ProviderCommission {
@@ -247,6 +247,36 @@ export function getProviderEvent(id: string) {
   );
 }
 
+/** Downloads the event's settlement statement (not a fiscal invoice). */
+export function downloadEventSettlement(id: string, fileName: string) {
+  return downloadFile(
+    `/provider/events/${encodeURIComponent(id)}/settlement.pdf`,
+    fileName,
+  );
+}
+
+export interface ProviderBillingInfo {
+  legalName: string | null;
+  taxId: string | null;
+  address: string | null;
+  bankName: string | null;
+  bankAccountNumber: string | null;
+  bankAccountType: string | null;
+}
+
+export function getProviderBillingInfo() {
+  return apiFetch<ProviderBillingInfo>("/provider/billing-info");
+}
+
+export function updateProviderBillingInfo(
+  patch: Partial<ProviderBillingInfo>,
+) {
+  return apiFetch<ProviderBillingInfo>("/provider/billing-info", {
+    method: "PATCH",
+    body: patch,
+  });
+}
+
 export function getHourlySales(id: string) {
   return apiFetch<HourlySales>(
     `/provider/events/${encodeURIComponent(id)}/hourly-sales?tz=${encodeURIComponent("America/Tegucigalpa")}`,
@@ -343,6 +373,7 @@ export function getProviderActivity(limit = 20) {
 
 export const providerKeys = {
   dashboard: ["provider", "dashboard"] as const,
+  billingInfo: ["provider", "billing-info"] as const,
   hub: ["provider", "hub"] as const,
   activity: ["provider", "activity"] as const,
   payouts: ["provider", "payouts"] as const,

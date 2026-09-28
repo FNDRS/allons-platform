@@ -154,3 +154,43 @@ export async function apiFetch<T>(
   }
   return parsed as T;
 }
+
+/**
+ * For an endpoint that returns a file (a PDF, not JSON): fetches it with the
+ * same bearer auth as `apiFetch`, then hands the browser a download instead
+ * of parsing a body that was never going to be JSON.
+ */
+export async function downloadFile(path: string, fileName: string): Promise<void> {
+  const token = await getAccessToken();
+  if (!token) throw new ApiError("No hay sesión activa", 401, "no_session");
+
+  let response: Response;
+  try {
+    response = await fetch(`${getApiBaseUrl()}${path}`, {
+      headers: { Authorization: `Bearer ${token}`, "x-allons-client": "web" },
+    });
+  } catch {
+    throw new ApiError(
+      "No pudimos conectar con Allons. Revisa tu conexión.",
+      0,
+      "network",
+    );
+  }
+  if (!response.ok) {
+    throw new ApiError(
+      response.status >= 500
+        ? "Allons tuvo un problema. Intenta de nuevo en un momento."
+        : "No se pudo generar el archivo.",
+      response.status,
+      null,
+    );
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}

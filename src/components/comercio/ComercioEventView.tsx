@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, Clock } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, Clock, Download } from "lucide-react";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useProviderLive } from "./ProviderLive";
 import {
+  downloadEventSettlement,
   getHourlySales,
   getProviderEvent,
   getProviderPayments,
@@ -66,6 +68,23 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
     refetchInterval: live ? false : 60_000,
   });
   const seats = useProviderResources(eventId, ready);
+  const [downloadingSettlement, setDownloadingSettlement] = useState(false);
+
+  async function downloadSettlement() {
+    setDownloadingSettlement(true);
+    try {
+      const title = event.data?.title ?? "evento";
+      await downloadEventSettlement(
+        eventId,
+        `liquidacion-${title.toLowerCase().replace(/\s+/g, "-")}.pdf`,
+      );
+    } catch {
+      // The download button has no inline error slot; a failed generation is
+      // rare enough that asking the organizer to just try again is enough.
+    } finally {
+      setDownloadingSettlement(false);
+    }
+  }
 
   if (event.isLoading) {
     return (
@@ -164,6 +183,15 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
           </div>
           <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
             <ShareEventButton eventId={eventId} title={data.title} />
+            <button
+              type="button"
+              disabled={downloadingSettlement}
+              onClick={() => void downloadSettlement()}
+              className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-1.5 px-4 text-[13px] disabled:opacity-60 sm:w-auto ${glassCtaClass}`}
+            >
+              {downloadingSettlement ? "Generando…" : "Comprobante de liquidación"}
+              <Download className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
+            </button>
             <Link
               href={`/events/${encodeURIComponent(eventId)}`}
               className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-1.5 px-4 text-[13px] sm:w-auto ${glassCtaClass}`}

@@ -11,6 +11,7 @@ import { Card, SectionTitle } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/States";
 import { glassCtaClass } from "@/components/ui/cta";
 import { ComercioEventsListView } from "./ComercioEventsListView";
+import { ProviderBillingForm } from "./ProviderBillingForm";
 import { SeatsChart } from "./SeatsChart";
 
 /** The one number that matters: what the comercio will be paid. */
@@ -108,6 +109,8 @@ export function FinanceView() {
       </section>
 
       <SeatsChart events={events.data ?? []} loading={events.isLoading} />
+
+      <ProviderBillingForm />
     </div>
   );
 }
