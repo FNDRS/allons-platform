@@ -17,7 +17,7 @@ export function TicketTypeTable({
   const courtesyByType = new Map<string, number>();
   if (rows) {
     for (const row of rows) {
-      if (!row.entryTypeId) continue;
+      if (!row.entryTypeId || row.status !== "paid") continue;
       revenueByType.set(
         row.entryTypeId,
         (revenueByType.get(row.entryTypeId) ?? 0) + row.amountCents,

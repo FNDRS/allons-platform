@@ -8,6 +8,7 @@ import { useProviderLive } from "./ProviderLive";
 import { listProviderEvents, providerKeys } from "@/lib/api/provider";
 import { SectionTitle } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
+import { DashboardPrivacy, HideMoneyButton } from "./dashboardPrivacy";
 import { ProviderEventCard } from "./ProviderEventCard";
 
 /**
@@ -36,13 +37,17 @@ export function ComercioEventsListView() {
     });
 
   return (
+    <DashboardPrivacy>
     <div className="flex flex-col gap-6">
       <section>
         <SectionTitle
           action={
-            <span className="text-[12px] font-semibold text-dim">
-              {events.data ? `${sorted.length} de ${events.data.length}` : ""}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-semibold text-dim">
+                {events.data ? `${sorted.length} de ${events.data.length}` : ""}
+              </span>
+              <HideMoneyButton />
+            </div>
           }
         >
           Tus eventos
@@ -87,5 +92,6 @@ export function ComercioEventsListView() {
         )}
       </section>
     </div>
+    </DashboardPrivacy>
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useProviderLive } from "./ProviderLive";
 import { listProviderEvents, providerKeys } from "@/lib/api/provider";
@@ -10,6 +10,7 @@ import { formatHNL, formatNumber } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/States";
 import { glassCtaClass } from "@/components/ui/cta";
+import { ComercioEventsListView } from "./ComercioEventsListView";
 import { SeatsChart } from "./SeatsChart";
 
 /** The one number that matters: what the comercio will be paid. */
@@ -53,6 +54,7 @@ export function FinanceView() {
 
   const totals = dashboard?.totals;
   const commission = dashboard?.commission;
+  const [showEvents, setShowEvents] = useState(false);
 
   return (
     <div className="flex flex-col gap-8">
@@ -86,13 +88,23 @@ export function FinanceView() {
       ) : null}
 
       <section>
-        <Link
-          href="/comercio/events"
+        <button
+          type="button"
+          onClick={() => setShowEvents((current) => !current)}
           className={`inline-flex h-11 items-center gap-2 px-4 text-[14px] ${glassCtaClass}`}
         >
-          Ver el detalle por evento
-          <ArrowUpRight className="size-4 text-white/45" strokeWidth={1.5} aria-hidden />
-        </Link>
+          {showEvents ? "Ocultar eventos" : "Ver mis eventos"}
+          {showEvents ? (
+            <ChevronUp className="size-4 text-white/45" strokeWidth={1.5} aria-hidden />
+          ) : (
+            <ChevronDown className="size-4 text-white/45" strokeWidth={1.5} aria-hidden />
+          )}
+        </button>
+        {showEvents ? (
+          <div className="mt-5">
+            <ComercioEventsListView />
+          </div>
+        ) : null}
       </section>
 
       <SeatsChart events={events.data ?? []} loading={events.isLoading} />

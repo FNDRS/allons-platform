@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight } from "lucide-react";
+import { useState } from "react";
+import { SearchPill } from "@/components/ui/Pill";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useProviderLive } from "./ProviderLive";
 import {
@@ -10,13 +10,18 @@ import {
   providerKeys,
   type ProviderEventListItem,
 } from "@/lib/api/provider";
-import { formatCardDay, formatCardTime, formatDashboardHNL, formatNumber } from "@/lib/format";
+import {
+  formatCardDay,
+  formatCardTime,
+  formatDashboardHNL,
+  formatNumber,
+} from "@/lib/format";
 import { SectionTitle } from "@/components/ui/Card";
-import { Skeleton } from "@/components/ui/States";
-import { glassCtaClass } from "@/components/ui/cta";
+import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { DashboardFigure } from "./DashboardFigure";
 import { DashboardPrivacy, HideMoneyButton } from "./dashboardPrivacy";
 import { KpiTile } from "./KpiTile";
+import { ProviderEventCard } from "./ProviderEventCard";
 
 function nextEvent(events: ProviderEventListItem[]) {
   const now = Date.now();
@@ -44,6 +49,8 @@ export function ComercioDashboard() {
     enabled: ready,
     refetchInterval: live ? false : 60_000,
   });
+  const [query, setQuery] = useState("");
+  const needle = query.trim().toLowerCase();
   const catalog = events.data ?? [];
   const withCapacity = catalog.filter((event) => event.capacity > 0);
   const capacity = withCapacity.reduce((sum, event) => sum + event.capacity, 0);
@@ -57,6 +64,13 @@ export function ComercioDashboard() {
     capacity > 0 ? Math.round((soldInCapacity / capacity) * 100) : null;
   const average = sold > 0 ? (dashboard?.totals.net ?? 0) / sold : null;
   const upcoming = nextEvent(catalog);
+  const sorted = [...catalog]
+    .filter((event) => !needle || event.title.toLowerCase().includes(needle))
+    .sort((a, b) => {
+      const ta = a.startsAt ? new Date(a.startsAt).getTime() : 0;
+      const tb = b.startsAt ? new Date(b.startsAt).getTime() : 0;
+      return tb - ta;
+    });
 
   return (
     <DashboardPrivacy>
@@ -163,14 +177,53 @@ export function ComercioDashboard() {
       ) : null}
 
       <section>
-        <SectionTitle>Tus eventos</SectionTitle>
-        <Link
-          href="/comercio/events"
-          className={`inline-flex h-11 items-center gap-2 px-4 text-[14px] ${glassCtaClass}`}
+        <SectionTitle
+          action={
+            <span className="text-[12px] font-semibold text-dim">
+              {events.data ? `${sorted.length} de ${events.data.length}` : ""}
+            </span>
+          }
         >
-          Ver el detalle de cada evento
-          <ArrowUpRight className="size-4 text-white/45" strokeWidth={1.5} aria-hidden />
-        </Link>
+          Tus eventos
+        </SectionTitle>
+        <SearchPill
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Buscar un evento"
+          aria-label="Buscar un evento"
+          className="mb-4"
+          actionLabel="Filtrar"
+        />
+        {events.isLoading ? (
+          <div className="grid gap-5 sm:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton
+                key={index}
+                className="h-[168px] w-full rounded-[24px] border border-white/10"
+              />
+            ))}
+          </div>
+        ) : events.error ? (
+          <ErrorState
+            message={(events.error as Error).message}
+            onRetry={() => void events.refetch()}
+          />
+        ) : sorted.length === 0 ? (
+          <EmptyState
+            title={needle ? "Ningún evento coincide" : "Aún no tienes eventos"}
+            body={
+              needle
+                ? "Prueba con otra palabra del título."
+                : "Crea eventos desde la app de Allons. Aquí verás sus ventas y asistentes."
+            }
+          />
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2">
+            {sorted.map((event) => (
+              <ProviderEventCard key={event.id} event={event} />
+            ))}
+          </div>
+        )}
       </section>
     </div>
     </DashboardPrivacy>
