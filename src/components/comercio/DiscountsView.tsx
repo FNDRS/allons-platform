@@ -152,7 +152,9 @@ export function DiscountsView() {
           />
         ) : (
           <div className="flex flex-col gap-2.5">
-            {discounts.discounts.map((discount) => (
+            {discounts.discounts.map((discount) => {
+              const exhausted = discount.uses >= discount.maxUses;
+              return (
               <Card
                 key={discount.id}
                 className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
@@ -165,11 +167,15 @@ export function DiscountsView() {
                     </span>
                   </p>
                   <p className="truncate text-sm text-white/50">
-                    {discount.eventTitle ?? "Todos los eventos"} · {discount.uses}/
-                    {discount.maxUses} usos
+                    {discount.eventTitle ?? "Todos los eventos"} ·{" "}
+                    {discount.uses === 0
+                      ? "sin usar"
+                      : `usado ${discount.uses} ${discount.uses === 1 ? "vez" : "veces"}`}{" "}
+                    ({discount.uses}/{discount.maxUses})
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
+                  {exhausted ? <Badge tone="warn">Agotado</Badge> : null}
                   <Badge tone={discount.active ? "accent" : "neutral"}>
                     {discount.active ? "Activo" : "Inactivo"}
                   </Badge>
@@ -202,7 +208,8 @@ export function DiscountsView() {
                   </Button>
                 </div>
               </Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
