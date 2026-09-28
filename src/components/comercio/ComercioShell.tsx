@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   Activity,
   ArrowUpRight,
+  CalendarDays,
   LayoutDashboard,
   Smartphone,
   Tag,
@@ -30,6 +31,12 @@ import { PageTransition } from "@/components/app/PageTransition";
 function buildNav(isHub: boolean) {
   return [
     { href: "/comercio", label: "Dashboard", Icon: LayoutDashboard, exact: false },
+    {
+      href: "/comercio/events",
+      label: "Eventos",
+      Icon: CalendarDays,
+      exact: false,
+    },
     {
       href: "/comercio/actividades",
       label: "Actividades",

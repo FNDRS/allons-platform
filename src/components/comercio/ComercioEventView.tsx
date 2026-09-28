@@ -19,7 +19,20 @@ import { PaymentsTable, TicketTypeTable } from "./EventTables";
 import { HourlySalesChart } from "./HourlySalesChart";
 import { KpiTile } from "./KpiTile";
 import { ResourceMap } from "./ResourceMap";
+import { SalesTrendChart, type SalesTrendPoint } from "./SalesTrendChart";
 import { useProviderResources } from "@/hooks/useProviderResources";
+
+const dayFmt = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Tegucigalpa",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const dayLabelFmt = new Intl.DateTimeFormat("es-HN", {
+  timeZone: "America/Tegucigalpa",
+  day: "numeric",
+  month: "short",
+});
 
 const STATUS: Record<string, string> = {
   published: "Publicado",
@@ -77,17 +90,41 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
   const place = [data.venue, data.city].filter(Boolean).join(", ");
   const paymentRows = payments.data?.data ?? [];
   const typeById = new Map((data.ticketTypes ?? []).map((type) => [type.id, type]));
-  const courtesy = paymentRows.reduce(
-    (acc, row) => {
-      const type = row.entryTypeId ? typeById.get(row.entryTypeId) : undefined;
-      if (row.amountCents !== 0 || !type || type.price <= 0) return acc;
+
+  // A ticket type's list price times quantity versus what the order actually
+  // charged (minus any donation, which is not a ticket discount). Any
+  // positive gap is a code applied at checkout, partial or full.
+  let discountedCount = 0;
+  let discountedAmount = 0;
+  const dayTotals = new Map<string, { cents: number; qty: number }>();
+  for (const row of paymentRows) {
+    if (row.status !== "paid") continue;
+    const type = row.entryTypeId ? typeById.get(row.entryTypeId) : undefined;
+    const listAmount = (type?.price ?? 0) * row.quantity;
+    const chargedAmount = (row.amountCents - (row.donationCents ?? 0)) / 100;
+    if (listAmount - chargedAmount > 0) {
+      discountedCount += row.quantity;
+      discountedAmount += listAmount - chargedAmount;
+    }
+    const key = dayFmt.format(new Date(row.createdAt));
+    const entry = dayTotals.get(key) ?? { cents: 0, qty: 0 };
+    entry.cents += row.amountCents;
+    entry.qty += row.quantity;
+    dayTotals.set(key, entry);
+  }
+
+  let running = 0;
+  const salesTrend: SalesTrendPoint[] = [...dayTotals.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([day, entry]) => {
+      running += entry.cents;
       return {
-        count: acc.count + row.quantity,
-        valueForegone: acc.valueForegone + type.price * row.quantity,
+        day,
+        label: dayLabelFmt.format(new Date(`${day}T12:00:00`)),
+        cumulativeCents: running,
+        dayQty: entry.qty,
       };
-    },
-    { count: 0, valueForegone: 0 },
-  );
+    });
 
   return (
     <div className="flex flex-col gap-8">
@@ -164,16 +201,18 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
               : undefined
           }
         />
-        {courtesy.count > 0 ? (
+        {discountedCount > 0 ? (
           <KpiTile
-            label="Cortesía"
-            value={formatNumber(courtesy.count)}
-            hint={`${formatHNL(courtesy.valueForegone)} en valor regalado`}
+            label="Con descuento"
+            value={formatNumber(discountedCount)}
+            hint={`${formatHNL(discountedAmount)} menos que el precio de lista`}
           />
         ) : null}
       </div>
 
       <TicketTypeTable types={data.ticketTypes ?? []} rows={paymentRows} />
+
+      <SalesTrendChart points={salesTrend} loading={payments.isLoading} />
 
       {seats.isLoading ? (
         <Skeleton className="h-64 rounded-[24px]" />

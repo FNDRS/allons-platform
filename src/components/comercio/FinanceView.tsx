@@ -1,31 +1,16 @@
 "use client";
 
-import { useQueries, useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowUpRight } from "lucide-react";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useProviderLive } from "./ProviderLive";
-import {
-  getProviderEvent,
-  getProviderPayments,
-  listProviderEvents,
-  providerKeys,
-} from "@/lib/api/provider";
+import { listProviderEvents, providerKeys } from "@/lib/api/provider";
 import { formatHNL, formatNumber } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/States";
-import { SalesTrendChart, type SalesTrendPoint } from "./SalesTrendChart";
+import { glassCtaClass } from "@/components/ui/cta";
 import { SeatsChart } from "./SeatsChart";
-
-const dayFmt = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "America/Tegucigalpa",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
-const dayLabelFmt = new Intl.DateTimeFormat("es-HN", {
-  timeZone: "America/Tegucigalpa",
-  day: "numeric",
-  month: "short",
-});
 
 /** The one number that matters: what the comercio will be paid. */
 export function FinanceBalances({
@@ -47,6 +32,13 @@ export function FinanceBalances({
   );
 }
 
+/**
+ * The general picture across every event: totals from the dashboard endpoint
+ * (already aggregated server side, so this stays cheap no matter how many
+ * events a comercio has) plus a link into `/comercio/events` for the detail
+ * of any one event. Per-event breakdown (ticket types, courtesy/discounted
+ * tickets, sales over time) lives on that event's own page, not here.
+ */
 export function FinanceView() {
   const { dashboard, dashboardLoading, ready } = useProviderAccess({
     withDashboard: true,
@@ -61,69 +53,6 @@ export function FinanceView() {
 
   const totals = dashboard?.totals;
   const commission = dashboard?.commission;
-
-  const eventList = events.data ?? [];
-  const paymentQueries = useQueries({
-    queries: eventList.map((event) => ({
-      queryKey: providerKeys.payments(event.id),
-      queryFn: () => getProviderPayments(event.id),
-      enabled: ready && eventList.length > 0,
-    })),
-  });
-  const eventDetailQueries = useQueries({
-    queries: eventList.map((event) => ({
-      queryKey: providerKeys.event(event.id),
-      queryFn: () => getProviderEvent(event.id),
-      enabled: ready && eventList.length > 0,
-    })),
-  });
-  const paymentsLoading = paymentQueries.some((query) => query.isLoading);
-  const detailsLoading = eventDetailQueries.some((query) => query.isLoading);
-
-  let discountedTickets = 0;
-  let discountedAmountCents = 0;
-  const dayTotals = new Map<string, { cents: number; qty: number }>();
-  eventList.forEach((event, index) => {
-    const rows = paymentQueries[index]?.data?.data ?? [];
-    const priceByType = new Map(
-      (eventDetailQueries[index]?.data?.ticketTypes ?? []).map((type) => [type.id, type.price]),
-    );
-    for (const row of rows) {
-      if (row.status !== "paid") continue;
-
-      // A ticket type's list price times quantity, in cents, versus what the
-      // order actually charged (minus any donation, which is not a ticket
-      // discount). Any positive gap is a code applied at checkout, whether
-      // it covered part of the price or all of it.
-      const listPrice = row.entryTypeId ? priceByType.get(row.entryTypeId) ?? 0 : 0;
-      const listCents = listPrice * row.quantity * 100;
-      const chargedCents = row.amountCents - (row.donationCents ?? 0);
-      const gapCents = listCents - chargedCents;
-      if (gapCents > 0) {
-        discountedTickets += row.quantity;
-        discountedAmountCents += gapCents;
-      }
-
-      const key = dayFmt.format(new Date(row.createdAt));
-      const entry = dayTotals.get(key) ?? { cents: 0, qty: 0 };
-      entry.cents += row.amountCents;
-      entry.qty += row.quantity;
-      dayTotals.set(key, entry);
-    }
-  });
-
-  let running = 0;
-  const salesTrend: SalesTrendPoint[] = [...dayTotals.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([day, entry]) => {
-      running += entry.cents;
-      return {
-        day,
-        label: dayLabelFmt.format(new Date(`${day}T12:00:00`)),
-        cumulativeCents: running,
-        dayQty: entry.qty,
-      };
-    });
 
   return (
     <div className="flex flex-col gap-8">
@@ -152,26 +81,21 @@ export function FinanceView() {
               value={formatNumber(totals.soldTickets)}
               muted
             />
-            {!paymentsLoading && discountedTickets > 0 ? (
-              <Row
-                label="Boletos con descuento"
-                value={`${formatNumber(discountedTickets)} · ${detailsLoading ? "…" : `−${formatHNL(discountedAmountCents / 100)} vs. precio de lista`}`}
-                muted
-                hint="Boletos comprados con un código de descuento, parcial o del 100%. El ingreso bruto y el neto ya reflejan lo realmente cobrado, no el precio de lista."
-              />
-            ) : null}
           </Card>
         </section>
       ) : null}
 
-      <div className="grid items-start gap-8 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <SalesTrendChart points={salesTrend} loading={events.isLoading || paymentsLoading} />
-        </div>
-        <div className="lg:col-span-2">
-          <SeatsChart events={eventList} loading={events.isLoading} />
-        </div>
-      </div>
+      <section>
+        <Link
+          href="/comercio/events"
+          className={`inline-flex h-11 items-center gap-2 px-4 text-[14px] ${glassCtaClass}`}
+        >
+          Ver el detalle por evento
+          <ArrowUpRight className="size-4 text-white/45" strokeWidth={1.5} aria-hidden />
+        </Link>
+      </section>
+
+      <SeatsChart events={events.data ?? []} loading={events.isLoading} />
     </div>
   );
 }
