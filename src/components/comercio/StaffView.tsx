@@ -2,6 +2,7 @@
 
 import { UserPlus } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/components/app/AuthProvider";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useStaff } from "@/hooks/useStaff";
 import type { StaffRole } from "@/lib/api/provider";
@@ -13,6 +14,7 @@ import { Badge, EmptyState, ErrorState, Skeleton } from "@/components/ui/States"
 const ROLE_LABEL: Record<string, string> = { scanner: "Escáner", admin: "Administrador" };
 
 export function StaffView() {
+  const { user } = useAuth();
   const { ready } = useProviderAccess();
   const staff = useStaff(ready);
   const [name, setName] = useState("");
@@ -102,7 +104,7 @@ export function StaffView() {
                     {ROLE_LABEL[member.role] ?? member.role}
                     {member.active ? "" : " · inactivo"}
                   </Badge>
-                  {member.active ? (
+                  {member.active && member.userId !== user?.id ? (
                     <Button
                       variant="ghost"
                       size="sm"
