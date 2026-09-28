@@ -20,6 +20,7 @@ import { HourlySalesChart } from "./HourlySalesChart";
 import { KpiTile } from "./KpiTile";
 import { ResourceMap } from "./ResourceMap";
 import { SalesTrendChart, type SalesTrendPoint } from "./SalesTrendChart";
+import { TransactionsStatement } from "./TransactionsStatement";
 import { useProviderResources } from "@/hooks/useProviderResources";
 
 const dayFmt = new Intl.DateTimeFormat("en-CA", {
@@ -244,7 +245,10 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
           onRetry={() => void payments.refetch()}
         />
       ) : (
-        <PaymentsTable rows={paymentRows} types={data.ticketTypes ?? []} />
+        <>
+          <PaymentsTable rows={paymentRows} types={data.ticketTypes ?? []} />
+          <TransactionsStatement eventTitle={data.title} rows={paymentRows} />
+        </>
       )}
     </div>
   );

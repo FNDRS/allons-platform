@@ -96,6 +96,15 @@ export interface ProviderPaymentRow {
   entryTypeId?: string | null;
   donationCents?: number;
   holders?: Array<{ name: string }>;
+  /** How the charge split at capture time. Null on an order predating the split, where the whole charge was the subtotal. */
+  subtotalCents?: number | null;
+  serviceChargeCents?: number | null;
+  /** Allons' commission withheld from the comercio. */
+  allonsFeeCents?: number | null;
+  /** What the payment gateway takes out of the charge. */
+  gatewayCostCents?: number | null;
+  /** The gateway's own reference for this charge. */
+  authCode?: string | null;
 }
 
 export interface ProviderPayments {
