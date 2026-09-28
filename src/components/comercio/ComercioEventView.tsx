@@ -3,27 +3,22 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, Clock, Download } from "lucide-react";
+import { ArrowLeft, CalendarDays, Download } from "lucide-react";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useProviderLive } from "./ProviderLive";
 import {
   downloadEventSettlement,
-  getHourlySales,
   getProviderEvent,
   getProviderPayments,
   providerKeys,
 } from "@/lib/api/provider";
-import { formatCardDay, formatCardTime, formatHNL, formatNumber } from "@/lib/format";
+import { formatCardDay, formatHNL, formatNumber } from "@/lib/format";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { glassCtaClass } from "@/components/ui/cta";
-import { ShareEventButton } from "./ShareEventButton";
-import { PaymentsTable, TicketTypeTable } from "./EventTables";
-import { HourlySalesChart } from "./HourlySalesChart";
+import { TicketTypeTable } from "./EventTables";
 import { KpiTile } from "./KpiTile";
-import { ResourceMap } from "./ResourceMap";
 import { SalesTrendChart, type SalesTrendPoint } from "./SalesTrendChart";
 import { TransactionsStatement } from "./TransactionsStatement";
-import { useProviderResources } from "@/hooks/useProviderResources";
 
 const dayFmt = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/Tegucigalpa",
@@ -37,13 +32,12 @@ const dayLabelFmt = new Intl.DateTimeFormat("es-HN", {
   month: "short",
 });
 
-const STATUS: Record<string, string> = {
-  published: "Publicado",
-  draft: "Borrador",
-  sold_out: "Agotado",
-  ended: "Finalizado",
-};
-
+/**
+ * Money only: what this event generated and what's owed to the comercio.
+ * Sales/attendee/day-of-event operations (seating, hourly activity, the
+ * order list, sharing the event) live on its Eventos page instead, not
+ * here, so this stays a page you'd actually hand to an accountant.
+ */
 export function ComercioEventView({ eventId }: { eventId: string }) {
   const { ready } = useProviderAccess();
   // Realtime already invalidates these keys; the interval is the fallback
@@ -55,32 +49,28 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
     enabled: ready,
     refetchInterval: live ? false : 60_000,
   });
-  const hourly = useQuery({
-    queryKey: providerKeys.hourly(eventId),
-    queryFn: () => getHourlySales(eventId),
-    enabled: ready,
-    refetchInterval: live ? false : 60_000,
-  });
   const payments = useQuery({
     queryKey: providerKeys.payments(eventId),
     queryFn: () => getProviderPayments(eventId),
     enabled: ready,
     refetchInterval: live ? false : 60_000,
   });
-  const seats = useProviderResources(eventId, ready);
   const [downloadingSettlement, setDownloadingSettlement] = useState(false);
+  const [settlementError, setSettlementError] = useState<string | null>(null);
 
   async function downloadSettlement() {
     setDownloadingSettlement(true);
+    setSettlementError(null);
     try {
       const title = event.data?.title ?? "evento";
       await downloadEventSettlement(
         eventId,
         `liquidacion-${title.toLowerCase().replace(/\s+/g, "-")}.pdf`,
       );
-    } catch {
-      // The download button has no inline error slot; a failed generation is
-      // rare enough that asking the organizer to just try again is enough.
+    } catch (error) {
+      setSettlementError(
+        (error as Error).message || "No se pudo generar el comprobante.",
+      );
     } finally {
       setDownloadingSettlement(false);
     }
@@ -104,10 +94,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
     );
   }
   const data = event.data;
-  const status = STATUS[data.status] ?? data.status;
   const day = formatCardDay(data.startsAt);
-  const time = formatCardTime(data.startsAt);
-  const place = [data.venue, data.city].filter(Boolean).join(", ");
   const paymentRows = payments.data?.data ?? [];
   const typeById = new Map((data.ticketTypes ?? []).map((type) => [type.id, type]));
 
@@ -161,28 +148,12 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
             <h1 className="break-words text-[24px] font-bold leading-[1.1] tracking-[-0.03em] sm:text-[32px]">
               {data.title}
             </h1>
-            <p className="mt-2 text-[13px] text-white/40">{status}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-white/50">
-              <span className="inline-flex items-center gap-1.5">
-                <CalendarDays className="size-3.5 text-white/35" strokeWidth={1.5} aria-hidden />
-                {day ?? "Sin fecha"}
-              </span>
-              {time ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <Clock className="size-3.5 text-white/35" strokeWidth={1.5} aria-hidden />
-                  {time}
-                </span>
-              ) : null}
-              {place ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <Building2 className="size-3.5 text-white/35" strokeWidth={1.5} aria-hidden />
-                  {place}
-                </span>
-              ) : null}
-            </div>
+            <p className="mt-3 flex items-center gap-1.5 text-[13px] text-white/50">
+              <CalendarDays className="size-3.5 text-white/35" strokeWidth={1.5} aria-hidden />
+              {day ?? "Sin fecha"}
+            </p>
           </div>
-          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
-            <ShareEventButton eventId={eventId} title={data.title} />
+          <div className="flex w-full shrink-0 flex-col items-end gap-1.5 sm:w-auto">
             <button
               type="button"
               disabled={downloadingSettlement}
@@ -192,13 +163,9 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
               {downloadingSettlement ? "Generando…" : "Comprobante de liquidación"}
               <Download className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
             </button>
-            <Link
-              href={`/events/${encodeURIComponent(eventId)}`}
-              className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-1.5 px-4 text-[13px] sm:w-auto ${glassCtaClass}`}
-            >
-              Ver página pública
-              <ArrowUpRight className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
-            </Link>
+            {settlementError ? (
+              <p className="text-[12px] text-red-400">{settlementError}</p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -221,15 +188,6 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
           label="Ingresos"
           value={formatHNL(data.revenue - (data.contributions ?? 0))}
         />
-        <KpiTile
-          label="Escaneados"
-          value={formatNumber(data.scans)}
-          hint={
-            data.ticketsSold > 0
-              ? `${Math.round((data.scans / data.ticketsSold) * 100)}% asistencia`
-              : undefined
-          }
-        />
         {discountedCount > 0 ? (
           <KpiTile
             label="Con descuento"
@@ -243,28 +201,6 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
 
       <SalesTrendChart points={salesTrend} loading={payments.isLoading} />
 
-      {seats.isLoading ? (
-        <Skeleton className="h-64 rounded-[24px]" />
-      ) : (
-        <ResourceMap
-          groups={seats.groups}
-          typeNames={Object.fromEntries(
-            (data.ticketTypes ?? []).map((type) => [type.id, type.name]),
-          )}
-          busy={seats.assign.isPending || seats.release.isPending}
-          onRelease={(resourceId) => seats.release.mutate(resourceId)}
-          onAssign={(resourceId, ticketId) =>
-            seats.assign.mutate({ resourceId, ticketId })
-          }
-        />
-      )}
-
-      {hourly.data ? (
-        <HourlySalesChart data={hourly.data} />
-      ) : hourly.isLoading ? (
-        <Skeleton className="h-56 rounded-[24px]" />
-      ) : null}
-
       {payments.isLoading ? (
         <Skeleton className="h-48 rounded-[24px]" />
       ) : payments.error ? (
@@ -273,10 +209,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
           onRetry={() => void payments.refetch()}
         />
       ) : (
-        <>
-          <PaymentsTable rows={paymentRows} types={data.ticketTypes ?? []} />
-          <TransactionsStatement eventTitle={data.title} rows={paymentRows} />
-        </>
+        <TransactionsStatement eventTitle={data.title} rows={paymentRows} />
       )}
     </div>
   );

@@ -4,11 +4,21 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, Clock } from "lucide-react";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
-import { getProviderEvent, providerKeys } from "@/lib/api/provider";
-import { formatCardDay, formatCardTime, formatHNL } from "@/lib/format";
+import { useProviderResources } from "@/hooks/useProviderResources";
+import {
+  getHourlySales,
+  getProviderEvent,
+  getProviderPayments,
+  providerKeys,
+} from "@/lib/api/provider";
+import { formatCardDay, formatCardTime, formatHNL, formatNumber } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { glassCtaClass } from "@/components/ui/cta";
+import { PaymentsTable } from "./EventTables";
+import { HourlySalesChart } from "./HourlySalesChart";
+import { KpiTile } from "./KpiTile";
+import { ResourceMap } from "./ResourceMap";
 import { ShareEventButton } from "./ShareEventButton";
 
 const STATUS: Record<string, string> = {
@@ -34,10 +44,12 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 /**
- * An event's own configuration, the way it's set up from the Allons app:
- * what it's called, when and where it happens, its ticket types and their
- * list prices, its refund policy. No sales, no attendees, no money in or
- * out. That's a different view, reached from Finanzas, not from here.
+ * An event's own configuration and day-to-day operations: what it's called,
+ * when and where it happens, its ticket types and list prices, its refund
+ * policy, who's assigned to which seat, its order list, its sales activity
+ * today. No money math here (gross/net/commissions): that lives on this
+ * same event's Finanzas page instead, reached from Finanzas or Dashboard,
+ * not from here.
  */
 export function EventConfigView({ eventId }: { eventId: string }) {
   const { ready } = useProviderAccess();
@@ -46,6 +58,17 @@ export function EventConfigView({ eventId }: { eventId: string }) {
     queryFn: () => getProviderEvent(eventId),
     enabled: ready,
   });
+  const hourly = useQuery({
+    queryKey: providerKeys.hourly(eventId),
+    queryFn: () => getHourlySales(eventId),
+    enabled: ready,
+  });
+  const payments = useQuery({
+    queryKey: providerKeys.payments(eventId),
+    queryFn: () => getProviderPayments(eventId),
+    enabled: ready,
+  });
+  const seats = useProviderResources(eventId, ready);
 
   if (event.isLoading) {
     return (
@@ -123,6 +146,26 @@ export function EventConfigView({ eventId }: { eventId: string }) {
         </div>
       </div>
 
+      <div className="grid grid-cols-2 gap-3">
+        <KpiTile
+          label="Vendidos"
+          value={
+            data.capacity > 0
+              ? `${formatNumber(data.ticketsSold)} / ${formatNumber(data.capacity)}`
+              : formatNumber(data.ticketsSold)
+          }
+        />
+        <KpiTile
+          label="Escaneados"
+          value={formatNumber(data.scans)}
+          hint={
+            data.ticketsSold > 0
+              ? `${Math.round((data.scans / data.ticketsSold) * 100)}% asistencia`
+              : undefined
+          }
+        />
+      </div>
+
       {data.description ? (
         <section>
           <SectionTitle>Descripción</SectionTitle>
@@ -181,6 +224,42 @@ export function EventConfigView({ eventId }: { eventId: string }) {
           </div>
         )}
       </section>
+
+      {seats.isLoading ? (
+        <Skeleton className="h-64 rounded-[24px]" />
+      ) : (
+        <ResourceMap
+          groups={seats.groups}
+          typeNames={Object.fromEntries(
+            (data.ticketTypes ?? []).map((type) => [type.id, type.name]),
+          )}
+          busy={seats.assign.isPending || seats.release.isPending}
+          onRelease={(resourceId) => seats.release.mutate(resourceId)}
+          onAssign={(resourceId, ticketId) =>
+            seats.assign.mutate({ resourceId, ticketId })
+          }
+        />
+      )}
+
+      {hourly.data ? (
+        <HourlySalesChart data={hourly.data} />
+      ) : hourly.isLoading ? (
+        <Skeleton className="h-56 rounded-[24px]" />
+      ) : null}
+
+      {payments.isLoading ? (
+        <Skeleton className="h-48 rounded-[24px]" />
+      ) : payments.error ? (
+        <ErrorState
+          message={(payments.error as Error).message}
+          onRetry={() => void payments.refetch()}
+        />
+      ) : (
+        <PaymentsTable
+          rows={payments.data?.data ?? []}
+          types={data.ticketTypes ?? []}
+        />
+      )}
     </div>
   );
 }
