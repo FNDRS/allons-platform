@@ -5,7 +5,32 @@ import { SectionTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/States";
 import { Progress } from "@/components/ui/Stat";
 
-export function TicketTypeTable({ types }: { types: ProviderTicketType[] }) {
+export function TicketTypeTable({
+  types,
+  rows,
+}: {
+  types: ProviderTicketType[];
+  /** When given, revenue is the actual amount charged per type, not `sold * price` — a promo/courtesy ticket charges L 0 even though it counts toward `sold`. */
+  rows?: ProviderPaymentRow[];
+}) {
+  const revenueByType = new Map<string, number>();
+  const courtesyByType = new Map<string, number>();
+  if (rows) {
+    for (const row of rows) {
+      if (!row.entryTypeId) continue;
+      revenueByType.set(
+        row.entryTypeId,
+        (revenueByType.get(row.entryTypeId) ?? 0) + row.amountCents,
+      );
+      if (row.amountCents === 0) {
+        courtesyByType.set(
+          row.entryTypeId,
+          (courtesyByType.get(row.entryTypeId) ?? 0) + row.quantity,
+        );
+      }
+    }
+  }
+
   return (
     <section>
       <SectionTitle>Por tipo de entrada</SectionTitle>
@@ -14,6 +39,10 @@ export function TicketTypeTable({ types }: { types: ProviderTicketType[] }) {
       ) : (
         <div className="flex flex-col gap-3">
           {types.map((type) => {
+            const revenueCents = rows
+              ? revenueByType.get(type.id) ?? 0
+              : type.sold * type.price * 100;
+            const courtesyCount = courtesyByType.get(type.id) ?? 0;
             return (
               <article
                 key={type.id}
@@ -39,8 +68,13 @@ export function TicketTypeTable({ types }: { types: ProviderTicketType[] }) {
                       ) : null}
                     </p>
                     <p className="mt-0.5 text-[13px] tabular-nums text-white/50">
-                      {formatHNL(type.sold * type.price)}
+                      {formatCents(revenueCents)}
                     </p>
+                    {courtesyCount > 0 ? (
+                      <p className="mt-0.5 text-[12px] tabular-nums text-white/35">
+                        {courtesyCount} de cortesía
+                      </p>
+                    ) : null}
                   </div>
                 </div>
                 {type.total > 0 ? (
@@ -72,7 +106,7 @@ export function PaymentsTable({
   rows: ProviderPaymentRow[];
   types: ProviderTicketType[];
 }) {
-  const typeName = new Map(types.map((type) => [type.id, type.name]));
+  const typeById = new Map(types.map((type) => [type.id, type]));
 
   return (
     <section>
@@ -98,10 +132,12 @@ export function PaymentsTable({
             const names = (row.holders ?? [])
               .map((holder) => holder.name.trim())
               .filter(Boolean);
-            const kind = row.entryTypeId
-              ? typeName.get(row.entryTypeId)
+            const type = row.entryTypeId
+              ? typeById.get(row.entryTypeId)
               : undefined;
+            const kind = type?.name;
             const donation = row.donationCents ?? 0;
+            const isCourtesy = row.amountCents === 0 && (type?.price ?? 0) > 0;
             return (
               <article
                 key={row.orderId}
@@ -117,7 +153,9 @@ export function PaymentsTable({
                     </p>
                   </div>
                   <p className="shrink-0 text-[13px] text-white/40">
-                    {PAYMENT_LABEL[row.status] ?? row.status}
+                    {isCourtesy
+                      ? "Cortesía"
+                      : PAYMENT_LABEL[row.status] ?? row.status}
                   </p>
                 </div>
 

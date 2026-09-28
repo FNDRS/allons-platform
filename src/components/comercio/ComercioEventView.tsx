@@ -75,6 +75,19 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
   const day = formatCardDay(data.startsAt);
   const time = formatCardTime(data.startsAt);
   const place = [data.venue, data.city].filter(Boolean).join(", ");
+  const paymentRows = payments.data?.data ?? [];
+  const typeById = new Map((data.ticketTypes ?? []).map((type) => [type.id, type]));
+  const courtesy = paymentRows.reduce(
+    (acc, row) => {
+      const type = row.entryTypeId ? typeById.get(row.entryTypeId) : undefined;
+      if (row.amountCents !== 0 || !type || type.price <= 0) return acc;
+      return {
+        count: acc.count + row.quantity,
+        valueForegone: acc.valueForegone + type.price * row.quantity,
+      };
+    },
+    { count: 0, valueForegone: 0 },
+  );
 
   return (
     <div className="flex flex-col gap-8">
@@ -151,9 +164,16 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
               : undefined
           }
         />
+        {courtesy.count > 0 ? (
+          <KpiTile
+            label="Cortesía"
+            value={formatNumber(courtesy.count)}
+            hint={`${formatHNL(courtesy.valueForegone)} en valor regalado`}
+          />
+        ) : null}
       </div>
 
-      <TicketTypeTable types={data.ticketTypes ?? []} />
+      <TicketTypeTable types={data.ticketTypes ?? []} rows={paymentRows} />
 
       {seats.isLoading ? (
         <Skeleton className="h-64 rounded-[24px]" />
@@ -185,10 +205,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
           onRetry={() => void payments.refetch()}
         />
       ) : (
-        <PaymentsTable
-          rows={payments.data?.data ?? []}
-          types={data.ticketTypes ?? []}
-        />
+        <PaymentsTable rows={paymentRows} types={data.ticketTypes ?? []} />
       )}
     </div>
   );
