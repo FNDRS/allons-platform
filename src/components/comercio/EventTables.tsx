@@ -10,7 +10,7 @@ export function TicketTypeTable({
   rows,
 }: {
   types: ProviderTicketType[];
-  /** When given, revenue is the actual amount charged per type, not `sold * price` — a promo/courtesy ticket charges L 0 even though it counts toward `sold`. */
+  /** When given, revenue is the actual amount charged per type, not `sold * price`. A promo/courtesy ticket charges L 0 even though it counts toward `sold`. */
   rows?: ProviderPaymentRow[];
 }) {
   const revenueByType = new Map<string, number>();

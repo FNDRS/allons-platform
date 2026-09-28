@@ -80,8 +80,8 @@ export function FinanceView() {
   const paymentsLoading = paymentQueries.some((query) => query.isLoading);
   const detailsLoading = eventDetailQueries.some((query) => query.isLoading);
 
-  let courtesyTickets = 0;
-  let courtesyValueCents = 0;
+  let discountedTickets = 0;
+  let discountedAmountCents = 0;
   const dayTotals = new Map<string, { cents: number; qty: number }>();
   eventList.forEach((event, index) => {
     const rows = paymentQueries[index]?.data?.data ?? [];
@@ -90,11 +90,20 @@ export function FinanceView() {
     );
     for (const row of rows) {
       if (row.status !== "paid") continue;
-      if (row.amountCents === 0) {
-        courtesyTickets += row.quantity;
-        const listPrice = row.entryTypeId ? priceByType.get(row.entryTypeId) ?? 0 : 0;
-        courtesyValueCents += listPrice * row.quantity * 100;
+
+      // A ticket type's list price times quantity, in cents, versus what the
+      // order actually charged (minus any donation, which is not a ticket
+      // discount). Any positive gap is a code applied at checkout, whether
+      // it covered part of the price or all of it.
+      const listPrice = row.entryTypeId ? priceByType.get(row.entryTypeId) ?? 0 : 0;
+      const listCents = listPrice * row.quantity * 100;
+      const chargedCents = row.amountCents - (row.donationCents ?? 0);
+      const gapCents = listCents - chargedCents;
+      if (gapCents > 0) {
+        discountedTickets += row.quantity;
+        discountedAmountCents += gapCents;
       }
+
       const key = dayFmt.format(new Date(row.createdAt));
       const entry = dayTotals.get(key) ?? { cents: 0, qty: 0 };
       entry.cents += row.amountCents;
@@ -143,12 +152,12 @@ export function FinanceView() {
               value={formatNumber(totals.soldTickets)}
               muted
             />
-            {!paymentsLoading && courtesyTickets > 0 ? (
+            {!paymentsLoading && discountedTickets > 0 ? (
               <Row
-                label="Boletos de cortesía"
-                value={`${formatNumber(courtesyTickets)} · ${detailsLoading ? "…" : `valor de lista ${formatHNL(courtesyValueCents / 100)}`}`}
+                label="Boletos con descuento"
+                value={`${formatNumber(discountedTickets)} · ${detailsLoading ? "…" : `−${formatHNL(discountedAmountCents / 100)} vs. precio de lista`}`}
                 muted
-                hint="Boletos entregados en L 0.00 por un código de descuento al 100%. Ya no forman parte de los ingresos brutos ni del neto — este es solo el valor de lista que hubieran tenido."
+                hint="Boletos comprados con un código de descuento, parcial o del 100%. El ingreso bruto y el neto ya reflejan lo realmente cobrado, no el precio de lista."
               />
             ) : null}
           </Card>
