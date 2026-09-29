@@ -31,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...events.map((event) => {
       const upcoming = !event.startsAt || new Date(event.startsAt).getTime() >= now;
       return {
-        url: `${SITE_URL}/events/${encodeURIComponent(event.id)}`,
+        url: `${SITE_URL}/eventos/${encodeURIComponent(event.id)}`,
         lastModified,
         changeFrequency: upcoming ? ("daily" as const) : ("monthly" as const),
         priority: upcoming ? 0.8 : 0.4,

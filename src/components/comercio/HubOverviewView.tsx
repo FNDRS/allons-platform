@@ -89,7 +89,7 @@ export function HubOverviewView() {
                 </p>
               </div>
               <Link
-                href={`/events/${row.eventId}`}
+                href={`/eventos/${row.eventId}`}
                 target="_blank"
                 className={`flex h-9 shrink-0 items-center gap-1.5 px-4 text-[13px] ${glassCtaClass}`}
               >

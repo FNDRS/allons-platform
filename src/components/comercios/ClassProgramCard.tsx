@@ -99,12 +99,12 @@ export function ClassProgramCard({
 
           <div className="mt-4 flex items-center gap-3">
             {price ? (
-              <p className="min-w-0 shrink-0 whitespace-nowrap text-[15px] font-semibold tracking-tight tabular-nums text-white">
+              <p className="min-w-0 shrink-0 text-[15px] font-semibold tracking-tight tabular-nums text-white">
                 {price}
               </p>
             ) : null}
             <span
-              className={`inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap text-[13px] ${glassCtaClass}`}
+              className={`inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 text-[13px] ${glassCtaClass}`}
             >
               Reservar
               <ArrowUpRight

@@ -43,7 +43,7 @@ export function deriveReserveState(event: EventDetail): ReserveState {
 function detailFromListItem(item: EventListItem): EventDetail {
   return {
     ...item,
-    description: null,
+    description: item.description ?? null,
     venue: item.venue ?? null,
     address: item.address ?? null,
     latitude: null,

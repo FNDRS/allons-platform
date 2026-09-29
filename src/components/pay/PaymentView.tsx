@@ -103,8 +103,8 @@ export function PaymentView({ orderId }: { orderId: string }) {
   }
 
   const retryHref = eventId
-    ? `/events/${encodeURIComponent(eventId)}/reservar`
-    : "/events";
+    ? `/eventos/${encodeURIComponent(eventId)}/reservar`
+    : "/eventos";
 
   if (phase === "paid" && order) {
     const ticketId = order.ticketIds[0];

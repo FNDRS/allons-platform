@@ -27,7 +27,7 @@ export function ComercioHero({
   const whatsapp = whatsappLink(profile.phone);
 
   return (
-    <header className="relative overflow-hidden rounded-[32px] border border-white/10 bg-black shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
+    <header className="relative w-full min-w-0 overflow-hidden rounded-[28px] border border-white/10 bg-black shadow-[0_30px_80px_rgba(0,0,0,0.45)] sm:rounded-[32px]">
       <span
         className="pointer-events-none absolute inset-0"
         style={{
@@ -41,7 +41,7 @@ export function ComercioHero({
       />
       <span className="poster-grain" aria-hidden />
 
-      <div className="relative flex flex-col gap-7 p-6 sm:p-9">
+      <div className="relative flex min-w-0 flex-col gap-6 p-4 sm:gap-7 sm:p-9">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-7">
           <span
             className="relative grid size-[88px] shrink-0 place-items-center overflow-hidden rounded-[26px] bg-white/[0.06] text-[30px] font-bold tracking-tight text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] ring-1 ring-white/15 backdrop-blur sm:size-[104px] sm:text-[36px]"

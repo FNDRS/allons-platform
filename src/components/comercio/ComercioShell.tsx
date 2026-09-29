@@ -116,7 +116,7 @@ export function ComercioShellInner({
   return (
     <div className="app-canvas min-h-dvh text-white lg:flex">
       <aside className="hidden w-[248px] shrink-0 flex-col border-r border-border px-4 pb-6 pt-6 lg:sticky lg:top-0 lg:flex lg:h-dvh">
-        <Link href="/events" aria-label="Allons, ir a eventos" className="px-3">
+        <Link href="/eventos" aria-label="Allons, ir a eventos" className="px-3">
           <AllonsLogo className="h-auto w-[92px]" variant="orange" />
         </Link>
         <p className="mt-2 px-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-dim">
@@ -144,7 +144,7 @@ export function ComercioShellInner({
         </nav>
         <div className="mt-auto flex flex-col gap-1">
           <Link
-            href="/events"
+            href="/eventos"
             className="flex h-11 items-center gap-3 rounded-[14px] px-3 text-[14px] font-semibold text-muted transition hover:bg-surface hover:text-white"
           >
             <ArrowUpRight className="size-[18px]" aria-hidden />
@@ -161,7 +161,7 @@ export function ComercioShellInner({
         <header className="glass sticky top-0 z-40 border-b border-border pt-[env(safe-area-inset-top)]">
           <div className="mx-auto flex h-12 w-full max-w-[1200px] items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
             <Link
-              href="/events"
+              href="/eventos"
               aria-label="Allons, ir a eventos"
               className="min-w-0 shrink-0 lg:hidden"
             >
@@ -179,7 +179,7 @@ export function ComercioShellInner({
           </div>
         </header>
 
-        <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-24 pt-4 sm:px-6 md:pb-8 lg:px-8">
+        <main id="contenido" tabIndex={-1} className="mx-auto w-full min-w-0 max-w-[1200px] flex-1 px-4 pb-24 pt-4 sm:px-6 md:pb-8 lg:px-8">
           <PageTransition>{children}</PageTransition>
         </main>
 

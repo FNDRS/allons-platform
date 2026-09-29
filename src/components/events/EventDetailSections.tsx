@@ -190,7 +190,9 @@ export function EventDescription({ text }: { text: string | null }) {
   return (
     <section>
       <SectionTitle>Sobre el evento</SectionTitle>
-      <p className="whitespace-pre-line text-[16px] leading-7 text-white/80">{text}</p>
+      <p className="whitespace-pre-line break-words text-[16px] leading-7 text-white/80 [overflow-wrap:anywhere]">
+        {text}
+      </p>
     </section>
   );
 }
@@ -249,7 +251,7 @@ export function EntryTypesCard({
             return (
               <Link
                 key={type.id}
-                href={`/events/${encodeURIComponent(previewEventId)}/reservar?entrada=${encodeURIComponent(type.id)}`}
+                href={`/eventos/${encodeURIComponent(previewEventId)}/reservar?entrada=${encodeURIComponent(type.id)}`}
                 className="flex items-center justify-between gap-4 px-5 py-4 transition hover:bg-white/[0.04]"
               >
                 {row}

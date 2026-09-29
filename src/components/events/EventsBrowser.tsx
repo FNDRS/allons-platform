@@ -41,14 +41,14 @@ export function EventsBrowser() {
       </Hero>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2">
           {Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
               className="overflow-hidden rounded-[32px] border border-white/10"
             >
               <Skeleton className="aspect-video w-full !rounded-none" />
-              <Skeleton className="h-36 w-full !rounded-none" />
+              <Skeleton className="h-52 w-full !rounded-none" />
             </div>
           ))}
         </div>
@@ -64,7 +64,7 @@ export function EventsBrowser() {
           }
         />
       ) : (
-        <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2">
           {events.map((event, index) => (
             <div
               key={event.id}

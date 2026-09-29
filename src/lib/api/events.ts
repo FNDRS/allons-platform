@@ -22,7 +22,27 @@ export interface EventListItem {
   petFriendly?: boolean;
   minAge?: number | null;
   capacity?: number | null;
+  description?: string | null;
+  /** Interest name when the list already flattened it. */
+  category?: string | null;
+  /** Raw interests from `GET /events`. The card reads the first name. */
+  interests?: Array<{
+    interest?: { name?: string | null } | null;
+  }> | null;
   provider?: EventProvider | null;
+}
+
+/** Category chip on the public card. The list sends it as an interest name. */
+export function eventCategoryName(
+  event: Pick<EventListItem, "category" | "interests">,
+): string | null {
+  const direct = event.category?.trim();
+  if (direct) return direct;
+  for (const row of event.interests ?? []) {
+    const name = row.interest?.name?.trim();
+    if (name) return name;
+  }
+  return null;
 }
 
 export interface EventEntryType {

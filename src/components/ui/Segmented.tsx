@@ -21,7 +21,7 @@ export function Segmented<T extends string>({
     <div
       role="radiogroup"
       aria-label={label}
-      className="inline-flex h-11 items-center gap-1 rounded-full border border-border bg-surface p-1"
+      className="inline-flex h-11 max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border bg-surface p-1"
     >
       {options.map((option) => {
         const active = option.value === value;
@@ -44,7 +44,7 @@ export function Segmented<T extends string>({
                 (index + step + options.length) % options.length
               ] as HTMLElement | undefined)?.focus();
             }}
-            className={`relative z-0 h-full rounded-full px-4 text-[13px] font-semibold transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+            className={`relative z-0 h-full shrink-0 rounded-full px-3 text-[13px] font-semibold transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] sm:px-4 ${
               active ? "text-black" : "text-muted hover:text-white"
             }`}
           >

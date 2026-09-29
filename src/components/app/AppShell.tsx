@@ -63,7 +63,7 @@ function ShellFrame({
       <main
         id="contenido"
         tabIndex={-1}
-        className={`relative z-10 mx-auto w-full flex-1 px-4 pb-32 pt-6 sm:px-6 sm:pt-8 lg:px-8 ${max}`}
+        className={`relative z-10 mx-auto w-full min-w-0 flex-1 px-4 pb-28 pt-6 sm:px-6 sm:pb-32 sm:pt-8 lg:px-8 ${max}`}
       >
         <PageTransition>{children}</PageTransition>
         <LegalLinks className="mt-16 border-t border-border pt-6" />
