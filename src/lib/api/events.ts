@@ -60,6 +60,9 @@ export interface PublicResource {
   id: string;
   label: string;
   sortOrder: number;
+  /** Cell on the studio map, zero-based. Both null when the unit flows in order. */
+  row: number | null;
+  col: number | null;
   taken: boolean;
 }
 
@@ -92,6 +95,14 @@ export interface EventProvider {
   phone?: string | null;
 }
 
+/** A co-host comercio on a collaborative event, as the public page names it. */
+export interface EventCollaborator {
+  id: string;
+  name: string;
+  handle: string | null;
+  logoUrl: string | null;
+}
+
 export interface EventDetail extends EventListItem {
   description: string | null;
   venue: string | null;
@@ -102,6 +113,8 @@ export interface EventDetail extends EventListItem {
   capacity?: number | null;
   attendeeCount?: number;
   provider: EventProvider | null;
+  /** Accepted co-hosts besides `provider`. Empty or absent on a regular event. */
+  collaborators?: EventCollaborator[];
   gallery?: Array<{ id: string; url: string }>;
   entryTypes: EventEntryType[];
   questions: EventQuestion[];

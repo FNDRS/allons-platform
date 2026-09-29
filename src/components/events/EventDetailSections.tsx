@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import Link from "next/link";
-import { Package, Undo2 } from "lucide-react";
+import { Handshake, Package, Undo2 } from "lucide-react";
 import { formatEventWhen } from "@/lib/allons-api";
 import { instagramLink } from "@/lib/instagram";
 import { whatsappLink } from "@/lib/whatsapp";
@@ -25,6 +25,7 @@ export function EventHero({ event }: { event: EventDetail }) {
     ? `@${provider.handle.replace(/^@/, "")}`
     : null;
   const avatarName = (provider?.name ?? event.title).trim();
+  const collaborators = event.collaborators ?? [];
 
   return (
     <header className="flex flex-col gap-5">
@@ -62,8 +63,59 @@ export function EventHero({ event }: { event: EventDetail }) {
             </div>
           </Link>
         ) : null}
+        {collaborators.length > 0 ? (
+          <EventCollaborators collaborators={collaborators} />
+        ) : null}
       </div>
     </header>
+  );
+}
+
+/**
+ * The other comercios behind a collaborative event, right under the
+ * organizer so the attendee sees who is in it, each linking to its
+ * profile like the host does.
+ */
+function EventCollaborators({
+  collaborators,
+}: {
+  collaborators: NonNullable<EventDetail["collaborators"]>;
+}) {
+  return (
+    <div className="mt-4 rounded-[20px] border border-white/[0.08] bg-white/[0.03] px-4 py-3.5">
+      <p className="inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
+        <Handshake className="size-3.5" strokeWidth={1.7} aria-hidden />
+        Evento colaborativo
+      </p>
+      <p className="mt-1 text-[13px] text-white/45">
+        Organizado junto con{" "}
+        {collaborators.length === 1 ? "este comercio" : "estos comercios"}.
+      </p>
+      <ul className="mt-3 flex flex-col gap-2">
+        {collaborators.map((comercio) => {
+          const handle = comercio.handle?.replace(/^@/, "") ?? null;
+          return (
+            <li key={comercio.id}>
+              <Link
+                href={`/${encodeURIComponent(handle || comercio.id)}`}
+                className="inline-flex max-w-full items-center gap-3 rounded-full pr-4 transition hover:bg-white/[0.04]"
+                aria-label={`Ver el perfil de ${comercio.name}`}
+              >
+                <HostMark src={comercio.logoUrl} name={comercio.name} />
+                <span className="min-w-0">
+                  <span className="block truncate text-[15px] font-semibold tracking-tight">
+                    {comercio.name}
+                  </span>
+                  <span className="block truncate text-[13px] text-white/45">
+                    {handle ? `@${handle}` : "Ver perfil"}
+                  </span>
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
