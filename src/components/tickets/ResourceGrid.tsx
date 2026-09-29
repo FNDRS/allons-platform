@@ -38,7 +38,7 @@ export function ResourceGrid({
   frontLabel?: string | null;
   /** Icono de la unidad: bici, mat, saco o trampolín. */
   mark?: StudioMark;
-  /** La bici es alta, el saco y el bounce cuadrados, el mat de pilates ancho. */
+  /** La bici es alta, el saco y el bounce cuadrados, el mat de pilates es un rectángulo vertical. */
   shape?: TileShape;
 }) {
   const { rows, cols } = layoutRows(tiles, columns, autoColumns(tiles.length));
@@ -102,7 +102,7 @@ function UnitTile({
   const interactive = Boolean(onSelect) && !disabled && !(tile.taken && !tile.mine);
   const frame = tileFrame(shape);
   const labelSize =
-    shape === "wide"
+    shape === "portrait"
       ? compact
         ? "text-[14px]"
         : "text-[17px]"
@@ -199,11 +199,11 @@ function StudioFront({ label }: { label: string }) {
 
 export type StudioMark = "bike" | "mat" | "bag" | "bounce" | null;
 
-export type TileShape = "tall" | "square" | "wide";
+export type TileShape = "tall" | "square" | "portrait";
 
 function tileFrame(shape: TileShape): string {
   if (shape === "square") return "aspect-square rounded-[12px]";
-  if (shape === "wide") return "aspect-[8/5] rounded-[8px]";
+  if (shape === "portrait") return "aspect-[5/8] rounded-[8px]";
   return "aspect-[1/1.18] rounded-[16px]";
 }
 
@@ -283,7 +283,7 @@ export function studioMapChrome(name: string): {
     return { frontLabel: "Frente estrado", mark: "bag", shape: "square" };
   }
   if (/\bmat\b|pilates/.test(n)) {
-    return { frontLabel: "Mat Coach", mark: null, shape: "wide" };
+    return { frontLabel: "Mat Coach", mark: null, shape: "portrait" };
   }
   if (/\bbounce\b/.test(n)) {
     return { frontLabel: "Coach", mark: "bounce", shape: "square" };
