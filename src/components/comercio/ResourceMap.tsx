@@ -60,6 +60,8 @@ export function ResourceMap({
                 .map((unit) => ({
                   id: unit.id,
                   label: unit.label,
+                  row: unit.row,
+                  col: unit.col,
                   taken: Boolean(unit.ticket),
                   caption: unit.ticket
                     ? unit.ticket.holderName ?? unit.ticket.code

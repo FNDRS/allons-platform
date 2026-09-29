@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { PublicResourceGroup } from "./events";
+import type { PublicResource, PublicResourceGroup } from "./events";
 
 export interface TicketEventInfo {
   id: string;
@@ -52,13 +52,7 @@ export interface TicketDetail extends TicketListItem {
 
 export interface TicketResourceGroup extends PublicResourceGroup {
   assigned: { id: string; label: string } | null;
-  resources: Array<{
-    id: string;
-    label: string;
-    sortOrder: number;
-    taken: boolean;
-    mine: boolean;
-  }>;
+  resources: Array<PublicResource & { mine: boolean }>;
 }
 
 export interface AnswerInput {
