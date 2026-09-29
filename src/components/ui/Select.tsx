@@ -28,6 +28,7 @@ export function Select({
   placeholder,
   className = "",
   "aria-label": ariaLabel,
+  "aria-invalid": ariaInvalid,
   children,
 }: {
   name?: string;
@@ -39,6 +40,7 @@ export function Select({
   placeholder?: string;
   className?: string;
   "aria-label"?: string;
+  "aria-invalid"?: boolean;
   children: ReactNode;
 }) {
   const [uncontrolled, setUncontrolled] = useState(defaultValue ?? "");
@@ -60,6 +62,7 @@ export function Select({
       >
         <SelectPrimitive.Trigger
           aria-label={ariaLabel}
+          aria-invalid={ariaInvalid || undefined}
           className="group flex h-12 w-full cursor-pointer items-center justify-between gap-2 rounded-[14px] border border-border bg-surface-2 px-4 text-left text-[15px] text-white outline-none transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:border-accent/60 focus-visible:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-dim data-[state=open]:border-white/20 data-[state=open]:bg-white/[0.08]"
         >
           <SelectPrimitive.Value placeholder={placeholder} />

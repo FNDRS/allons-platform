@@ -27,10 +27,13 @@ export function ReserveBikePicker({
 
   return (
     <section>
-      {groups.map((group) => {
+      {groups.map((group, index) => {
         const mine = new Set(selectedByGroup[group.id] ?? []);
         return (
-          <div key={group.id}>
+          <div
+            key={group.id}
+            {...(error && index === 0 ? { "data-scroll-target": "invalid" } : {})}
+          >
             <StepHeading n={step}>
               Elige tu {group.name.toLowerCase()}
             </StepHeading>
