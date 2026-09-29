@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Lock } from "lucide-react";
 import { useCardCheckout } from "@/hooks/useCardCheckout";
@@ -25,6 +26,7 @@ import {
   StepHeading,
 } from "./ReserveSections";
 import { formatCents, formatDateTime } from "@/lib/format";
+import { scrollToFirstInvalid } from "@/lib/scroll-to-invalid";
 
 export function ReserveView({ eventId }: { eventId: string }) {
   const params = useSearchParams();
@@ -66,14 +68,17 @@ export function ReserveView({ eventId }: { eventId: string }) {
   // una entrada gratuita.
   const promoStep = form.isFree ? 0 : 1;
 
+  const pageRef = useRef<HTMLDivElement>(null);
+
   function onPay() {
     if (form.preview) return;
     if (!payInApp) {
       void form.submit();
-      return;
+    } else {
+      const input = form.preparePaidOrder();
+      if (input) void checkout.pay(input);
     }
-    const input = form.preparePaidOrder();
-    if (input) void checkout.pay(input);
+    scrollToFirstInvalid(pageRef.current);
   }
 
   if (!ready || form.isLoading) {
@@ -119,7 +124,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-10 pb-36 sm:gap-12">
+    <div ref={pageRef} className="flex flex-col gap-10 pb-36 sm:gap-12">
       <header>
         <Link
           href={back}
@@ -213,7 +218,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
           ))}
         </div>
         {form.touched && form.duplicateEmail ? (
-          <p className="mt-2 text-sm text-red-300">
+          <p data-scroll-target="invalid" className="mt-2 text-sm text-red-300">
             Cada ticket necesita un correo distinto.
           </p>
         ) : null}

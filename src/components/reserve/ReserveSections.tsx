@@ -333,6 +333,7 @@ function QuestionField({
           onValueChange={onChange}
           placeholder="Elige una opción"
           aria-label={question.label}
+          aria-invalid={Boolean(error)}
         >
           {(question.options ?? []).map((option) => (
             <SelectItem key={option} value={option}>
@@ -348,7 +349,11 @@ function QuestionField({
     return (
       <label className="block">
         <Label hint={hint}>{question.label}</Label>
-        <Textarea value={value} onChange={(event) => onChange(event.target.value)} />
+        <Textarea
+          value={value}
+          aria-invalid={Boolean(error)}
+          onChange={(event) => onChange(event.target.value)}
+        />
         <FieldError>{error}</FieldError>
       </label>
     );
@@ -360,6 +365,7 @@ function QuestionField({
         type={kind === "number" ? "number" : kind === "date" ? "date" : "text"}
         inputMode={kind === "number" ? "numeric" : undefined}
         value={value}
+        aria-invalid={Boolean(error)}
         onChange={(event) => onChange(event.target.value)}
       />
       <FieldError>{error}</FieldError>
