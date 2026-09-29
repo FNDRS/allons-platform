@@ -78,12 +78,31 @@ interface ComercioEventRow {
   startsAt: string | null;
   endsAt: string | null;
   city: string | null;
+  venue?: string | null;
+  address?: string | null;
   coverImageUrl: string | null;
+  hoverVideoUrl?: string | null;
   themeColor: string | null;
   minPriceCents: number | null;
   status?: string;
   types?: string[];
   eventType?: string | null;
+  parkingAvailable?: boolean;
+  petFriendly?: boolean;
+  minAge?: number | null;
+  capacity?: number | null;
+  hiddenFromPublic?: boolean;
+}
+
+/**
+ * `upcoming` on the API means "tickets are on sale", so a published event
+ * whose sale has not opened is missing from both upcoming and past. The
+ * profile lists every public event and splits by when it happens.
+ */
+function isListedComercioEvent(row: ComercioEventRow) {
+  if (row.hiddenFromPublic) return false;
+  if (!row.status) return true;
+  return row.status === "published" || row.status === "sold_out" || row.status === "ended";
 }
 
 export function getComercio(idOrHandle: string) {
@@ -102,20 +121,48 @@ export async function listComercioEvents(
     `/providers/${encodeURIComponent(id)}/events?scope=${scope}`,
     { auth: false },
   );
-  return rows.map((row) => ({
+  return rows.filter(isListedComercioEvent).map((row) => ({
     id: row.id,
     title: row.title,
     startsAt: row.startsAt,
     endsAt: row.endsAt,
     city: row.city,
+    venue: row.venue ?? null,
+    address: row.address ?? null,
     coverImageUrl: row.coverImageUrl,
+    hoverVideoUrl: row.hoverVideoUrl ?? null,
     themeColor: row.themeColor,
     minPriceCents: row.minPriceCents,
     status: row.status,
     types: row.types,
     eventType: row.eventType,
+    parkingAvailable: row.parkingAvailable,
+    petFriendly: row.petFriendly,
+    minAge: row.minAge ?? null,
+    capacity: row.capacity ?? null,
     provider,
   }));
+}
+
+/** An event is past once it has ended, otherwise it belongs on the profile. */
+export function splitComercioEvents(events: EventListItem[], now = Date.now()) {
+  const upcoming: EventListItem[] = [];
+  const past: EventListItem[] = [];
+  for (const event of events) {
+    const raw = event.endsAt ?? event.startsAt;
+    const when = raw ? new Date(raw).getTime() : NaN;
+    const ended = event.status === "ended" || (Number.isFinite(when) && when < now);
+    if (ended) past.push(event);
+    else upcoming.push(event);
+  }
+  const byStart = (a: EventListItem, b: EventListItem) => {
+    const ta = a.startsAt ? new Date(a.startsAt).getTime() : 0;
+    const tb = b.startsAt ? new Date(b.startsAt).getTime() : 0;
+    return ta - tb;
+  };
+  upcoming.sort(byStart);
+  past.sort((a, b) => byStart(b, a));
+  return { upcoming, past };
 }
 
 export function listComercioClassPrograms(id: string) {

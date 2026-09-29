@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   comercioKeys,
   listComercioClassPrograms,
   listComercioEvents,
+  splitComercioEvents,
   type ComercioProfile,
 } from "@/lib/api/comercios";
 import type { EventProvider } from "@/lib/api/events";
@@ -25,14 +27,14 @@ export function useComercioCatalogue(profile: ComercioProfile) {
     instagramUrl: profile.instagramUrl,
   };
 
-  const upcoming = useQuery({
-    queryKey: comercioKeys.events(profile.id, "upcoming"),
-    queryFn: () => listComercioEvents(profile.id, "upcoming", provider),
+  const events = useQuery({
+    queryKey: comercioKeys.events(profile.id, "all"),
+    queryFn: () => listComercioEvents(profile.id, "all", provider),
   });
-  const past = useQuery({
-    queryKey: comercioKeys.events(profile.id, "past"),
-    queryFn: () => listComercioEvents(profile.id, "past", provider),
-  });
+  const split = useMemo(
+    () => splitComercioEvents(events.data ?? []),
+    [events.data],
+  );
   const programs = useQuery({
     queryKey: comercioKeys.classPrograms(profile.id),
     queryFn: () => listComercioClassPrograms(profile.id),
@@ -40,13 +42,12 @@ export function useComercioCatalogue(profile: ComercioProfile) {
   });
 
   return {
-    upcoming: upcoming.data ?? [],
-    past: past.data ?? [],
-    eventsLoading: upcoming.isLoading || past.isLoading,
-    eventsError: (upcoming.error ?? past.error) as Error | null,
+    upcoming: split.upcoming,
+    past: split.past,
+    eventsLoading: events.isLoading,
+    eventsError: (events.error as Error | null) ?? null,
     refetchEvents: () => {
-      void upcoming.refetch();
-      void past.refetch();
+      void events.refetch();
     },
     programs: (programs.data ?? []).filter(
       (program) => program.status === "published",
