@@ -7,6 +7,7 @@ import {
   Activity,
   ArrowUpRight,
   CalendarDays,
+  Handshake,
   LayoutDashboard,
   Smartphone,
   Tag,
@@ -66,6 +67,12 @@ function buildNav(isHub: boolean) {
             exact: true,
           },
         ]),
+    {
+      href: "/comercio/colaboraciones",
+      label: "Colaboraciones",
+      Icon: Handshake,
+      exact: true,
+    },
     { href: "/comercio/staff", label: "Personal", Icon: Users, exact: true },
   ];
 }

@@ -158,20 +158,29 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
               {day ?? "Sin fecha"}
             </p>
           </div>
-          <div className="flex w-full shrink-0 flex-col items-end gap-1.5 sm:w-auto">
-            <button
-              type="button"
-              disabled={downloadingSettlement}
-              onClick={() => void downloadSettlement()}
-              className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-1.5 px-4 text-[13px] disabled:opacity-60 sm:w-auto ${glassCtaClass}`}
-            >
-              {downloadingSettlement ? "Generando…" : "Comprobante de liquidación"}
-              <Download className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
-            </button>
-            {settlementError ? (
-              <p className="text-[12px] text-red-400">{settlementError}</p>
-            ) : null}
-          </div>
+          {data.access === "collaborator" ? (
+            // The settlement names the host's bank account: it is theirs to
+            // download. A collaborator still gets every number on this page.
+            <p className="max-w-xs text-[13px] leading-relaxed text-white/50">
+              Evento colaborativo. {data.host?.name ?? "El organizador"} lo
+              organiza y recibe la liquidación.
+            </p>
+          ) : (
+            <div className="flex w-full shrink-0 flex-col items-end gap-1.5 sm:w-auto">
+              <button
+                type="button"
+                disabled={downloadingSettlement}
+                onClick={() => void downloadSettlement()}
+                className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-1.5 px-4 text-[13px] disabled:opacity-60 sm:w-auto ${glassCtaClass}`}
+              >
+                {downloadingSettlement ? "Generando…" : "Comprobante de liquidación"}
+                <Download className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
+              </button>
+              {settlementError ? (
+                <p className="text-[12px] text-red-400">{settlementError}</p>
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
 

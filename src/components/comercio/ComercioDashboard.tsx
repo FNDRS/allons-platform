@@ -20,6 +20,7 @@ import { SectionTitle } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { DashboardFigure } from "./DashboardFigure";
 import { DashboardPrivacy, HideMoneyButton } from "./dashboardPrivacy";
+import { CollaborationInvitesBanner } from "./CollaborationInvites";
 import { KpiTile } from "./KpiTile";
 import { ProviderEventCard } from "./ProviderEventCard";
 
@@ -75,6 +76,7 @@ export function ComercioDashboard() {
   return (
     <DashboardPrivacy>
     <div className="flex flex-col gap-6">
+      <CollaborationInvitesBanner />
       {dashboardLoading || dashboard ? (
         <section>
           <SectionTitle action={<HideMoneyButton />}>Totales</SectionTitle>

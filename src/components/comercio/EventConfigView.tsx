@@ -20,6 +20,7 @@ import { PaymentsTable } from "./EventTables";
 import { HourlySalesChart } from "./HourlySalesChart";
 import { KpiTile } from "./KpiTile";
 import { ResourceMap } from "./ResourceMap";
+import { EventCollaboratorsSection } from "./EventCollaboratorsSection";
 import { ShareEventButton } from "./ShareEventButton";
 
 const STATUS: Record<string, string> = {
@@ -115,7 +116,12 @@ export function EventConfigView({ eventId }: { eventId: string }) {
             <h1 className="break-words text-[24px] font-bold leading-[1.1] tracking-[-0.03em] sm:text-[32px]">
               {data.title}
             </h1>
-            <p className="mt-2 text-[13px] text-white/40">{status}</p>
+            <p className="mt-2 text-[13px] text-white/40">
+              {status}
+              {data.access === "collaborator" && data.host
+                ? ` · Organiza ${data.host.name}`
+                : ""}
+            </p>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-white/50">
               <span className="inline-flex items-center gap-1.5">
                 <CalendarDays className="size-3.5 text-white/35" strokeWidth={1.5} aria-hidden />
@@ -167,6 +173,8 @@ export function EventConfigView({ eventId }: { eventId: string }) {
           }
         />
       </div>
+
+      <EventCollaboratorsSection eventId={eventId} enabled={ready} />
 
       {data.description ? (
         <section>
