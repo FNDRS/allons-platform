@@ -21,13 +21,13 @@ export function MetaTile({
         <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-white/38">
           {label}
         </span>
-        <span className="mt-0.5 block break-words text-[15px] font-medium tracking-tight text-white/88">
+        <span className="mt-0.5 block break-words text-[15px] font-medium tracking-tight text-white/88 [overflow-wrap:anywhere]">
           {children}
         </span>
       </span>
     </>
   );
-  const className = "flex items-center gap-3.5 rounded-[16px] px-1 py-1.5";
+  const className = "flex min-w-0 items-center gap-3.5 rounded-[16px] px-1 py-1.5";
   if (href) {
     return (
       <li>

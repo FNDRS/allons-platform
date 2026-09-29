@@ -32,7 +32,7 @@ function getAppStoreLink() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const path = `/events/${encodeURIComponent(id)}`;
+  const path = `/eventos/${encodeURIComponent(id)}`;
   const event = await loadEvent(id);
 
   const title = event?.title ?? GENERIC_TITLE;
@@ -128,7 +128,7 @@ function isListable(event: PublicEvent | null): event is PublicEvent {
  * for searches like "eventos en Tegucigalpa este fin de semana".
  */
 function eventJsonLd(event: PublicEvent) {
-  const url = `${SITE_URL}/events/${encodeURIComponent(event.id)}`;
+  const url = `${SITE_URL}/eventos/${encodeURIComponent(event.id)}`;
   const availability =
     event.status === "sold_out"
       ? "https://schema.org/SoldOut"

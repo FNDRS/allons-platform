@@ -24,11 +24,11 @@ export function ComercioProfileView({
   const catalogue = useComercioCatalogue(profile);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex w-full min-w-0 flex-col gap-8">
       <ComercioHero profile={profile} appDeepLink={appDeepLink} />
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-        <div className="flex flex-col gap-10">
+      <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+        <div className="flex min-w-0 flex-col gap-10">
           <ComercioEventsSection
             upcoming={catalogue.upcoming}
             past={catalogue.past}
@@ -43,7 +43,7 @@ export function ComercioProfileView({
           />
         </div>
 
-        <div className="flex flex-col gap-6 lg:sticky lg:top-24">
+        <div className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-24">
           <ComercioAbout profile={profile} />
           <ComercioAppCard
             name={profile.name}

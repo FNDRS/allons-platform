@@ -31,6 +31,17 @@ export function formatPriceCents(cents: number | null | undefined): string {
   return formatCents(cents);
 }
 
+/** "L 500" on a card. Whole lempiras drop the cents. */
+export function formatCardPrice(cents: number | null | undefined): string {
+  if (!cents || cents <= 0) return "Gratis";
+  const lempiras = cents / 100;
+  const whole = Number.isInteger(lempiras);
+  return `L ${lempiras.toLocaleString("es-HN", {
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  })}`;
+}
+
 export function formatDateTime(iso: string | null | undefined): string | null {
   if (!iso) return null;
   const date = new Date(iso);

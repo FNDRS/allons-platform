@@ -138,12 +138,12 @@ const config: NextConfig = {
     ];
   },
   async redirects() {
-    return [{ source: "/", destination: "/events", permanent: true }];
-  },
-  async rewrites() {
     return [
-      { source: "/eventos", destination: "/events" },
-      { source: "/eventos/:path*", destination: "/events/:path*" },
+      { source: "/", destination: "/eventos", permanent: true },
+      // The pages used to live at /events and a rewrite kept /eventos as an
+      // alias. That mismatch made the client refetch the RSC payload forever.
+      { source: "/events", destination: "/eventos", permanent: false },
+      { source: "/events/:path*", destination: "/eventos/:path*", permanent: false },
     ];
   },
 };

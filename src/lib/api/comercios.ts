@@ -91,6 +91,9 @@ interface ComercioEventRow {
   petFriendly?: boolean;
   minAge?: number | null;
   capacity?: number | null;
+  description?: string | null;
+  category?: string | null;
+  interests?: EventListItem["interests"];
   hiddenFromPublic?: boolean;
 }
 
@@ -140,6 +143,9 @@ export async function listComercioEvents(
     petFriendly: row.petFriendly,
     minAge: row.minAge ?? null,
     capacity: row.capacity ?? null,
+    description: row.description ?? null,
+    category: row.category ?? null,
+    interests: row.interests ?? null,
     provider,
   }));
 }

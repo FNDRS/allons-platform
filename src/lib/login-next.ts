@@ -54,14 +54,14 @@ export function forgetLoginNext() {
 /** Only a same-origin path: no protocol-relative, no backslash tricks. */
 export function safeLoginNext(raw: string | null): string {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//") || /[\\\s]/.test(raw)) {
-    return "/events";
+    return "/eventos";
   }
   try {
     const url = new URL(raw, "https://allonsapp.com");
-    if (url.origin !== "https://allonsapp.com") return "/events";
+    if (url.origin !== "https://allonsapp.com") return "/eventos";
     return url.pathname + url.search;
   } catch {
-    return "/events";
+    return "/eventos";
   }
 }
 

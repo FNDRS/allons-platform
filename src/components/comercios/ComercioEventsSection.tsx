@@ -45,7 +45,7 @@ export function ComercioEventsSection({
       </SectionTitle>
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
           {Array.from({ length: 2 }).map((_, index) => (
             <Skeleton key={index} className="aspect-[4/5] w-full rounded-[32px]" />
           ))}
@@ -59,7 +59,7 @@ export function ComercioEventsSection({
             body="Sigue al comercio en la app y te avisamos cuando publique algo."
           />
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
             {upcoming.map((event, index) => (
               <div
                 key={event.id}
