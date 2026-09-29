@@ -7,6 +7,7 @@ import { deriveReserveState, useEventDetail } from "@/hooks/useEventDetail";
 import { isApiError } from "@/lib/api/client";
 import {
   GOVERNMENT_ID_REQUIRED_CODE,
+  GOVERNMENT_ID_TAKEN_CODE,
   formatGovernmentId,
   isValidGovernmentId,
 } from "@/lib/governmentId";
@@ -144,6 +145,11 @@ export function useReserveForm(
   const [governmentId, setGovernmentIdState] = useState("");
   /** La API la pidió al iniciar: la cotización no lo sabía o cambió la pasarela. */
   const [governmentIdDemanded, setGovernmentIdDemanded] = useState(false);
+  /** El número que la pasarela rechazó y por qué, para marcarlo en el campo. */
+  const [governmentIdRejection, setGovernmentIdRejection] = useState<{
+    value: string;
+    message: string;
+  } | null>(null);
 
   const reserveKind =
     event && !detail.isPlaceholderData ? deriveReserveState(event).kind : null;
@@ -580,6 +586,11 @@ export function useReserveForm(
       if (isApiError(err) && err.code === GOVERNMENT_ID_REQUIRED_CODE) {
         setGovernmentIdDemanded(true);
       }
+      // Clinpays tiene ese número con otro correo. El error va en el campo
+      // para que se vea qué corregir, y se quita al cambiar el número.
+      if (isApiError(err) && err.code === GOVERNMENT_ID_TAKEN_CODE) {
+        setGovernmentIdRejection({ value: governmentId.trim(), message: err.message });
+      }
       setError(
         isApiError(err) ? err.message : "No pudimos crear la reserva. Intenta de nuevo.",
       );
@@ -637,6 +648,10 @@ export function useReserveForm(
     needsGovernmentId,
     governmentId,
     governmentIdValid,
+    governmentIdRejectedMessage:
+      governmentIdRejection && governmentIdRejection.value === governmentId.trim()
+        ? governmentIdRejection.message
+        : null,
     setGovernmentId: (value: string) => setGovernmentIdState(formatGovernmentId(value)),
     submit,
     preparePaidOrder,

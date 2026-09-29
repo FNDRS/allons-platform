@@ -5,6 +5,8 @@
  * 13 dígitos; pasaportes y carnets de residencia llevan letras.
  */
 export const GOVERNMENT_ID_REQUIRED_CODE = "government_id_required";
+/** Clinpays ya tiene ese número con otro correo y no abre el formulario. */
+export const GOVERNMENT_ID_TAKEN_CODE = "government_id_taken";
 
 const GOVERNMENT_ID_MAX_LENGTH = 30;
 const GOVERNMENT_ID_RE = /^[A-Za-z0-9][A-Za-z0-9 -]{3,28}[A-Za-z0-9]$/;
