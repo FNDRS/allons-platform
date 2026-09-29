@@ -6,12 +6,12 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Building2, CalendarDays, Car, Clock, PawPrint, User, Users } from "lucide-react";
 import { usePrefetchEvent } from "@/hooks/usePrefetchEvent";
-import type { EventListItem } from "@/lib/api/events";
+import { eventCategoryName, type EventListItem } from "@/lib/api/events";
 import {
   formatCardDay,
+  formatCardPrice,
   formatCardTime,
   formatNumber,
-  formatPriceCents,
 } from "@/lib/format";
 import { EventCover, EventPosterWash } from "./EventCover";
 import { EventHoverVideo } from "./EventHoverVideo";
@@ -37,7 +37,7 @@ const CARD_PRICE_CENTS: Record<string, number> = {
   "cd4c2bb2-95c9-4486-93ca-ee7de45e2af9": 85000,
 };
 
-/** Event card: 16:9 cover on top, facts and Reservar below. */
+/** Event card: 16:9 cover, category, facts, description and Reservar. */
 export function EventCard({ event }: { event: EventListItem }) {
   const prefetchEvent = usePrefetchEvent();
   const warm = () => prefetchEvent(event.id);
@@ -45,10 +45,12 @@ export function EventCard({ event }: { event: EventListItem }) {
   const provider = event.provider;
   const price = soldOut
     ? "Agotado"
-    : formatPriceCents(CARD_PRICE_CENTS[event.id] ?? event.minPriceCents);
+    : formatCardPrice(CARD_PRICE_CENTS[event.id] ?? event.minPriceCents);
   const address = placeLine(event.venue, event.address, event.city);
   const day = formatCardDay(event.startsAt);
   const time = formatCardTime(event.startsAt);
+  const category = eventCategoryName(event);
+  const description = event.description?.trim() || "";
   const hoverSrc =
     event.hoverVideoUrl?.trim() ||
     (provider?.handle
@@ -63,7 +65,7 @@ export function EventCard({ event }: { event: EventListItem }) {
       onTouchStart={warm}
       onFocus={warm}
     >
-      <article className="event-phone relative flex h-full flex-col overflow-hidden rounded-[32px] border border-white/10 bg-black shadow-[0_24px_50px_rgba(0,0,0,0.38)]">
+      <article className="event-phone relative flex h-full min-w-0 flex-col overflow-hidden rounded-[28px] border border-white/10 bg-black shadow-[0_24px_50px_rgba(0,0,0,0.38)] sm:rounded-[32px]">
         <div className="relative aspect-video shrink-0 overflow-hidden bg-black">
           {event.coverImageUrl ? (
             <EventCover
@@ -79,10 +81,15 @@ export function EventCard({ event }: { event: EventListItem }) {
             />
           )}
           {hoverSrc ? <EventHoverVideo src={hoverSrc} /> : null}
+          {category ? (
+            <span className="absolute left-4 top-4 z-10 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/85 backdrop-blur">
+              {category}
+            </span>
+          ) : null}
         </div>
 
-        <div className="relative z-10 flex flex-1 flex-col px-5 pb-5 pt-4">
-          <h3 className="line-clamp-2 text-[22px] font-semibold leading-[1.12] tracking-[-0.03em] text-white">
+        <div className="relative z-10 flex min-w-0 flex-1 flex-col px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
+          <h3 className="line-clamp-2 break-words text-[20px] font-semibold leading-[1.12] tracking-[-0.03em] text-white sm:text-[22px]">
             {event.title}
           </h3>
           {address ? (
@@ -114,6 +121,12 @@ export function EventCard({ event }: { event: EventListItem }) {
               <Stat icon={<User className="size-3.5" />}>+{event.minAge}</Stat>
             ) : null}
           </div>
+
+          {description ? (
+            <p className="mt-3 line-clamp-3 text-[13px] leading-5 text-white/60">
+              {description}
+            </p>
+          ) : null}
 
           <div className="mt-auto flex items-center gap-3 pt-4">
             <p

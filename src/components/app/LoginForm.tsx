@@ -42,7 +42,7 @@ export function LoginForm() {
   const queryNext = params.get("next");
   const [storedNext, setStoredNext] = useState<string | null>(null);
   const [nextReady, setNextReady] = useState(Boolean(queryNext));
-  const next = queryNext ? safeLoginNext(queryNext) : storedNext ?? "/events";
+  const next = queryNext ? safeLoginNext(queryNext) : storedNext ?? "/eventos";
   const { user, loading } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");

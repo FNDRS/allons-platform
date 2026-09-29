@@ -144,7 +144,7 @@ export function EventConfigView({ eventId }: { eventId: string }) {
           <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
             <ShareEventButton eventId={eventId} title={data.title} />
             <Link
-              href={`/events/${encodeURIComponent(eventId)}`}
+              href={`/eventos/${encodeURIComponent(eventId)}`}
               className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-1.5 px-4 text-[13px] sm:w-auto ${glassCtaClass}`}
             >
               Ver página pública

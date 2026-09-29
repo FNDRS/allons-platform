@@ -101,7 +101,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
   }
 
   const event = form.event;
-  const back = `/events/${encodeURIComponent(eventId)}`;
+  const back = `/eventos/${encodeURIComponent(eventId)}`;
   const opensAt =
     form.preview && form.entryType?.saleStartsAt
       ? formatDateTime(form.entryType.saleStartsAt)
@@ -322,7 +322,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
             loading={form.preview ? false : submitting}
             disabled={form.preview}
             onClick={onPay}
-            className="min-w-0 shrink-0 shadow-[0_10px_40px_rgba(246,112,16,0.28)] sm:min-w-[11.5rem]"
+            className="min-w-0 !shrink shadow-[0_10px_40px_rgba(246,112,16,0.28)] sm:min-w-[11.5rem] sm:!shrink-0"
           >
             {form.preview
               ? "Reservar"

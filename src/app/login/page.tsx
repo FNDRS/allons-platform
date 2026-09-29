@@ -17,14 +17,14 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <AppShell bottomTabs={false}>
-      <div className="grid items-center gap-10 pt-4 lg:min-h-[70vh] lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:pt-8">
-        <section className="relative">
-          <h1 className="text-[28px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[56px] lg:text-[64px]">
+      <div className="grid min-w-0 items-center gap-10 pt-4 lg:min-h-[70vh] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16 lg:pt-8">
+        <section className="relative min-w-0">
+          <h1 className="break-words text-[28px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[56px] lg:text-[64px]">
             Todos tus eventos
             <br />
             en un solo lugar.
           </h1>
-          <p className="mt-5 max-w-md text-[16px] leading-relaxed text-muted">
+          <p className="mt-5 max-w-md break-words text-[16px] leading-relaxed text-muted">
             Compra tus entradas, guarda tu QR y elige tu lugar desde cualquier navegador. La misma
             cuenta que usas en la app.
           </p>
@@ -34,7 +34,7 @@ export default function LoginPage() {
             <li>Eventos en toda Honduras</li>
           </ul>
         </section>
-        <Card padding="lg" className="w-full lg:max-w-[440px] lg:justify-self-end">
+        <Card padding="lg" className="w-full min-w-0 lg:max-w-[440px] lg:justify-self-end">
           <Suspense fallback={null}>
             <LoginForm />
           </Suspense>

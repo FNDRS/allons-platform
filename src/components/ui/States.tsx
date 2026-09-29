@@ -21,13 +21,15 @@ export function EmptyState({
 }) {
   return (
     <div
-      className={`flex flex-col items-center rounded-[18px] border border-dashed border-border-strong px-6 py-14 text-center ${className}`}
+      className={`flex w-full min-w-0 flex-col items-center rounded-[18px] border border-dashed border-border-strong px-4 py-10 text-center sm:px-6 sm:py-14 ${className}`}
     >
       <span className="flex size-12 items-center justify-center rounded-full bg-surface-2">
         <Inbox className="size-5 text-dim" aria-hidden />
       </span>
       <p className="mt-5 text-lg font-bold tracking-tight">{title}</p>
-      {body ? <p className="mt-1.5 max-w-sm text-sm text-muted">{body}</p> : null}
+      {body ? (
+        <p className="mt-1.5 max-w-sm text-balance break-words text-sm text-muted">{body}</p>
+      ) : null}
       {action ? <div className="mt-6">{action}</div> : null}
     </div>
   );

@@ -15,6 +15,8 @@ export function GET() {
               "/tickets/*",
               "/events",
               "/events/*",
+              "/eventos",
+              "/eventos/*",
             ],
           },
         ],

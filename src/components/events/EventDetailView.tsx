@@ -121,7 +121,7 @@ export function EventDetailView({
               Reservar
             </Button>
           ) : reserve?.kind === "open" ? (
-            <Link href={`/events/${encodeURIComponent(id)}/reservar`} className="shrink-0">
+            <Link href={`/eventos/${encodeURIComponent(id)}/reservar`} className="shrink-0">
               <Button size="md" className="sm:!h-13 sm:!px-6 sm:!text-[15px]">
                 {reserve.label}
               </Button>

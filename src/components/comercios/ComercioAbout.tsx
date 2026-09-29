@@ -19,7 +19,9 @@ export function ComercioAbout({ profile }: { profile: ComercioProfile }) {
       <SectionTitle>Sobre el comercio</SectionTitle>
       <Card className="flex flex-col gap-5">
         {description ? (
-          <p className="text-[15px] leading-7 text-white/80">{description}</p>
+          <p className="whitespace-pre-line break-words text-[15px] leading-7 text-white/80 [overflow-wrap:anywhere]">
+            {description}
+          </p>
         ) : null}
         {hasContact ? (
           <ul className={`flex flex-col gap-1 ${description ? "border-t border-white/[0.08] pt-4" : ""}`}>

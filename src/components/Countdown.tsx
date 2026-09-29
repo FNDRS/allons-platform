@@ -50,14 +50,14 @@ export function Countdown() {
       aria-label="Cuenta regresiva para el lanzamiento"
       className="fade-up delay-6 mt-10 flex flex-col items-center"
     >
-      <div className="grid grid-cols-4 gap-2 sm:gap-3">
+      <div className="grid w-full max-w-md grid-cols-4 gap-2 sm:max-w-none sm:gap-3">
         {segments.map((segment, index) => (
-          <div key={segment.label} className="flex items-stretch gap-2 sm:gap-3">
-            <div className="min-w-[68px] sm:min-w-[92px] rounded-2xl border border-white/10 bg-white/[0.035] px-3 py-3 sm:px-5 sm:py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+          <div key={segment.label} className="flex min-w-0 items-stretch gap-2 sm:gap-3">
+            <div className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/[0.035] px-1 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] sm:min-w-[92px] sm:px-5 sm:py-4">
               <div className="font-mono text-2xl sm:text-4xl font-semibold leading-none tracking-[-0.04em] text-white tabular-nums">
                 {segment.value}
               </div>
-              <div className="mt-2 text-[9px] sm:text-[10px] font-medium uppercase tracking-[0.22em] text-white/38">
+              <div className="mt-2 truncate text-[8px] font-medium uppercase tracking-[0.08em] text-white/38 sm:text-[10px] sm:tracking-[0.22em]">
                 {segment.label}
               </div>
             </div>

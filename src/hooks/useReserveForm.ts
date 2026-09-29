@@ -277,7 +277,7 @@ export function useReserveForm(
     if (!Number.isFinite(remaining)) return;
     const leave = () => {
       clearStoredHold(eventId);
-      router.replace(`/events/${encodeURIComponent(eventId)}`);
+      router.replace(`/eventos/${encodeURIComponent(eventId)}`);
     };
     if (remaining <= 0) {
       leave();

@@ -39,7 +39,7 @@ export function SectionTitle({
   className?: string;
 }) {
   return (
-    <div className={`mb-3 flex min-w-0 items-baseline justify-between gap-3 ${className}`}>
+    <div className={`mb-3 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 ${className}`}>
       <h2 className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted sm:text-[12px] sm:tracking-[0.2em]">
         {children}
       </h2>

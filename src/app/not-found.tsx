@@ -20,7 +20,7 @@ export default function NotFoundPage() {
           El enlace pudo cambiar o estar incompleto. Vuelve a los eventos.
         </p>
         <Link
-          href="/events"
+          href="/eventos"
           className={`mt-9 inline-flex items-center justify-center px-7 py-4 text-sm ${glassCtaClass}`}
         >
           Volver al inicio
