@@ -1,8 +1,9 @@
 "use client";
 
 import { Check, Minus, Plus } from "lucide-react";
-import type { EventEntryType, EventQuestion } from "@/lib/api/events";
-import { formatCents, formatPriceCents } from "@/lib/format";
+import { isEntryTypeOnSale, type EventEntryType, type EventQuestion } from "@/lib/api/events";
+import { formatCents, formatDateTime } from "@/lib/format";
+import { ListedPrice } from "@/components/ui/ListedPrice";
 import type { HolderDraft } from "@/hooks/useReserveForm";
 import { FieldError, Input, Label, Select, SelectItem, Textarea } from "@/components/ui/Field";
 import { StatusPill } from "@/components/ui/Pill";
@@ -61,10 +62,13 @@ export function EntryTypePicker({
   types,
   value,
   onChange,
+  priceCentsFor,
 }: {
   types: EventEntryType[];
   value: string | null;
   onChange: (id: string) => void;
+  /** Null while the buyer-facing quote is still loading. */
+  priceCentsFor?: (listCents: number) => number | null;
 }) {
   return (
     <section>
@@ -72,6 +76,10 @@ export function EntryTypePicker({
       <div role="radiogroup" aria-label="Tipo de entrada" className="flex flex-col gap-2.5">
         {types.map((type) => {
           const active = type.id === value;
+          const opensAt =
+            !isEntryTypeOnSale(type) && type.saleStartsAt
+              ? formatDateTime(type.saleStartsAt)
+              : null;
           return (
             <button
               key={type.id}
@@ -97,7 +105,11 @@ export function EntryTypePicker({
                     </span>
                     <div className="min-w-0">
                       <p className="font-semibold tracking-tight">{type.name}</p>
-                      {type.remaining != null ? (
+                      {opensAt ? (
+                        <p className="mt-0.5 text-[13px] text-white/40">
+                          A la venta desde {opensAt}
+                        </p>
+                      ) : type.remaining != null ? (
                         <p className="mt-0.5 text-[13px] text-white/40">
                           {type.remaining} disponibles
                         </p>
@@ -109,7 +121,9 @@ export function EntryTypePicker({
                       active ? "text-accent" : "text-white"
                     }`}
                   >
-                    {formatPriceCents(type.priceCents)}
+                    <ListedPrice
+                      cents={(priceCentsFor ?? ((cents) => cents))(type.priceCents)}
+                    />
                   </p>
                 </div>
               </Shell>

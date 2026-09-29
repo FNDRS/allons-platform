@@ -11,10 +11,12 @@ import { InstagramMark } from "@/components/shared/InstagramMark";
 import { WhatsAppMark } from "@/components/shared/WhatsAppMark";
 import {
   isEntryTypeOnSale,
+  isEntryTypeUpcoming,
   type EventDetail,
   type EventEntryType,
 } from "@/lib/api/events";
-import { formatDateTime, formatPriceCents } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
+import { ListedPrice } from "@/components/ui/ListedPrice";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { CalendarMark, MetaTile, PinMark } from "@/components/ui/MetaTile";
 import { EventCover, EventPosterWash } from "./EventCover";
@@ -193,7 +195,23 @@ export function EventDescription({ text }: { text: string | null }) {
   );
 }
 
-export function EntryTypesCard({ types }: { types: EventEntryType[] }) {
+export function EntryTypesCard({
+  types,
+  previewEventId,
+  priceCentsFor,
+}: {
+  types: EventEntryType[];
+  /**
+   * While the sale has not opened, each upcoming ticket links into the
+   * reserve screen so the selection can be previewed. Reserving stays off.
+   */
+  previewEventId?: string;
+  /**
+   * What to print for a list price. Null while the buyer-facing quote is
+   * still loading. Defaults to the list price itself.
+   */
+  priceCentsFor?: (listCents: number) => number | null;
+}) {
   if (types.length === 0) return null;
   const now = Date.now();
   return (
@@ -203,6 +221,8 @@ export function EntryTypesCard({ types }: { types: EventEntryType[] }) {
         {types.map((type) => {
           const onSale = isEntryTypeOnSale(type, now);
           const soldOut = type.soldOut || type.remaining === 0;
+          const upcoming = isEntryTypeUpcoming(type, now);
+          const previewable = Boolean(previewEventId) && upcoming;
           const status = soldOut
             ? "Agotado"
             : !onSale && type.saleStartsAt && new Date(type.saleStartsAt).getTime() > now
@@ -212,15 +232,36 @@ export function EntryTypesCard({ types }: { types: EventEntryType[] }) {
                 : type.remaining != null
                   ? `${type.remaining} disponibles`
                   : "Disponible";
-          return (
-            <div key={type.id} className={`flex items-center justify-between gap-4 px-5 py-4 ${soldOut || !onSale ? "opacity-60" : ""}`}>
+          const row = (
+            <>
               <div className="min-w-0">
                 <p className="text-[15px] font-bold tracking-tight">{type.name}</p>
                 <p className="mt-0.5 text-[13px] text-muted">{status}</p>
               </div>
               <p className="shrink-0 text-[17px] font-bold tabular-nums tracking-tight">
-                {formatPriceCents(type.priceCents)}
+                <ListedPrice
+                  cents={(priceCentsFor ?? ((cents) => cents))(type.priceCents)}
+                />
               </p>
+            </>
+          );
+          if (previewable && previewEventId) {
+            return (
+              <Link
+                key={type.id}
+                href={`/events/${encodeURIComponent(previewEventId)}/reservar?entrada=${encodeURIComponent(type.id)}`}
+                className="flex items-center justify-between gap-4 px-5 py-4 transition hover:bg-white/[0.04]"
+              >
+                {row}
+              </Link>
+            );
+          }
+          return (
+            <div
+              key={type.id}
+              className={`flex items-center justify-between gap-4 px-5 py-4 ${soldOut || !onSale ? "opacity-60" : ""}`}
+            >
+              {row}
             </div>
           );
         })}

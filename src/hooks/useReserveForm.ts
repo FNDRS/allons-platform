@@ -16,6 +16,7 @@ import {
   getEventResources,
   resourceGroupsForTicketType,
   isEntryTypeOnSale,
+  isEntryTypeUpcoming,
   type EventEntryType,
   type EventQuestion,
 } from "@/lib/api/events";
@@ -118,7 +119,10 @@ export function missingAnswers(
 /**
  * All the state behind /events/[id]/reservar. The page only renders.
  */
-export function useReserveForm(eventId: string) {
+export function useReserveForm(
+  eventId: string,
+  initialEntryTypeId?: string | null,
+) {
   const router = useRouter();
   const { user } = useAuth();
   const detail = useEventDetail(eventId);
@@ -141,21 +145,39 @@ export function useReserveForm(eventId: string) {
   /** La API la pidió al iniciar: la cotización no lo sabía o cambió la pasarela. */
   const [governmentIdDemanded, setGovernmentIdDemanded] = useState(false);
 
+  const reserveKind =
+    event && !detail.isPlaceholderData ? deriveReserveState(event).kind : null;
+  // Sale has not opened. The form is a preview: every step is usable, and
+  // nothing is held or charged.
+  const preview = reserveKind === "preview";
+
   const availableTypes = useMemo(() => {
     // Same gate as the detail CTA: a finished or sold-out event sells nothing,
-    // whatever a stale tier row says.
-    if (!event || deriveReserveState(event).kind === "closed") return [];
+    // whatever a stale tier row says. A preview still lists the tiers whose
+    // sale has not opened, so the buyer can see the selection.
+    if (!event || reserveKind === "closed" || reserveKind === null) return [];
     const now = Date.now();
-    return (event.entryTypes ?? []).filter(
-      (type) => isEntryTypeOnSale(type, now) && !type.soldOut && type.remaining !== 0,
-    );
-  }, [event]);
+    return (event.entryTypes ?? []).filter((type) => {
+      if (type.soldOut || type.remaining === 0) return false;
+      if (isEntryTypeOnSale(type, now)) return true;
+      return preview && isEntryTypeUpcoming(type, now);
+    });
+  }, [event, reserveKind, preview]);
 
-  // Pick the only (or first) tier so the buyer has one less tap.
+  // Pick the tier they opened, or the first one, so the selection is visible.
   useEffect(() => {
-    if (entryTypeId || availableTypes.length === 0) return;
-    setEntryTypeId(availableTypes[0].id);
-  }, [availableTypes, entryTypeId]);
+    if (availableTypes.length === 0) return;
+    setEntryTypeId((current) => {
+      if (current && availableTypes.some((type) => type.id === current)) return current;
+      if (
+        initialEntryTypeId &&
+        availableTypes.some((type) => type.id === initialEntryTypeId)
+      ) {
+        return initialEntryTypeId;
+      }
+      return availableTypes[0].id;
+    });
+  }, [availableTypes, initialEntryTypeId]);
 
   const entryType: EventEntryType | null =
     availableTypes.find((type) => type.id === entryTypeId) ?? null;
@@ -219,6 +241,11 @@ export function useReserveForm(eventId: string) {
   const paidTypesExist = availableTypes.some((type) => type.priceCents > 0);
   useEffect(() => {
     if (!selectionKnown) return;
+    if (preview) {
+      setHold(null);
+      clearStoredHold(eventId);
+      return;
+    }
     // The tier is chosen in another effect. Clearing here, before that lands,
     // would drop the saved deadline and a reload would start 30 minutes again.
     if (!entryTypeId) {
@@ -240,7 +267,7 @@ export function useReserveForm(eventId: string) {
       if (!stored) writeStoredHold(eventId, expiresAt);
       return { eventId, expiresAt };
     });
-  }, [selectionKnown, hasPaidSelection, paidTypesExist, entryTypeId, eventId]);
+  }, [selectionKnown, preview, hasPaidSelection, paidTypesExist, entryTypeId, eventId]);
   const holdExpiresAt = hold?.eventId === eventId ? hold.expiresAt : null;
 
   // The clock ran out on this visit. Leave the form and land on the event.
@@ -457,12 +484,14 @@ export function useReserveForm(eventId: string) {
    * the ticket is free; the error state is set in the first case.
    */
   function preparePaidOrder(): InitiatePaymentInput | null {
+    if (preview) return null;
     const draft = validateDraft();
     if (!draft || isFree) return null;
     return paidOrderInput(draft);
   }
 
   async function submit() {
+    if (preview) return;
     const draft = validateDraft();
     if (!draft) return;
     const { event, entryType, holderPayload, firstAnswers } = draft;
@@ -527,6 +556,7 @@ export function useReserveForm(eventId: string) {
     loadError: detail.error as Error | null,
     refetch: detail.refetch,
     availableTypes,
+    preview,
     entryType,
     entryTypeId,
     setEntryTypeId,

@@ -103,6 +103,16 @@ export interface EventCollaborator {
   logoUrl: string | null;
 }
 
+export type FeeMode =
+  | "provider_absorbs"
+  | "buyer_pays_gateway"
+  | "buyer_pays_all";
+
+/** The buyer is charged the service fee on top of the list price. */
+export function buyerPaysFees(mode: FeeMode | null | undefined): boolean {
+  return mode === "buyer_pays_gateway" || mode === "buyer_pays_all";
+}
+
 export interface EventDetail extends EventListItem {
   description: string | null;
   venue: string | null;
@@ -123,6 +133,11 @@ export interface EventDetail extends EventListItem {
   refundPartialPct?: number | null;
   refundDeadlineDays?: number | null;
   kitPickupInfo?: string | null;
+  /**
+   * Who pays the service fee. When the buyer pays it, the public price is
+   * the quote total, not `entryTypes[].priceCents`.
+   */
+  feeMode?: FeeMode;
 }
 
 export function listEvents() {
@@ -137,7 +152,7 @@ export function getEvent(id: string) {
 
 /** Lo que costaría una compra, con el recargo que calcula el servidor. */
 export interface EventQuote {
-  feeMode: "provider_absorbs" | "buyer_pays_gateway" | "buyer_pays_all";
+  feeMode: FeeMode;
   quantity: number;
   unitPriceCents: number;
   /** Boletos más aporte, el precio que publicó el comercio. */
@@ -236,5 +251,18 @@ export function isEntryTypeOnSale(type: EventEntryType, now = Date.now()) {
     return false;
   if (type.saleEndsAt && new Date(type.saleEndsAt).getTime() < now)
     return false;
+  return true;
+}
+
+/** The price is already listed, but the sale has not opened yet. */
+export function isEntryTypeUpcoming(type: EventEntryType, now = Date.now()) {
+  if (type.soldOut || type.remaining === 0) return false;
+  if (!type.saleStartsAt) return false;
+  const start = new Date(type.saleStartsAt).getTime();
+  if (!Number.isFinite(start) || start <= now) return false;
+  if (type.saleEndsAt) {
+    const end = new Date(type.saleEndsAt).getTime();
+    if (Number.isFinite(end) && end <= now) return false;
+  }
   return true;
 }

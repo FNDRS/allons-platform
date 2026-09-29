@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Lock } from "lucide-react";
 import { useCardCheckout } from "@/hooks/useCardCheckout";
+import { useBuyerUnitPrices } from "@/hooks/useBuyerUnitPrices";
 import { useReserveForm } from "@/hooks/useReserveForm";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { formatEventWhen } from "@/lib/allons-api";
@@ -22,18 +24,28 @@ import {
   ReserveSummary,
   StepHeading,
 } from "./ReserveSections";
-import { formatCents } from "@/lib/format";
+import { formatCents, formatDateTime } from "@/lib/format";
 
 export function ReserveView({ eventId }: { eventId: string }) {
-  const { ready, user } = useRequireAuth();
-  const form = useReserveForm(eventId);
+  const params = useSearchParams();
+  const form = useReserveForm(eventId, params.get("entrada"));
+  const listed = useBuyerUnitPrices(
+    eventId,
+    form.availableTypes,
+    form.event?.feeMode,
+  );
+  // A preview is only for looking. Guests can open it; a real purchase still
+  // asks for an account.
+  const { ready, user } = useRequireAuth({
+    enabled: !form.isLoading && !form.preview && !form.loadError,
+  });
   // A promo code can cover the ticket in full; nothing is charged, so the
   // card step is as pointless there as it is on a genuinely free entry.
   const chargesNothing = form.isFree || form.effectivelyFree;
   // Saved cards load only for a paid ticket; a free one never shows the step.
   const checkout = useCardCheckout({
     userId: user?.id ?? null,
-    enabled: ready && !chargesNothing && Boolean(form.entryType),
+    enabled: ready && Boolean(user) && !chargesNothing && Boolean(form.entryType),
   });
   const payInApp = !chargesNothing && checkout.available && checkout.cardReady;
   // While the card list loads the CTA must not send anyone to the hosted
@@ -54,6 +66,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
   const promoStep = form.isFree ? 0 : 1;
 
   function onPay() {
+    if (form.preview) return;
     if (!payInApp) {
       void form.submit();
       return;
@@ -83,6 +96,10 @@ export function ReserveView({ eventId }: { eventId: string }) {
 
   const event = form.event;
   const back = `/events/${encodeURIComponent(eventId)}`;
+  const opensAt =
+    form.preview && form.entryType?.saleStartsAt
+      ? formatDateTime(form.entryType.saleStartsAt)
+      : null;
   const when = formatEventWhen(event.startsAt);
   const place = [event.venue, event.city].filter(Boolean).join(" · ");
 
@@ -147,6 +164,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
         types={form.availableTypes}
         value={form.entryTypeId}
         onChange={form.setEntryTypeId}
+        priceCentsFor={listed.priceCentsFor}
       />
 
       <QuantityStepper
@@ -295,18 +313,27 @@ export function ReserveView({ eventId }: { eventId: string }) {
           </div>
           <Button
             size="lg"
-            loading={submitting}
+            loading={form.preview ? false : submitting}
+            disabled={form.preview}
             onClick={onPay}
             className="min-w-0 shrink-0 shadow-[0_10px_40px_rgba(246,112,16,0.28)] sm:min-w-[11.5rem]"
           >
-            {chargesNothing
-              ? "Confirmar"
-              : payInApp
-                ? `Pagar ${formatCents(form.totalCents)}`
-                : "Ir a pagar"}
+            {form.preview
+              ? "Reservar"
+              : chargesNothing
+                ? "Confirmar"
+                : payInApp
+                  ? `Pagar ${formatCents(form.totalCents)}`
+                  : "Ir a pagar"}
           </Button>
         </div>
-        {!chargesNothing ? (
+        {form.preview ? (
+          <p className="mx-auto mt-2 max-w-2xl text-center text-[11px] text-white/40">
+            {opensAt
+              ? `A la venta desde ${opensAt} Reservar se habilita en ese momento.`
+              : "Reservar se habilita cuando abra la venta."}
+          </p>
+        ) : !chargesNothing ? (
           <p className="mx-auto mt-2 flex max-w-2xl items-center justify-center gap-1.5 text-[11px] text-white/30">
             <Lock className="size-3" strokeWidth={1.75} aria-hidden />
             {payInApp

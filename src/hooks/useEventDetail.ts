@@ -6,12 +6,14 @@ import {
   eventKeys,
   getEvent,
   isEntryTypeOnSale,
+  isEntryTypeUpcoming,
   type EventDetail,
   type EventListItem,
 } from "@/lib/api/events";
 
 export type ReserveState =
   | { kind: "open"; label: string }
+  | { kind: "preview"; label: string }
   | { kind: "closed"; label: string };
 
 export function deriveReserveState(event: EventDetail): ReserveState {
@@ -23,7 +25,14 @@ export function deriveReserveState(event: EventDetail): ReserveState {
   }
   const now = Date.now();
   const onSale = types.filter((type) => isEntryTypeOnSale(type, now));
-  if (onSale.length === 0) return { kind: "closed", label: "Reservas cerradas" };
+  if (onSale.length === 0) {
+    // The price is visible, the sale just has not opened. The buyer can
+    // look through ticket selection; only reserving stays off.
+    if (types.some((type) => isEntryTypeUpcoming(type, now))) {
+      return { kind: "preview", label: "Reservar" };
+    }
+    return { kind: "closed", label: "Reservas cerradas" };
+  }
   if (onSale.every((type) => type.soldOut || type.remaining === 0)) {
     return { kind: "closed", label: "Agotado" };
   }

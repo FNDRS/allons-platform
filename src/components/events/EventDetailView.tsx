@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useEventDetail } from "@/hooks/useEventDetail";
+import {
+  cheapestListedCents,
+  useBuyerUnitPrices,
+} from "@/hooks/useBuyerUnitPrices";
 import { Button } from "@/components/ui/Button";
+import { ListedPrice } from "@/components/ui/ListedPrice";
 import { ErrorState } from "@/components/ui/States";
 import { formatPriceCents } from "@/lib/format";
 import {
@@ -30,6 +35,13 @@ export function EventDetailView({
 }) {
   const { event, reserve, isLoading, isPlaceholderData, error, refetch } =
     useEventDetail(id);
+  const partial = Boolean(event) && isPlaceholderData;
+  const types = partial ? [] : (event?.entryTypes ?? []);
+  const listed = useBuyerUnitPrices(
+    id,
+    types,
+    partial ? undefined : event?.feeMode,
+  );
 
   if (isLoading) {
     return <EventDetailSkeleton />;
@@ -48,10 +60,11 @@ export function EventDetailView({
   }
 
   // Coming from the list we only know the card's price until the detail lands.
-  const partial = isPlaceholderData;
-  const cheapest = event.entryTypes?.length
-    ? Math.min(...event.entryTypes.map((type) => type.priceCents))
-    : (event.minPriceCents ?? null);
+  const cheapest = partial
+    ? event.entryTypes?.length
+      ? Math.min(...event.entryTypes.map((type) => type.priceCents))
+      : (event.minPriceCents ?? null)
+    : cheapestListedCents(event.entryTypes ?? [], listed.priceCentsFor);
 
   return (
     <div className="flex flex-col gap-6">
@@ -68,7 +81,11 @@ export function EventDetailView({
         <EventDetailBodySkeleton />
       ) : (
         <>
-          <EntryTypesCard types={event.entryTypes ?? []} />
+          <EntryTypesCard
+            types={event.entryTypes ?? []}
+            previewEventId={reserve?.kind === "preview" ? id : undefined}
+            priceCentsFor={listed.priceCentsFor}
+          />
           <EventDescription text={event.description} />
           <KitPickupCard info={event.kitPickupInfo} />
           <RefundPolicyNote event={event} />
@@ -90,7 +107,13 @@ export function EventDetailView({
           <div className="min-w-0 flex-1">
             <p className="truncate text-[14px] font-bold tracking-tight">{event.title}</p>
             <p className="truncate text-[12px] text-muted">
-              {cheapest != null ? `Desde ${formatPriceCents(cheapest)}` : ""}
+              {cheapest != null ? (
+                `Desde ${formatPriceCents(cheapest)}`
+              ) : listed.resolving ? (
+                <ListedPrice cents={null} />
+              ) : (
+                ""
+              )}
             </p>
           </div>
           {partial ? (
@@ -104,8 +127,17 @@ export function EventDetailView({
               </Button>
             </Link>
           ) : (
-            <Button size="md" className="shrink-0 sm:!h-13 sm:!px-6 sm:!text-[15px]" disabled>
-              {reserve?.label ?? "Reservar"}
+            <Button
+              size="md"
+              className="shrink-0 sm:!h-13 sm:!px-6 sm:!text-[15px]"
+              disabled
+              title={
+                reserve?.kind === "preview"
+                  ? "Se habilita cuando abra la venta"
+                  : undefined
+              }
+            >
+              {reserve?.kind === "preview" ? "Reservar" : (reserve?.label ?? "Reservar")}
             </Button>
           )}
         </div>
