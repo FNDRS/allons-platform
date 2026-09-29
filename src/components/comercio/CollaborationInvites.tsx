@@ -180,7 +180,7 @@ export function CollaborationsView() {
             <Handshake className="mt-0.5 size-4 shrink-0 text-white/40" aria-hidden />
             <p className="text-[14px] leading-relaxed text-white/60">
               Un evento colaborativo lo organiza un comercio y lo comparte con
-              hasta dos más. Todos ven sus ventas, dinero y escaneos aquí en
+              hasta cinco más. Todos ven sus ventas, dinero y escaneos aquí en
               el panel, y el equipo de cada uno puede escanear en la puerta. El
               dinero se liquida al organizador.
             </p>
