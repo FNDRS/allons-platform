@@ -586,10 +586,14 @@ export function useReserveForm(
       if (isApiError(err) && err.code === GOVERNMENT_ID_REQUIRED_CODE) {
         setGovernmentIdDemanded(true);
       }
-      // Clinpays tiene ese número con otro correo. El error va en el campo
-      // para que se vea qué corregir, y se quita al cambiar el número.
+      // Clinpays tiene ese número con otro correo. El error va solo en el
+      // campo, para que se vea qué corregir y no se anuncie dos veces, y se
+      // quita al cambiar el número.
       if (isApiError(err) && err.code === GOVERNMENT_ID_TAKEN_CODE) {
         setGovernmentIdRejection({ value: governmentId.trim(), message: err.message });
+        setError(null);
+        setSubmitting(false);
+        return;
       }
       setError(
         isApiError(err) ? err.message : "No pudimos crear la reserva. Intenta de nuevo.",
