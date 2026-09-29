@@ -37,6 +37,31 @@ export interface ProviderDashboard {
   payouts?: ProviderPayout[];
 }
 
+/** A comercio as it appears on a shared event: the host or a collaborator. */
+export interface CollaboratorProvider {
+  id: string;
+  name: string;
+  handle: string | null;
+  logoUrl: string | null;
+}
+
+export interface EventCollaborator {
+  id: string;
+  provider: CollaboratorProvider;
+  /** "pending" until the invited comercio accepts, then "accepted". */
+  status: string;
+  invitedByAdmin: boolean;
+  invitedAt: string;
+  respondedAt: string | null;
+}
+
+/**
+ * How the signed-in comercio relates to an event: it owns it (and gets
+ * paid for it) or it was invited on as a collaborator and sees the same
+ * numbers without owning them.
+ */
+export type EventAccess = "owner" | "collaborator";
+
 export interface ProviderEventListItem {
   id: string;
   title: string;
@@ -54,6 +79,10 @@ export interface ProviderEventListItem {
   scans: number;
   coverImageUrl: string | null;
   themeColor: string | null;
+  access: EventAccess;
+  host: CollaboratorProvider | null;
+  /** Invited (pending) and accepted collaborators, besides the host. */
+  collaborators: EventCollaborator[];
 }
 
 export interface ProviderTicketType {
@@ -337,6 +366,67 @@ export function releaseProviderResource(eventId: string, resourceId: string) {
   );
 }
 
+/** An invite to co-host another comercio's event, as the invited side sees it. */
+export interface CollaborationInvite {
+  id: string;
+  status: string;
+  invitedAt: string;
+  respondedAt: string | null;
+  event: {
+    id: string;
+    title: string;
+    startsAt: string | null;
+    city: string | null;
+    coverImageUrl: string | null;
+    status: string;
+  };
+  host: CollaboratorProvider | null;
+}
+
+export interface ProviderCollaborations {
+  pending: CollaborationInvite[];
+  accepted: CollaborationInvite[];
+}
+
+export function listCollaborations() {
+  return apiFetch<ProviderCollaborations>("/provider/collaborations");
+}
+
+export function respondCollaboration(id: string, accept: boolean) {
+  return apiFetch<CollaborationInvite>(
+    `/provider/collaborations/${encodeURIComponent(id)}/${accept ? "accept" : "decline"}`,
+    { method: "POST" },
+  );
+}
+
+export interface EventCollaborationInfo {
+  access: EventAccess;
+  host: CollaboratorProvider | null;
+  collaborators: EventCollaborator[];
+  seatsLeft: number;
+}
+
+export function getEventCollaborators(eventId: string) {
+  return apiFetch<EventCollaborationInfo>(
+    `/provider/events/${encodeURIComponent(eventId)}/collaborators`,
+  );
+}
+
+/** Host only. `handle` is the partner comercio's public @handle. */
+export function inviteEventCollaborator(eventId: string, handle: string) {
+  return apiFetch<{ collaborator: EventCollaborator; emailed: number }>(
+    `/provider/events/${encodeURIComponent(eventId)}/collaborators`,
+    { method: "POST", body: { handle } },
+  );
+}
+
+export function revokeEventCollaborator(eventId: string, providerId: string) {
+  return apiFetch<EventCollaborator>(
+    `/provider/events/${encodeURIComponent(eventId)}/collaborators/${encodeURIComponent(providerId)}`,
+    { method: "DELETE" },
+  );
+}
+
 export function listStaff() {
   return apiFetch<StaffMember[]>("/provider/staff");
 }
@@ -399,4 +489,7 @@ export const providerKeys = {
   resources: (id: string) => ["provider", "events", id, "resources"] as const,
   staff: ["provider", "staff"] as const,
   discounts: ["provider", "discounts"] as const,
+  collaborations: ["provider", "collaborations"] as const,
+  collaborators: (id: string) =>
+    ["provider", "events", id, "collaborators"] as const,
 };

@@ -20,6 +20,7 @@ import { SectionTitle } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { DashboardFigure } from "./DashboardFigure";
 import { DashboardPrivacy, HideMoneyButton } from "./dashboardPrivacy";
+import { CollaborationInvitesBanner } from "./CollaborationInvites";
 import { KpiTile } from "./KpiTile";
 import { ProviderEventCard } from "./ProviderEventCard";
 
@@ -52,7 +53,12 @@ export function ComercioDashboard() {
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
   const catalog = events.data ?? [];
-  const withCapacity = catalog.filter((event) => event.capacity > 0);
+  // The totals above the list come from the owner-only dashboard endpoint,
+  // so the capacity and occupancy figures derived here must cover the same
+  // events: what this comercio owns, not the ones it only collaborates on.
+  // The cards below still show every event, shared ones included.
+  const owned = catalog.filter((event) => event.access !== "collaborator");
+  const withCapacity = owned.filter((event) => event.capacity > 0);
   const capacity = withCapacity.reduce((sum, event) => sum + event.capacity, 0);
   const soldInCapacity = withCapacity.reduce(
     (sum, event) => sum + event.ticketsSold,
@@ -63,7 +69,7 @@ export function ComercioDashboard() {
   const occupancy =
     capacity > 0 ? Math.round((soldInCapacity / capacity) * 100) : null;
   const average = sold > 0 ? (dashboard?.totals.net ?? 0) / sold : null;
-  const upcoming = nextEvent(catalog);
+  const upcoming = nextEvent(owned);
   const sorted = [...catalog]
     .filter((event) => !needle || event.title.toLowerCase().includes(needle))
     .sort((a, b) => {
@@ -75,6 +81,7 @@ export function ComercioDashboard() {
   return (
     <DashboardPrivacy>
     <div className="flex flex-col gap-6">
+      <CollaborationInvitesBanner />
       {dashboardLoading || dashboard ? (
         <section>
           <SectionTitle action={<HideMoneyButton />}>Totales</SectionTitle>

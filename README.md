@@ -22,6 +22,7 @@ la sesión de Supabase (Bearer); no hay rutas `/api/*` propias para esto.
 | `/tickets`, `/tickets/{id}` | Mis tickets: QR, código `ALL-`, y elección de recurso (bici/asiento) |
 | `/comercio` | Resumen del comercio: KPIs y eventos |
 | `/comercio/events/{id}` | Ventas por tipo y por hora, pagos, mapa y editor de recursos |
+| `/comercio/colaboraciones` | Invitaciones a colaborar en eventos de otros comercios, y los que ya comparte |
 | `/comercio/staff` | Invitar y desactivar staff |
 | `/login` | Correo + contraseña (misma cuenta que la app) |
 

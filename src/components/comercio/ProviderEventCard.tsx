@@ -9,6 +9,7 @@ import {
   Building2,
   CalendarDays,
   Clock,
+  Handshake,
   Ticket,
 } from "lucide-react";
 import { usePrefetchProviderEvent } from "@/hooks/usePrefetchProviderEvent";
@@ -47,6 +48,13 @@ export function ProviderEventCard({
     event.capacity > 0
       ? `${formatNumber(event.ticketsSold)} / ${formatNumber(event.capacity)}`
       : formatNumber(event.ticketsSold);
+  const accepted = (event.collaborators ?? []).filter((c) => c.status === "accepted");
+  const collaboration =
+    event.access === "collaborator"
+      ? `Colaborativo · organiza ${event.host?.name ?? "otro comercio"}`
+      : accepted.length > 0
+        ? `Colaborativo · con ${accepted.map((c) => c.provider.name).join(", ")}`
+        : null;
 
   return (
     <Link
@@ -70,6 +78,12 @@ export function ProviderEventCard({
               {event.title}
             </h3>
             <p className="mt-1 text-[13px] text-white/40">{status}</p>
+            {collaboration ? (
+              <p className="mt-1 inline-flex max-w-full items-center gap-1.5 truncate text-[12px] font-semibold text-accent">
+                <Handshake className="size-3.5 shrink-0" strokeWidth={1.7} aria-hidden />
+                <span className="truncate">{collaboration}</span>
+              </p>
+            ) : null}
           </div>
         </div>
 
