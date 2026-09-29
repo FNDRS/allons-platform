@@ -109,6 +109,8 @@ export interface ProviderPaymentRow {
   serviceChargeCents?: number | null;
   /** Allons' commission withheld from the comercio. */
   allonsFeeCents?: number | null;
+  /** ISV on the commission, when the event has a nonzero rate configured. */
+  isvCents?: number | null;
   /** What the payment gateway takes out of the charge. */
   gatewayCostCents?: number | null;
   /** The gateway's own reference for this charge. */

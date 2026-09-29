@@ -23,7 +23,10 @@ function toRows(rows: ProviderPaymentRow[]): StatementRow[] {
     .filter((row) => row.status === "paid")
     .map((row) => {
       const amount = row.amountCents / 100;
-      const commission = (row.allonsFeeCents ?? 0) / 100;
+      // Folded into the displayed commission rather than broken out as its
+      // own column: an event with a nonzero ISV rate must not have net
+      // overstated by leaving it out of every deduction here.
+      const commission = ((row.allonsFeeCents ?? 0) + (row.isvCents ?? 0)) / 100;
       const cost = (row.gatewayCostCents ?? 0) / 100;
       return {
         code: row.authCode || row.orderId.slice(0, 8),
