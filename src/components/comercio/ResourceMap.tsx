@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Input, Label } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
-import { ResourceGrid, studioFrontLabel } from "@/components/tickets/ResourceGrid";
+import { ResourceGrid, studioMapChrome } from "@/components/tickets/ResourceGrid";
 
 /** Who holds each unit, with the ticket they will sit on. */
 export function ResourceMap({
@@ -52,7 +52,7 @@ export function ResourceMap({
             </div>
             <ResourceGrid
               columns={group.columns}
-              frontLabel={studioFrontLabel(group.name)}
+              {...studioMapChrome(group.name)}
               tiles={group.resources
                 // A retired unit stays on the map while a ticket holds it, so
                 // the organizer can still release or move that holder.

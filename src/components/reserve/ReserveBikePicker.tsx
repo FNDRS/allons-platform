@@ -1,7 +1,7 @@
 "use client";
 
 import type { PublicResourceGroup } from "@/lib/api/events";
-import { ResourceGrid, studioFrontLabel } from "@/components/tickets/ResourceGrid";
+import { ResourceGrid, studioMapChrome } from "@/components/tickets/ResourceGrid";
 import { StepHeading } from "./ReserveSections";
 
 export function ReserveBikePicker({
@@ -41,7 +41,7 @@ export function ReserveBikePicker({
                 </p>
                 <ResourceGrid
                   columns={group.columns}
-                  frontLabel={studioFrontLabel(group.name)}
+                  {...studioMapChrome(group.name)}
                   tiles={group.resources.map((unit) => ({
                     id: unit.id,
                     label: unit.label,
