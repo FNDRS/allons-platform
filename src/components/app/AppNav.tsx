@@ -51,6 +51,7 @@ const COMERCIO_BRANCHES = [
   "/comercio/hub",
   "/comercio/descuentos",
   "/comercio/events",
+  "/comercio/colaboraciones",
 ];
 
 export function isComercioNavActive(pathname: string, href: string): boolean {
