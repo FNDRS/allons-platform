@@ -225,6 +225,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
           onChange={form.setGovernmentId}
           step={4 + (form.hasResourceGroups ? 1 : 0)}
           showError={form.touched && !form.governmentIdValid}
+          rejectedMessage={form.governmentIdRejectedMessage}
         />
       ) : null}
 

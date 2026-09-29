@@ -413,13 +413,17 @@ export function GovernmentIdField({
   onChange,
   step,
   showError,
+  rejectedMessage,
 }: {
   value: string;
   onChange: (value: string) => void;
   step: number;
   /** Tras intentar pagar con el campo vacío o mal escrito. */
   showError: boolean;
+  /** La pasarela rechazó este mismo número. Se va en cuanto se edita. */
+  rejectedMessage?: string | null;
 }) {
+  const invalid = showError || Boolean(rejectedMessage);
   return (
     <section>
       <StepHeading n={step}>Tu identidad</StepHeading>
@@ -437,13 +441,17 @@ export function GovernmentIdField({
             maxLength={30}
             value={value}
             aria-label="Número de identidad"
-            aria-invalid={showError}
+            aria-invalid={invalid}
             onChange={(event) => onChange(event.target.value)}
             className="max-w-xs tracking-[0.04em]"
           />
           {showError ? (
             <p role="alert" className="mt-2 text-sm text-red-300">
               Escríbelo tal como aparece en el documento.
+            </p>
+          ) : rejectedMessage ? (
+            <p role="alert" className="mt-2 text-sm text-red-300">
+              {rejectedMessage}
             </p>
           ) : null}
         </div>
