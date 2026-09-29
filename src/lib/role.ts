@@ -1,8 +1,9 @@
 import type { User } from "@supabase/supabase-js";
 
 /**
- * Same JWT rule the app uses: comercio UI only when metadata.role is
- * provider. Missing role is a client. Disabled members stay out.
+ * Same JWT rule the app uses: comercio UI opens for provider accounts and
+ * invited staff with dashboard-capable roles. Scanner-only staff and clients
+ * stay out. Disabled members stay out.
  */
 export function isComercioUser(user: User | null | undefined): boolean {
   if (!user) return false;
