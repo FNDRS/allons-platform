@@ -60,6 +60,10 @@ export function ReserveView({ eventId }: { eventId: string }) {
     form.paymentDataLoading ||
     (!chargesNothing && checkout.loading) ||
     form.promoApplying;
+  // A background refetch blocks the charge too, but without the spinner or
+  // the faded disabled look: it lands in a moment and repeats every 10s, so
+  // the CTA should not flicker while the buyer is reading the total.
+  const refreshing = !form.preview && !submitting && form.paymentDataRefreshing;
   const error = form.error ?? checkout.error;
   // Un paso más cuando la pasarela pide identidad; corre la numeración de abajo.
   const idStep = form.needsGovernmentId ? 1 : 0;
@@ -321,9 +325,9 @@ export function ReserveView({ eventId }: { eventId: string }) {
           <Button
             size="lg"
             loading={form.preview ? false : submitting}
-            disabled={form.preview}
+            disabled={form.preview || refreshing}
             onClick={onPay}
-            className="min-w-0 !shrink shadow-[0_10px_40px_rgba(246,112,16,0.28)] sm:min-w-[11.5rem] sm:!shrink-0"
+            className={`min-w-0 !shrink shadow-[0_10px_40px_rgba(246,112,16,0.28)] sm:min-w-[11.5rem] sm:!shrink-0 ${refreshing ? "disabled:!cursor-wait disabled:!opacity-100 disabled:!shadow-[0_10px_40px_rgba(246,112,16,0.28)]" : ""}`}
           >
             {form.preview
               ? "Reservar"

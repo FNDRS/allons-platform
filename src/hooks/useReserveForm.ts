@@ -390,6 +390,14 @@ export function useReserveForm(
   const paymentDataLoading = Boolean(entryType) && (
     resourceQuery.isLoading || (!isFree && quoteQuery.isLoading)
   );
+  // The resource map refetches every 10s and a stale quote refetches on
+  // focus. While either request is in flight the data on screen may be about
+  // to change, so nothing is charged against it. Kept apart from the first
+  // load so the CTA can block without flashing a spinner every 10 seconds.
+  const paymentDataRefreshing =
+    Boolean(entryType) &&
+    !paymentDataLoading &&
+    (resourceQuery.isFetching || (!isFree && quoteQuery.isFetching));
 
   const holderErrors = useMemo(
     () =>
@@ -454,7 +462,7 @@ export function useReserveForm(
       setError("Espera un momento y vuelve a intentar.");
       return null;
     }
-    if (!isFree && quoteQuery.isLoading) {
+    if (!isFree && quoteQuery.isFetching) {
       setError("Estamos confirmando el total. Intenta de nuevo en un momento.");
       return null;
     }
@@ -466,7 +474,7 @@ export function useReserveForm(
       );
       return null;
     }
-    if (resourceQuery.isLoading) {
+    if (resourceQuery.isFetching) {
       setError("Estamos confirmando disponibilidad. Intenta de nuevo en un momento.");
       return null;
     }
@@ -649,6 +657,7 @@ export function useReserveForm(
     hasResourceGroups: resources.hasGroups,
     missingGroupName: resources.missingGroupName,
     paymentDataLoading,
+    paymentDataRefreshing,
     needsGovernmentId,
     governmentId,
     governmentIdValid,
