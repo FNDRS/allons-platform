@@ -157,6 +157,9 @@ export interface ProviderResource {
   id: string;
   label: string;
   sortOrder: number;
+  /** Cell on the studio map, zero-based. Both null when the unit flows in order. */
+  row: number | null;
+  col: number | null;
   active: boolean;
   ticket: {
     id: string;
@@ -188,6 +191,11 @@ export interface ResourceGroupInput {
   required?: boolean;
   columns?: number | null;
   labels: string[];
+  /**
+   * The map as rows of cells: a label places that unit, null leaves a gap.
+   * Omitted keeps the cells the group already has (drawn in the admin).
+   */
+  layout?: Array<Array<string | null>> | null;
 }
 
 export interface ProviderDiscount {

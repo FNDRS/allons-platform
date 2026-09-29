@@ -45,6 +45,8 @@ export function ReserveBikePicker({
                   tiles={group.resources.map((unit) => ({
                     id: unit.id,
                     label: unit.label,
+                    row: unit.row,
+                    col: unit.col,
                     taken: unit.taken === true && !mine.has(unit.id),
                     mine: mine.has(unit.id),
                   }))}

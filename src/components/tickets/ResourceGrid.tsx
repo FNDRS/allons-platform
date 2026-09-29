@@ -1,6 +1,7 @@
 "use client";
 
 import { StatusPill } from "@/components/ui/Pill";
+import { layoutRows } from "@/lib/resourceLayout";
 
 export interface ResourceTile {
   id: string;
@@ -9,6 +10,9 @@ export interface ResourceTile {
   mine?: boolean;
   /** Second line under the label, e.g. holder name (comercio view). */
   caption?: string | null;
+  /** Cell on the map when the organizer drew one; otherwise the tile flows. */
+  row?: number | null;
+  col?: number | null;
 }
 
 /**
@@ -31,8 +35,7 @@ export function ResourceGrid({
   compact?: boolean;
   frontLabel?: string | null;
 }) {
-  const cols = Math.min(Math.max(columns ?? autoColumns(tiles.length), 1), 12);
-  const rows = chunk(tiles, cols);
+  const { rows, cols } = layoutRows(tiles, columns, autoColumns(tiles.length));
   const gap = compact ? 6 : 8;
   const maxTile = compact ? 72 : 80;
 
@@ -45,19 +48,23 @@ export function ResourceGrid({
           className="flex w-full justify-center"
           style={{ gap }}
         >
-          {row.map((tile) => (
-            <UnitTile
-              key={tile.id}
-              tile={tile}
-              cols={cols}
-              gap={gap}
-              maxTile={maxTile}
-              compact={compact}
-              showBike={Boolean(frontLabel)}
-              onSelect={onSelect}
-              disabled={disabled}
-            />
-          ))}
+          {row.map((tile, cellIndex) =>
+            tile ? (
+              <UnitTile
+                key={tile.id}
+                tile={tile}
+                cols={cols}
+                gap={gap}
+                maxTile={maxTile}
+                compact={compact}
+                showBike={Boolean(frontLabel)}
+                onSelect={onSelect}
+                disabled={disabled}
+              />
+            ) : (
+              <EmptyCell key={`gap-${rowIndex}-${cellIndex}`} cols={cols} gap={gap} maxTile={maxTile} />
+            ),
+          )}
         </div>
       ))}
     </div>
@@ -141,6 +148,17 @@ function UnitTile({
   );
 }
 
+/** A gap in the drawn map: takes a tile's room, shows nothing. */
+function EmptyCell({ cols, gap, maxTile }: { cols: number; gap: number; maxTile: number }) {
+  return (
+    <div
+      aria-hidden
+      className="aspect-[1/1.18] w-full min-w-0"
+      style={{ flex: `0 1 calc((100% - ${(cols - 1) * gap}px) / ${cols})`, maxWidth: maxTile, minWidth: 0 }}
+    />
+  );
+}
+
 function StudioFront({ label }: { label: string }) {
   return (
     <div className="mb-1 flex w-full max-w-[min(100%,420px)] items-center gap-3">
@@ -165,15 +183,6 @@ function BikeMark({ className }: { className: string }) {
       />
     </svg>
   );
-}
-
-function chunk<T>(items: T[], size: number): T[][] {
-  if (size <= 0) return [items];
-  const rows: T[][] = [];
-  for (let i = 0; i < items.length; i += size) {
-    rows.push(items.slice(i, i + size));
-  }
-  return rows;
 }
 
 function autoColumns(count: number) {
