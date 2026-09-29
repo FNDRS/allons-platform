@@ -55,6 +55,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
   const submitting =
     form.submitting ||
     checkout.submitting ||
+    form.paymentDataLoading ||
     (!chargesNothing && checkout.loading) ||
     form.promoApplying;
   const error = form.error ?? checkout.error;

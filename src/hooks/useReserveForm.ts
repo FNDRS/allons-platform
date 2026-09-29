@@ -360,22 +360,30 @@ export function useReserveForm(
       getEventResources(eventId, entryType?.id ?? null).then(
         (res) => res.groups,
       ),
-    enabled: Boolean(eventId),
+    enabled: Boolean(eventId) && Boolean(entryType),
     refetchInterval: 10_000,
     staleTime: 5_000,
   });
+  const fallbackResourceGroups = useMemo(
+    () =>
+      resourceGroupsForTicketType(
+        event?.resourceGroups ?? [],
+        entryType?.id ?? null,
+      ),
+    [event?.resourceGroups, entryType?.id],
+  );
   // El detalle del evento trae los mapas de todos los horarios: sirve de
   // respaldo mientras carga el mapa en vivo, filtrado con la misma regla.
-  const resourceGroups =
-    resourceQuery.data ??
-    resourceGroupsForTicketType(
-      event?.resourceGroups ?? [],
-      entryType?.id ?? null,
-    );
+  const resourceGroups = resourceQuery.data ?? fallbackResourceGroups;
   const resources = useReserveResourceSelection({
     groups: resourceGroups,
     quantity,
   });
+  const quoteReady = isFree || Boolean(quoteQuery.data);
+  const resourcesLoaded = resourceQuery.isSuccess;
+  const paymentDataLoading = Boolean(entryType) && (
+    resourceQuery.isLoading || (!isFree && quoteQuery.isLoading)
+  );
 
   const holderErrors = useMemo(
     () =>
@@ -403,6 +411,9 @@ export function useReserveForm(
 
   const valid =
     Boolean(entryType) &&
+    holders.length === quantity &&
+    quoteReady &&
+    resourcesLoaded &&
     !duplicateEmail &&
     resources.resourcesReady &&
     holderErrors.every(
@@ -433,6 +444,34 @@ export function useReserveForm(
     setTouched(true);
     setError(null);
     if (!event || !entryType) return null;
+    if (holders.length !== quantity) {
+      setError("Espera un momento y vuelve a intentar.");
+      return null;
+    }
+    if (!isFree && quoteQuery.isLoading) {
+      setError("Estamos confirmando el total. Intenta de nuevo en un momento.");
+      return null;
+    }
+    if (!isFree && quoteQuery.isError) {
+      setError(
+        isApiError(quoteQuery.error)
+          ? quoteQuery.error.message
+          : "No pudimos confirmar el total del evento.",
+      );
+      return null;
+    }
+    if (resourceQuery.isLoading) {
+      setError("Estamos confirmando disponibilidad. Intenta de nuevo en un momento.");
+      return null;
+    }
+    if (resourceQuery.isError) {
+      setError(
+        isApiError(resourceQuery.error)
+          ? resourceQuery.error.message
+          : "No pudimos confirmar la disponibilidad del evento.",
+      );
+      return null;
+    }
     if (duplicateEmail) {
       setError("Cada ticket necesita un correo distinto.");
       return null;
@@ -473,7 +512,7 @@ export function useReserveForm(
       answers: draft.firstAnswers,
       ...(donationAllowed && donationCents > 0 ? { donationCents } : {}),
       ...(promoCode ? { discountCode: promoCode } : {}),
-      resourceIds: resources.selectedIds.length ? resources.selectedIds : null,
+      ...(resources.selectedIds.length ? { resourceIds: resources.selectedIds } : {}),
       ...(needsGovernmentId ? { governmentId: governmentId.trim() } : {}),
     };
   }
@@ -505,7 +544,7 @@ export function useReserveForm(
           ticketTypeId: entryType.id,
           holders: holderPayload,
           answers: firstAnswers,
-          resourceIds: resources.selectedIds,
+          ...(resources.selectedIds.length ? { resourceIds: resources.selectedIds } : {}),
         });
         const ticketId = result.ticketIds?.[0];
         router.replace(
@@ -594,6 +633,7 @@ export function useReserveForm(
     onToggleResource: resources.toggle,
     hasResourceGroups: resources.hasGroups,
     missingGroupName: resources.missingGroupName,
+    paymentDataLoading,
     needsGovernmentId,
     governmentId,
     governmentIdValid,
