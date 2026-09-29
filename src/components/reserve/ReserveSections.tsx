@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Minus, Plus } from "lucide-react";
+import { useId } from "react";
 import { isEntryTypeOnSale, type EventEntryType, type EventQuestion } from "@/lib/api/events";
 import { formatCents, formatDateTime } from "@/lib/format";
 import { ListedPrice } from "@/components/ui/ListedPrice";
@@ -429,7 +430,10 @@ export function GovernmentIdField({
   /** La pasarela rechazó este mismo número. Se va en cuanto se edita. */
   rejectedMessage?: string | null;
 }) {
-  const invalid = showError || Boolean(rejectedMessage);
+  const errorId = useId();
+  const errorText = showError
+    ? "Escríbelo tal como aparece en el documento."
+    : rejectedMessage || null;
   return (
     <section>
       <StepHeading n={step}>Tu identidad</StepHeading>
@@ -447,17 +451,14 @@ export function GovernmentIdField({
             maxLength={30}
             value={value}
             aria-label="Número de identidad"
-            aria-invalid={invalid}
+            aria-invalid={errorText !== null}
+            aria-describedby={errorText ? errorId : undefined}
             onChange={(event) => onChange(event.target.value)}
             className="max-w-xs tracking-[0.04em]"
           />
-          {showError ? (
-            <p role="alert" className="mt-2 text-sm text-red-300">
-              Escríbelo tal como aparece en el documento.
-            </p>
-          ) : rejectedMessage ? (
-            <p role="alert" className="mt-2 text-sm text-red-300">
-              {rejectedMessage}
+          {errorText ? (
+            <p id={errorId} role="alert" className="mt-2 text-sm text-red-300">
+              {errorText}
             </p>
           ) : null}
         </div>
