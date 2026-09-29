@@ -38,7 +38,7 @@ export function ResourceGrid({
   frontLabel?: string | null;
   /** Icono de la unidad: bici, mat, saco o trampolín. */
   mark?: StudioMark;
-  /** La bici es alta, el saco y el bounce cuadrados, el mat de pilates es un rectángulo vertical. */
+  /** La bici es alta, el saco es un rectángulo largo, el bounce es cuadrado y el mat es vertical. */
   shape?: TileShape;
 }) {
   const { rows, cols } = layoutRows(tiles, columns, autoColumns(tiles.length));
@@ -102,13 +102,17 @@ function UnitTile({
   const interactive = Boolean(onSelect) && !disabled && !(tile.taken && !tile.mine);
   const frame = tileFrame(shape);
   const labelSize =
-    shape === "portrait"
+    shape === "bag"
       ? compact
-        ? "text-[14px]"
-        : "text-[17px]"
-      : compact
-        ? "text-[11px]"
-        : "text-[13px]";
+        ? "text-[18px]"
+        : "text-[24px]"
+      : shape === "portrait"
+        ? compact
+          ? "text-[14px]"
+          : "text-[17px]"
+        : compact
+          ? "text-[11px]"
+          : "text-[13px]";
   const className = `flex w-full min-w-0 flex-col items-center justify-center overflow-hidden border text-center transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] select-none ${frame} ${
     tile.mine
       ? "border-accent bg-accent text-black shadow-[0_8px_30px_rgba(246,112,16,0.35)]"
@@ -199,11 +203,12 @@ function StudioFront({ label }: { label: string }) {
 
 export type StudioMark = "bike" | "mat" | "bag" | "bounce" | null;
 
-export type TileShape = "tall" | "square" | "portrait";
+export type TileShape = "tall" | "square" | "portrait" | "bag";
 
 function tileFrame(shape: TileShape): string {
   if (shape === "square") return "aspect-square rounded-[12px]";
   if (shape === "portrait") return "aspect-[5/8] rounded-[8px]";
+  if (shape === "bag") return "aspect-[2/5] rounded-xl";
   return "aspect-[1/1.18] rounded-[16px]";
 }
 
@@ -279,8 +284,8 @@ export function studioMapChrome(name: string): {
   if (/(locker|casillero)/.test(n)) {
     return { frontLabel: null, mark: null, shape: "tall" };
   }
-  if (/(saco|bolsa)/.test(n)) {
-    return { frontLabel: "Frente estrado", mark: "bag", shape: "square" };
+  if (/(saco|bolsa|boxeo|boxing)/.test(n)) {
+    return { frontLabel: "Frente estrado", mark: null, shape: "bag" };
   }
   if (/\bmat\b|pilates/.test(n)) {
     return { frontLabel: "Mat Coach", mark: null, shape: "portrait" };
