@@ -26,6 +26,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // A password-recovery link can land on any page when Supabase falls back
+    // to the project's site URL (a reset sent from its dashboard does). Only
+    // /login knows how to ask for the new password, so hand it the hash
+    // before the client here consumes it and drops the user into the app
+    // with the old password still set.
+    if (
+      window.location.hash.includes("type=recovery") &&
+      window.location.pathname !== "/login"
+    ) {
+      window.location.replace(`/login${window.location.hash}`);
+      return;
+    }
     let active = true;
     let supabase: ReturnType<typeof getSupabaseBrowser>;
     try {
