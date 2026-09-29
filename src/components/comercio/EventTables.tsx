@@ -1,4 +1,5 @@
-import { Ticket, Users } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, ChevronUp, Ticket, Users } from "lucide-react";
 import type { ProviderPaymentRow, ProviderTicketType } from "@/lib/api/provider";
 import { formatCents, formatDateTime, formatHNL, formatNumber } from "@/lib/format";
 import { SectionTitle } from "@/components/ui/Card";
@@ -18,11 +19,17 @@ export function TicketTypeTable({
   if (rows) {
     for (const row of rows) {
       if (!row.entryTypeId || row.status !== "paid") continue;
+      // Ticket money only: `amountCents` also carries any buyer-paid gateway
+      // service charge (see OrderMoneySplit), which is a platform charge, not
+      // revenue from the ticket itself — same definition the backend and the
+      // "Ingresos" KPI already use, so this list can't disagree with them.
+      const charged =
+        (row.subtotalCents ?? row.amountCents) - (row.donationCents ?? 0);
       revenueByType.set(
         row.entryTypeId,
-        (revenueByType.get(row.entryTypeId) ?? 0) + row.amountCents,
+        (revenueByType.get(row.entryTypeId) ?? 0) + charged,
       );
-      if (row.amountCents === 0) {
+      if (charged === 0) {
         courtesyByType.set(
           row.entryTypeId,
           (courtesyByType.get(row.entryTypeId) ?? 0) + row.quantity,
@@ -106,22 +113,33 @@ export function PaymentsTable({
   rows: ProviderPaymentRow[];
   types: ProviderTicketType[];
 }) {
+  const [collapsed, setCollapsed] = useState(true);
   const typeById = new Map(types.map((type) => [type.id, type]));
 
   return (
     <section>
-      <SectionTitle
-        action={
-          rows.length > 0 ? (
+      <button
+        type="button"
+        onClick={() => setCollapsed((current) => !current)}
+        className="mb-3 flex w-full min-w-0 items-baseline justify-between gap-3"
+      >
+        <h2 className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted sm:text-[12px] sm:tracking-[0.2em]">
+          Pedidos
+        </h2>
+        <span className="flex shrink-0 items-center gap-2">
+          {rows.length > 0 ? (
             <span className="text-[12px] font-semibold text-white/40">
               {rows.length}
             </span>
-          ) : null
-        }
-      >
-        Pedidos
-      </SectionTitle>
-      {rows.length === 0 ? (
+          ) : null}
+          {collapsed ? (
+            <ChevronDown className="size-4 text-white/45" strokeWidth={1.5} aria-hidden />
+          ) : (
+            <ChevronUp className="size-4 text-white/45" strokeWidth={1.5} aria-hidden />
+          )}
+        </span>
+      </button>
+      {collapsed ? null : rows.length === 0 ? (
         <EmptyState
           title="Todavía no hay pedidos"
           body="Las compras con tarjeta aparecen aquí."

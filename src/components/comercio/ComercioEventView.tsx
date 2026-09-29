@@ -108,14 +108,19 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
     if (row.status !== "paid") continue;
     const type = row.entryTypeId ? typeById.get(row.entryTypeId) : undefined;
     const listAmount = (type?.price ?? 0) * row.quantity;
-    const chargedAmount = (row.amountCents - (row.donationCents ?? 0)) / 100;
+    // Ticket money only, same as `Ingresos`: `amountCents` also carries any
+    // buyer-paid gateway service charge, which isn't part of the ticket's
+    // own price and must not read as a discount (or a sale) here.
+    const ticketCents =
+      (row.subtotalCents ?? row.amountCents) - (row.donationCents ?? 0);
+    const chargedAmount = ticketCents / 100;
     if (listAmount - chargedAmount > 0) {
       discountedCount += row.quantity;
       discountedAmount += listAmount - chargedAmount;
     }
     const key = dayFmt.format(new Date(row.createdAt));
     const entry = dayTotals.get(key) ?? { cents: 0, qty: 0 };
-    entry.cents += row.amountCents;
+    entry.cents += ticketCents;
     entry.qty += row.quantity;
     dayTotals.set(key, entry);
   }

@@ -1,18 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
-import { useProviderLive } from "./ProviderLive";
-import { listProviderEvents, providerKeys } from "@/lib/api/provider";
 import { formatHNL, formatNumber } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/States";
-import { glassCtaClass } from "@/components/ui/cta";
 import { ComercioEventsListView } from "./ComercioEventsListView";
-import { ProviderBillingForm } from "./ProviderBillingForm";
-import { SeatsChart } from "./SeatsChart";
 
 /** The one number that matters: what the comercio will be paid. */
 export function FinanceBalances({
@@ -42,20 +34,12 @@ export function FinanceBalances({
  * tickets, sales over time) lives on that event's own page, not here.
  */
 export function FinanceView() {
-  const { dashboard, dashboardLoading, ready } = useProviderAccess({
+  const { dashboard, dashboardLoading } = useProviderAccess({
     withDashboard: true,
-  });
-  const { live } = useProviderLive();
-  const events = useQuery({
-    queryKey: providerKeys.events,
-    queryFn: listProviderEvents,
-    enabled: ready,
-    refetchInterval: live ? false : 60_000,
   });
 
   const totals = dashboard?.totals;
   const commission = dashboard?.commission;
-  const [showEvents, setShowEvents] = useState(false);
 
   return (
     <div className="flex flex-col gap-8">
@@ -89,28 +73,9 @@ export function FinanceView() {
       ) : null}
 
       <section>
-        <button
-          type="button"
-          onClick={() => setShowEvents((current) => !current)}
-          className={`inline-flex h-11 items-center gap-2 px-4 text-[14px] ${glassCtaClass}`}
-        >
-          {showEvents ? "Ocultar eventos" : "Ver mis eventos"}
-          {showEvents ? (
-            <ChevronUp className="size-4 text-white/45" strokeWidth={1.5} aria-hidden />
-          ) : (
-            <ChevronDown className="size-4 text-white/45" strokeWidth={1.5} aria-hidden />
-          )}
-        </button>
-        {showEvents ? (
-          <div className="mt-5">
-            <ComercioEventsListView basePath="/comercio/finanzas" />
-          </div>
-        ) : null}
+        <SectionTitle>Eventos</SectionTitle>
+        <ComercioEventsListView basePath="/comercio/finanzas" />
       </section>
-
-      <SeatsChart events={events.data ?? []} loading={events.isLoading} />
-
-      <ProviderBillingForm />
     </div>
   );
 }
