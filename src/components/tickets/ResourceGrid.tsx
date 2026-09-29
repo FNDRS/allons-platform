@@ -28,7 +28,7 @@ export function ResourceGrid({
   compact = false,
   frontLabel,
   mark = null,
-  square = false,
+  shape = "tall",
 }: {
   tiles: ResourceTile[];
   columns?: number | null;
@@ -38,8 +38,8 @@ export function ResourceGrid({
   frontLabel?: string | null;
   /** Icono de la unidad: bici, mat, saco o trampolín. */
   mark?: StudioMark;
-  /** Casilla cuadrada. La bici de spinning sigue alta. */
-  square?: boolean;
+  /** La bici es alta, el saco y el bounce cuadrados, el mat de pilates ancho. */
+  shape?: TileShape;
 }) {
   const { rows, cols } = layoutRows(tiles, columns, autoColumns(tiles.length));
   const gap = compact ? 6 : 8;
@@ -64,12 +64,12 @@ export function ResourceGrid({
                 maxTile={maxTile}
                 compact={compact}
                 mark={mark}
-                square={square}
+                shape={shape}
                 onSelect={onSelect}
                 disabled={disabled}
               />
             ) : (
-              <EmptyCell key={`gap-${rowIndex}-${cellIndex}`} cols={cols} gap={gap} maxTile={maxTile} square={square} />
+              <EmptyCell key={`gap-${rowIndex}-${cellIndex}`} cols={cols} gap={gap} maxTile={maxTile} shape={shape} />
             ),
           )}
         </div>
@@ -85,7 +85,7 @@ function UnitTile({
   maxTile,
   compact,
   mark,
-  square,
+  shape,
   onSelect,
   disabled,
 }: {
@@ -95,13 +95,21 @@ function UnitTile({
   maxTile: number;
   compact: boolean;
   mark: StudioMark;
-  square: boolean;
+  shape: TileShape;
   onSelect?: (tile: ResourceTile) => void;
   disabled: boolean;
 }) {
   const interactive = Boolean(onSelect) && !disabled && !(tile.taken && !tile.mine);
-  const shape = square ? "aspect-square rounded-[12px]" : "aspect-[1/1.18] rounded-[16px]";
-  const className = `flex w-full min-w-0 flex-col items-center justify-center overflow-hidden border text-center transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] select-none ${shape} ${
+  const frame = tileFrame(shape);
+  const labelSize =
+    shape === "wide"
+      ? compact
+        ? "text-[14px]"
+        : "text-[17px]"
+      : compact
+        ? "text-[11px]"
+        : "text-[13px]";
+  const className = `flex w-full min-w-0 flex-col items-center justify-center overflow-hidden border text-center transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] select-none ${frame} ${
     tile.mine
       ? "border-accent bg-accent text-black shadow-[0_8px_30px_rgba(246,112,16,0.35)]"
       : tile.taken && tile.caption
@@ -114,7 +122,7 @@ function UnitTile({
   const content = (
     <>
       {mark ? <UnitMark mark={mark} className={compact ? "size-3.5" : "size-4"} /> : null}
-      <span className={`font-bold leading-none ${compact ? "text-[11px]" : "text-[13px]"} ${mark ? (compact ? "mt-0.5" : "mt-1") : ""}`}>
+      <span className={`font-bold leading-none ${labelSize} ${mark ? (compact ? "mt-0.5" : "mt-1") : ""}`}>
         {tile.label}
       </span>
       {tile.caption && !compact ? (
@@ -163,17 +171,17 @@ function EmptyCell({
   cols,
   gap,
   maxTile,
-  square,
+  shape,
 }: {
   cols: number;
   gap: number;
   maxTile: number;
-  square: boolean;
+  shape: TileShape;
 }) {
   return (
     <div
       aria-hidden
-      className={`${square ? "aspect-square" : "aspect-[1/1.18]"} w-full min-w-0`}
+      className={`${tileFrame(shape)} w-full min-w-0`}
       style={{ flex: `0 1 calc((100% - ${(cols - 1) * gap}px) / ${cols})`, maxWidth: maxTile, minWidth: 0 }}
     />
   );
@@ -190,6 +198,14 @@ function StudioFront({ label }: { label: string }) {
 }
 
 export type StudioMark = "bike" | "mat" | "bag" | "bounce" | null;
+
+export type TileShape = "tall" | "square" | "wide";
+
+function tileFrame(shape: TileShape): string {
+  if (shape === "square") return "aspect-square rounded-[12px]";
+  if (shape === "wide") return "aspect-[8/5] rounded-[8px]";
+  return "aspect-[1/1.18] rounded-[16px]";
+}
 
 function UnitMark({ mark, className }: { mark: Exclude<StudioMark, null>; className: string }) {
   if (mark === "mat") return <MatMark className={className} />;
@@ -257,23 +273,23 @@ function autoColumns(count: number) {
 export function studioMapChrome(name: string): {
   frontLabel: string | null;
   mark: StudioMark;
-  square: boolean;
+  shape: TileShape;
 } {
   const n = name.toLowerCase();
   if (/(locker|casillero)/.test(n)) {
-    return { frontLabel: null, mark: null, square: false };
+    return { frontLabel: null, mark: null, shape: "tall" };
   }
   if (/(saco|bolsa)/.test(n)) {
-    return { frontLabel: "Frente estrado", mark: "bag", square: true };
+    return { frontLabel: "Frente estrado", mark: "bag", shape: "square" };
   }
-  if (/\bmat\b/.test(n)) {
-    return { frontLabel: "Mat Coach", mark: "mat", square: true };
+  if (/\bmat\b|pilates/.test(n)) {
+    return { frontLabel: "Mat Coach", mark: null, shape: "wide" };
   }
   if (/\bbounce\b/.test(n)) {
-    return { frontLabel: "Coach", mark: "bounce", square: true };
+    return { frontLabel: "Coach", mark: "bounce", shape: "square" };
   }
   const bike = /(bici|bike)/.test(n);
-  return { frontLabel: "Coach", mark: bike ? "bike" : null, square: false };
+  return { frontLabel: "Coach", mark: bike ? "bike" : null, shape: "tall" };
 }
 
 /** Frente del salón. Lockers no lo tienen; el saco mira al estrado. */
