@@ -68,6 +68,13 @@ export function FinanceView() {
               value={formatNumber(totals.soldTickets)}
               muted
             />
+            {totals.courtesyTickets > 0 ? (
+              <Row
+                label="Tickets de cortesía"
+                value={`× ${formatNumber(totals.courtesyTickets)}`}
+                muted
+              />
+            ) : null}
           </Card>
         </section>
       ) : null}

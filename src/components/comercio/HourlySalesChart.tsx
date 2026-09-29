@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import type { HourlySales } from "@/lib/api/provider";
 import { SectionTitle } from "@/components/ui/Card";
+import { DayPicker } from "@/components/ui/DayPicker";
 
 const W = 640;
 const H = 200;
@@ -60,17 +61,7 @@ export function HourlySalesChart({
       <SectionTitle
         action={
           onSelectDate ? (
-            <input
-              type="date"
-              value={selectedDate ?? today}
-              max={today}
-              onChange={(event) => {
-                const value = event.target.value;
-                onSelectDate(value === today ? undefined : value || undefined);
-              }}
-              className="h-8 rounded-full border border-white/[0.12] bg-white/[0.04] px-3 text-[12px] text-white/70 [color-scheme:dark]"
-              aria-label="Elegir día"
-            />
+            <DayPicker value={selectedDate} max={today} onChange={onSelectDate} />
           ) : null
         }
       >

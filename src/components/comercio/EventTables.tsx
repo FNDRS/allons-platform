@@ -5,6 +5,7 @@ import { formatCents, formatDateTime, formatHNL, formatNumber } from "@/lib/form
 import { SectionTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/States";
 import { Progress } from "@/components/ui/Stat";
+import { glassCtaClass } from "@/components/ui/cta";
 
 export function TicketTypeTable({
   types,
@@ -118,27 +119,26 @@ export function PaymentsTable({
 
   return (
     <section>
-      <button
-        type="button"
-        onClick={() => setCollapsed((current) => !current)}
-        className="mb-3 flex w-full min-w-0 items-baseline justify-between gap-3"
-      >
+      <div className="mb-3 flex min-w-0 items-baseline justify-between gap-3">
         <h2 className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted sm:text-[12px] sm:tracking-[0.2em]">
           Pedidos
-        </h2>
-        <span className="flex shrink-0 items-center gap-2">
           {rows.length > 0 ? (
-            <span className="text-[12px] font-semibold text-white/40">
-              {rows.length}
-            </span>
+            <span className="ml-1.5 text-white/40">{rows.length}</span>
           ) : null}
+        </h2>
+        <button
+          type="button"
+          onClick={() => setCollapsed((current) => !current)}
+          className={`inline-flex h-8 shrink-0 items-center gap-1.5 px-3 text-[12px] ${glassCtaClass}`}
+        >
+          {collapsed ? "Ver pedidos" : "Ocultar"}
           {collapsed ? (
-            <ChevronDown className="size-4 text-white/45" strokeWidth={1.5} aria-hidden />
+            <ChevronDown className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
           ) : (
-            <ChevronUp className="size-4 text-white/45" strokeWidth={1.5} aria-hidden />
+            <ChevronUp className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
           )}
-        </span>
-      </button>
+        </button>
+      </div>
       {collapsed ? null : rows.length === 0 ? (
         <EmptyState
           title="Todavía no hay pedidos"

@@ -31,6 +31,7 @@ export interface ProviderDashboard {
     net: number;
     soldTickets: number;
     scans: number;
+    courtesyTickets: number;
   };
   events: unknown[];
   payouts?: ProviderPayout[];
