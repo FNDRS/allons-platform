@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, Clock } from "lucide-react";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
@@ -53,14 +54,15 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
  */
 export function EventConfigView({ eventId }: { eventId: string }) {
   const { ready } = useProviderAccess();
+  const [hourlyDate, setHourlyDate] = useState<string | undefined>(undefined);
   const event = useQuery({
     queryKey: providerKeys.event(eventId),
     queryFn: () => getProviderEvent(eventId),
     enabled: ready,
   });
   const hourly = useQuery({
-    queryKey: providerKeys.hourly(eventId),
-    queryFn: () => getHourlySales(eventId),
+    queryKey: providerKeys.hourly(eventId, hourlyDate),
+    queryFn: () => getHourlySales(eventId, hourlyDate),
     enabled: ready,
   });
   const payments = useQuery({
@@ -242,7 +244,11 @@ export function EventConfigView({ eventId }: { eventId: string }) {
       )}
 
       {hourly.data ? (
-        <HourlySalesChart data={hourly.data} />
+        <HourlySalesChart
+          data={hourly.data}
+          selectedDate={hourlyDate}
+          onSelectDate={setHourlyDate}
+        />
       ) : hourly.isLoading ? (
         <Skeleton className="h-56 rounded-[24px]" />
       ) : null}

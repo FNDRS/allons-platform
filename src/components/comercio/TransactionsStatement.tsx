@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Download } from "lucide-react";
-import type { ProviderPaymentRow } from "@/lib/api/provider";
+import { downloadTransactionsStatement, type ProviderPaymentRow } from "@/lib/api/provider";
 import { formatDateTime, formatHNL } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/States";
@@ -77,9 +78,11 @@ function downloadCsv(fileName: string, rows: StatementRow[], totals: StatementTo
  * their own bank statement, not a copy of the gateway's closing report.
  */
 export function TransactionsStatement({
+  eventId,
   eventTitle,
   rows: paymentRows,
 }: {
+  eventId: string;
   eventTitle: string;
   rows: ProviderPaymentRow[];
 }) {
@@ -93,26 +96,53 @@ export function TransactionsStatement({
     }),
     { amount: 0, commission: 0, cost: 0, net: 0 },
   );
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const slug = eventTitle.toLowerCase().replace(/\s+/g, "-");
+
+  async function downloadPdf() {
+    setDownloadingPdf(true);
+    setPdfError(null);
+    try {
+      await downloadTransactionsStatement(eventId, `${slug}-transacciones.pdf`);
+    } catch (error) {
+      setPdfError((error as Error).message || "No se pudo generar el PDF.");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }
 
   return (
     <section>
       <SectionTitle
         action={
           rows.length > 0 ? (
-            <button
-              type="button"
-              onClick={() =>
-                downloadCsv(
-                  `${eventTitle.toLowerCase().replace(/\s+/g, "-")}-transacciones.csv`,
-                  rows,
-                  totals,
-                )
-              }
-              className={`inline-flex h-9 items-center gap-1.5 px-3 text-[13px] ${glassCtaClass}`}
-            >
-              <Download className="size-3.5" strokeWidth={1.5} aria-hidden />
-              Exportar CSV
-            </button>
+            <div className="flex flex-col items-end gap-1.5">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={downloadingPdf}
+                  onClick={() => void downloadPdf()}
+                  className={`inline-flex h-9 items-center gap-1.5 px-3 text-[13px] disabled:opacity-60 ${glassCtaClass}`}
+                >
+                  <Download className="size-3.5" strokeWidth={1.5} aria-hidden />
+                  {downloadingPdf ? "Generando…" : "Exportar PDF"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    downloadCsv(`${slug}-transacciones.csv`, rows, totals)
+                  }
+                  className={`inline-flex h-9 items-center gap-1.5 px-3 text-[13px] ${glassCtaClass}`}
+                >
+                  <Download className="size-3.5" strokeWidth={1.5} aria-hidden />
+                  Exportar CSV
+                </button>
+              </div>
+              {pdfError ? (
+                <p className="text-[12px] text-red-400">{pdfError}</p>
+              ) : null}
+            </div>
           ) : null
         }
       >

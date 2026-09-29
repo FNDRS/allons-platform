@@ -8,11 +8,33 @@ const W = 640;
 const H = 200;
 const PAD = { top: 16, right: 12, bottom: 28, left: 30 };
 
+const todayFmt = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Tegucigalpa",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const dayLabelFmt = new Intl.DateTimeFormat("es-HN", {
+  timeZone: "America/Tegucigalpa",
+  day: "numeric",
+  month: "short",
+});
+
 /**
- * Tickets sold per hour today as one area series: a 2px white line over a
- * quiet fill, a crosshair with a tooltip card on hover, and a grid.
+ * Tickets sold per hour on one day (today by default, or any earlier day via
+ * the date filter) as one area series: a 2px white line over a quiet fill, a
+ * crosshair with a tooltip card on hover, and a grid.
  */
-export function HourlySalesChart({ data }: { data: HourlySales }) {
+export function HourlySalesChart({
+  data,
+  selectedDate,
+  onSelectDate,
+}: {
+  data: HourlySales;
+  /** `YYYY-MM-DD`, or undefined for "today" (the query's own default). */
+  selectedDate?: string;
+  onSelectDate?: (date: string | undefined) => void;
+}) {
   const gradientId = useId();
   const [hover, setHover] = useState<number | null>(null);
   const hours =
@@ -26,20 +48,41 @@ export function HourlySalesChart({ data }: { data: HourlySales }) {
   const y = (value: number) => PAD.top + plotH - (value / max) * plotH;
   const ticks = [...new Set([0, Math.ceil(max / 2), max])];
   const peak = hours.reduce((best, value, hour) => (value > hours[best] ? hour : best), 0);
+  const today = todayFmt.format(new Date());
+  const isToday = data.date === today;
+  const dayWord = isToday ? "hoy" : dayLabelFmt.format(new Date(`${data.date}T12:00:00`));
 
   const line = hours.map((value, hour) => `${hour === 0 ? "M" : "L"}${x(hour)},${y(value)}`).join(" ");
   const area = `${line} L${x(23)},${PAD.top + plotH} L${x(0)},${PAD.top + plotH} Z`;
 
   return (
     <section>
-      <SectionTitle>Ventas por hora · hoy</SectionTitle>
+      <SectionTitle
+        action={
+          onSelectDate ? (
+            <input
+              type="date"
+              value={selectedDate ?? today}
+              max={today}
+              onChange={(event) => {
+                const value = event.target.value;
+                onSelectDate(value === today ? undefined : value || undefined);
+              }}
+              className="h-8 rounded-full border border-white/[0.12] bg-white/[0.04] px-3 text-[12px] text-white/70 [color-scheme:dark]"
+              aria-label="Elegir día"
+            />
+          ) : null
+        }
+      >
+        Ventas por hora · {dayWord}
+      </SectionTitle>
       <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <p className="text-[30px] font-bold leading-none tracking-[-0.03em] tabular-nums sm:text-[34px]">
             {data.total}
           </p>
           <p className="text-sm text-muted">
-            {data.total === 1 ? "ticket hoy" : "tickets hoy"}
+            {data.total === 1 ? `ticket ${dayWord}` : `tickets ${dayWord}`}
             {data.total > 0 ? ` · pico a las ${String(peak).padStart(2, "0")}:00` : ""}
           </p>
         </div>
@@ -47,7 +90,7 @@ export function HourlySalesChart({ data }: { data: HourlySales }) {
           <svg
             viewBox={`0 0 ${W} ${H}`}
             role="img"
-            aria-label={`Ventas por hora, ${data.total} tickets hoy`}
+            aria-label={`Ventas por hora, ${data.total} tickets ${dayWord}`}
             className="h-auto w-full touch-none"
             onMouseLeave={() => setHover(null)}
           >

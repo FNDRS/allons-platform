@@ -214,7 +214,11 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
           onRetry={() => void payments.refetch()}
         />
       ) : (
-        <TransactionsStatement eventTitle={data.title} rows={paymentRows} />
+        <TransactionsStatement
+          eventId={eventId}
+          eventTitle={data.title}
+          rows={paymentRows}
+        />
       )}
     </div>
   );

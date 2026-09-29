@@ -255,6 +255,14 @@ export function downloadEventSettlement(id: string, fileName: string) {
   );
 }
 
+/** Downloads the event's transactions statement as a PDF (same rows as the CSV export). */
+export function downloadTransactionsStatement(id: string, fileName: string) {
+  return downloadFile(
+    `/provider/events/${encodeURIComponent(id)}/transactions-statement.pdf`,
+    fileName,
+  );
+}
+
 export interface ProviderBillingInfo {
   legalName: string | null;
   taxId: string | null;
@@ -277,9 +285,12 @@ export function updateProviderBillingInfo(
   });
 }
 
-export function getHourlySales(id: string) {
+/** `date` is `YYYY-MM-DD`; omit it for today. */
+export function getHourlySales(id: string, date?: string) {
+  const params = new URLSearchParams({ tz: "America/Tegucigalpa" });
+  if (date) params.set("date", date);
   return apiFetch<HourlySales>(
-    `/provider/events/${encodeURIComponent(id)}/hourly-sales?tz=${encodeURIComponent("America/Tegucigalpa")}`,
+    `/provider/events/${encodeURIComponent(id)}/hourly-sales?${params.toString()}`,
   );
 }
 
@@ -379,7 +390,8 @@ export const providerKeys = {
   payouts: ["provider", "payouts"] as const,
   events: ["provider", "events"] as const,
   event: (id: string) => ["provider", "events", id] as const,
-  hourly: (id: string) => ["provider", "events", id, "hourly"] as const,
+  hourly: (id: string, date?: string) =>
+    ["provider", "events", id, "hourly", date ?? "today"] as const,
   payments: (id: string) => ["provider", "events", id, "payments"] as const,
   resources: (id: string) => ["provider", "events", id, "resources"] as const,
   staff: ["provider", "staff"] as const,
