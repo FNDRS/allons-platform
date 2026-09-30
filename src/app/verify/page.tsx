@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { VerifyInviteActions } from "./VerifyInviteActions";
 
 export const metadata: Metadata = {
   title: "Abrir invitación",
-  description: "Continúa en la app de Allons para crear tu contraseña.",
+  description: "Crea tu contraseña de Allons en la web o en la app.",
   robots: { index: false, follow: false },
 };
 
@@ -27,23 +28,11 @@ export default async function VerifyInvitePage({ searchParams }: Props) {
         <p className="text-2xl font-bold text-[#f67010]">Allons</p>
         <h1 className="mt-6 text-xl font-semibold">Abre tu invitación</h1>
         <p className="mt-3 text-sm leading-6 text-white/75">
-          Toca el botón para abrir la app en tu celular y crear tu contraseña.
+          Crea tu contraseña aquí mismo, o ábrela en la app si ya la tienes instalada.
         </p>
 
         {appUrl ? (
-          <>
-            <a
-              href={appUrl}
-              className="mt-8 inline-block rounded-xl bg-[#f67010] px-6 py-3.5 text-sm font-bold text-white no-underline"
-            >
-              Abrir Allons
-            </a>
-            <p className="mt-6 text-left text-xs leading-5 text-white/45">
-              ¿No se abrió la app? Instala Allons desde la tienda y vuelve a
-              tocar el botón. Si usas Android, también puedes copiar el enlace
-              del correo y abrirlo aquí de nuevo.
-            </p>
-          </>
+          <VerifyInviteActions tokenHash={tokenHash} type={type} appUrl={appUrl} />
         ) : (
           <p className="mt-8 text-sm text-amber-300/90">
             Enlace incompleto. Abre de nuevo el correo de invitación o pide al
