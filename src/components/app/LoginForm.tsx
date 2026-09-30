@@ -45,7 +45,10 @@ export function LoginForm() {
   const next = queryNext ? safeLoginNext(queryNext) : storedNext ?? "/eventos";
   const { user, loading } = useAuth();
 
-  const [mode, setMode] = useState<Mode>("login");
+  // /verify lands here with a session already open from the invite link.
+  const [mode, setMode] = useState<Mode>(
+    params.get("mode") === "update" ? "update" : "login",
+  );
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -110,6 +113,14 @@ export function LoginForm() {
     });
     return () => sub.subscription.unsubscribe();
   }, [queryNext]);
+
+  // Update mode without a session (stale tab, link used elsewhere) has no
+  // account to change, so fall back to a normal login.
+  useEffect(() => {
+    if (loading || user || mode !== "update") return;
+    if (window.location.hash.includes("type=recovery")) return;
+    setMode("login");
+  }, [loading, user, mode]);
 
   useEffect(() => {
     if (!nextReady || loading || !user || mode === "update") return;
