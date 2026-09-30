@@ -65,7 +65,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await getSupabaseBrowser().auth.signOut();
+    // Local only: the default scope is global and would also end this
+    // account's sessions in admin and the mobile app.
+    await getSupabaseBrowser().auth.signOut({ scope: "local" });
     setSession(null);
   }, []);
 
