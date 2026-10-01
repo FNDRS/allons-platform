@@ -15,6 +15,7 @@ export function AppShell({
   bottomTabs = true,
   tone = "default",
   cover = false,
+  fit = false,
 }: {
   children: React.ReactNode;
   width?: "default" | "narrow" | "listing" | "detail";
@@ -24,9 +25,11 @@ export function AppShell({
   tone?: "default" | "brand" | "space";
   /** White stairs over the whole shell, including the nav. */
   cover?: boolean;
+  /** Single-screen page with no tabs: drops the tab clearance so it fits without scrolling. */
+  fit?: boolean;
 }) {
   const frame = (
-    <ShellFrame width={width} bottomTabs={bottomTabs} tone={tone}>
+    <ShellFrame width={width} bottomTabs={bottomTabs} tone={tone} fit={fit}>
       {children}
     </ShellFrame>
   );
@@ -38,11 +41,13 @@ function ShellFrame({
   width,
   bottomTabs,
   tone,
+  fit,
 }: {
   children: React.ReactNode;
   width: "default" | "narrow" | "listing" | "detail";
   bottomTabs: boolean;
   tone: "default" | "brand" | "space";
+  fit: boolean;
 }) {
   const max =
     width === "narrow"
@@ -63,10 +68,12 @@ function ShellFrame({
       <main
         id="contenido"
         tabIndex={-1}
-        className={`relative z-10 mx-auto w-full min-w-0 flex-1 px-4 pb-28 pt-6 sm:px-6 sm:pb-32 sm:pt-8 lg:px-8 ${max}`}
+        className={`relative z-10 mx-auto w-full min-w-0 flex-1 px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8 ${
+          fit ? "pb-6" : "pb-28 sm:pb-32"
+        } ${max}`}
       >
         <PageTransition>{children}</PageTransition>
-        <LegalLinks className="mt-16 border-t border-border pt-6" />
+        <LegalLinks className={`${fit ? "mt-8" : "mt-16"} border-t border-border pt-6`} />
       </main>
       <BottomTabs hidden={!bottomTabs} />
     </div>

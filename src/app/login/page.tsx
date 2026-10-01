@@ -16,8 +16,8 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <AppShell bottomTabs={false}>
-      <div className="grid min-w-0 items-center gap-10 pt-4 lg:min-h-[70vh] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16 lg:pt-8">
+    <AppShell bottomTabs={false} fit>
+      <div className="grid min-w-0 items-center gap-10 pt-4 lg:pt-0 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
         <section className="relative min-w-0">
           <h1 className="break-words text-[28px] font-bold leading-[1.02] tracking-[-0.03em] sm:text-[56px] lg:text-[64px]">
             Todos tus eventos
