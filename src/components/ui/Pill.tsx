@@ -77,6 +77,7 @@ const PILL = {
   glass:
     "bg-black/45 text-white ring-1 ring-white/15 backdrop-blur-md",
   mute: "bg-white/10 text-white/50 ring-1 ring-white/10",
+  gray: "bg-[#3f3f46] text-white",
 } as const;
 
 /** Status chip: white, glass, or mute. Use this for every label pill. */

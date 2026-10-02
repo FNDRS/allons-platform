@@ -253,6 +253,7 @@ export type StaffRole = "scanner" | "admin";
 export interface StaffMember {
   userId: string;
   role: StaffRole | string;
+  isOwner?: boolean;
   name: string | null;
   email: string | null;
   phone?: string | null;

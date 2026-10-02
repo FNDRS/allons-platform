@@ -11,7 +11,16 @@ import { Card, SectionTitle } from "@/components/ui/Card";
 import { FieldError, Input, Label, Select, SelectItem } from "@/components/ui/Field";
 import { Badge, EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 
-const ROLE_LABEL: Record<string, string> = { scanner: "Escáner", admin: "Administrador" };
+const ROLE_LABEL: Record<string, string> = {
+  scanner: "Escáner",
+  admin: "Administrador",
+  owner: "Owner",
+};
+
+function memberRoleLabel(member: { role: string; isOwner?: boolean }) {
+  if (member.isOwner || member.role === "owner") return "Owner";
+  return ROLE_LABEL[member.role] ?? member.role;
+}
 
 export function StaffView() {
   const { user } = useAuth();
@@ -100,11 +109,11 @@ export function StaffView() {
                   <p className="truncate text-sm text-white/50">{member.email ?? "—"}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
-                  <Badge tone={member.active ? "accent" : "neutral"}>
-                    {ROLE_LABEL[member.role] ?? member.role}
+                  <Badge tone={member.active ? "gray" : "neutral"}>
+                    {memberRoleLabel(member)}
                     {member.active ? "" : " · inactivo"}
                   </Badge>
-                  {member.active && member.userId !== user?.id ? (
+                  {member.active && !member.isOwner && member.role !== "owner" && member.userId !== user?.id ? (
                     <Button
                       variant="ghost"
                       size="sm"

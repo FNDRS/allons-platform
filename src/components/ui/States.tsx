@@ -75,7 +75,7 @@ export function Badge({
   tone = "neutral",
 }: {
   children: React.ReactNode;
-  tone?: "neutral" | "accent" | "success" | "warn" | "danger";
+  tone?: "neutral" | "accent" | "success" | "warn" | "danger" | "gray";
 }) {
   const map = {
     neutral: "mute",
@@ -83,6 +83,7 @@ export function Badge({
     success: "solid",
     warn: "glass",
     danger: "mute",
+    gray: "gray",
   } as const;
   return <StatusPill tone={map[tone]}>{children}</StatusPill>;
 }
