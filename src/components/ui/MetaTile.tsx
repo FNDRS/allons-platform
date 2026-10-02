@@ -14,7 +14,7 @@ export function MetaTile({
 }) {
   const inner = (
     <>
-      <span className="grid size-10 shrink-0 place-items-center rounded-[13px] bg-white/[0.045] text-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/[0.08]">
+      <span className="grid size-10 shrink-0 place-items-center rounded-[13px] bg-[#E6E6E6] text-black">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
