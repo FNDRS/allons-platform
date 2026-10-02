@@ -173,7 +173,12 @@ export function LoginForm() {
         return;
       }
       if (mode === "update") {
-        const { error: err } = await supabase.auth.updateUser({ password });
+        // Clear the invite's flag too: the app reads it and would otherwise
+        // ask for a new password again on every sign-in.
+        const { error: err } = await supabase.auth.updateUser({
+          password,
+          data: { mustSetPassword: false },
+        });
         if (err) throw err;
         toast.success("Contraseña actualizada");
         setPassword("");
