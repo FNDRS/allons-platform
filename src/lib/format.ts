@@ -1,26 +1,20 @@
-const hnl = new Intl.NumberFormat("es-HN", {
-  style: "currency",
-  currency: "HNL",
-  minimumFractionDigits: 2,
-});
-
-/** "L 1,250.00" from lempiras. */
-export function formatHNL(lempiras: number): string {
-  return hnl.format(Number.isFinite(lempiras) ? lempiras : 0);
-}
-
 const hnlAmount = new Intl.NumberFormat("es-HN", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
-/** "HNL 1,250.00". The dashboard asks for the code, not the lempira sign. */
-export function formatDashboardHNL(lempiras: number): string {
+/** "HNL 1,250.00" from lempiras. */
+export function formatHNL(lempiras: number): string {
   const amount = Number.isFinite(lempiras) ? lempiras : 0;
   return `HNL ${hnlAmount.format(amount)}`;
 }
 
-/** "L 1,250.00" from cents. */
+/** "HNL 1,250.00". Same code as the rest of the product. */
+export function formatDashboardHNL(lempiras: number): string {
+  return formatHNL(lempiras);
+}
+
+/** "HNL 1,250.00" from cents. */
 export function formatCents(cents: number | null | undefined): string {
   return formatHNL((cents ?? 0) / 100);
 }
@@ -31,12 +25,12 @@ export function formatPriceCents(cents: number | null | undefined): string {
   return formatCents(cents);
 }
 
-/** "L 500" on a card. Whole lempiras drop the cents. */
+/** "HNL 500" on a card. Whole lempiras drop the cents. */
 export function formatCardPrice(cents: number | null | undefined): string {
   if (!cents || cents <= 0) return "Gratis";
   const lempiras = cents / 100;
   const whole = Number.isInteger(lempiras);
-  return `L ${lempiras.toLocaleString("es-HN", {
+  return `HNL ${lempiras.toLocaleString("es-HN", {
     minimumFractionDigits: whole ? 0 : 2,
     maximumFractionDigits: whole ? 0 : 2,
   })}`;
