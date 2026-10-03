@@ -84,47 +84,51 @@ export function CampaignReportPanel({
         </Button>
       </div>
 
-      <CampaignCharts report={report} />
+      {t.registered > 0 ? (
+        <CampaignCharts report={report} onOpenComercio={onOpenComercio} onOpenEvent={onOpenEvent} />
+      ) : (
+        <>
+          <section>
+            <SectionTitle>Por comercio</SectionTitle>
+            {report.byComercio.length === 0 ? (
+              <EmptyState title="Todavía sin comercios" body="Cuando un comercio sume eventos, su asistencia aparece aquí." />
+            ) : (
+              <Card className="divide-y divide-border">
+                {report.byComercio.map((c) => (
+                  <Row
+                    key={c.providerId}
+                    title={c.name}
+                    subtitle={c.events === 1 ? "1 evento" : `${c.events} eventos`}
+                    registered={c.registered}
+                    attended={c.attended}
+                    rate={c.attendanceRate}
+                    onOpen={() => onOpenComercio(c.providerId)}
+                  />
+                ))}
+              </Card>
+            )}
+          </section>
 
-      <section>
-        <SectionTitle>Por comercio</SectionTitle>
-        {report.byComercio.length === 0 ? (
-          <EmptyState title="Todavía sin comercios" body="Cuando un comercio sume eventos, su asistencia aparece aquí." />
-        ) : (
-          <Card className="divide-y divide-border">
-            {report.byComercio.map((c) => (
-              <Row
-                key={c.providerId}
-                title={c.name}
-                subtitle={c.events === 1 ? "1 evento" : `${c.events} eventos`}
-                registered={c.registered}
-                attended={c.attended}
-                rate={c.attendanceRate}
-                onOpen={() => onOpenComercio(c.providerId)}
-              />
-            ))}
-          </Card>
-        )}
-      </section>
-
-      {report.byEvent.length > 0 ? (
-        <section>
-          <SectionTitle>Por evento</SectionTitle>
-          <Card className="divide-y divide-border">
-            {report.byEvent.map((e) => (
-              <Row
-                key={e.eventId}
-                title={e.title}
-                subtitle={[e.providerName, e.removedAt ? "Retirado" : null].filter(Boolean).join(" · ")}
-                registered={e.registered}
-                attended={e.attended}
-                rate={e.attendanceRate}
-                onOpen={() => onOpenEvent(e.eventId)}
-              />
-            ))}
-          </Card>
-        </section>
-      ) : null}
+          {report.byEvent.length > 0 ? (
+            <section>
+              <SectionTitle>Por evento</SectionTitle>
+              <Card className="divide-y divide-border">
+                {report.byEvent.map((e) => (
+                  <Row
+                    key={e.eventId}
+                    title={e.title}
+                    subtitle={[e.providerName, e.removedAt ? "Retirado" : null].filter(Boolean).join(" · ")}
+                    registered={e.registered}
+                    attended={e.attended}
+                    rate={e.attendanceRate}
+                    onOpen={() => onOpenEvent(e.eventId)}
+                  />
+                ))}
+              </Card>
+            </section>
+          ) : null}
+        </>
+      )}
 
       {report.questions.length > 0 ? (
         <section>

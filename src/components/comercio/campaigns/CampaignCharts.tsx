@@ -1,156 +1,181 @@
 "use client";
 
-import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useEffect, useId, useState } from "react";
 import type { CampaignReport } from "@/lib/api/campaigns";
 import { formatRate } from "./campaignFormat";
 
-/** Attended is the brand accent; no-show is the neutral remainder. */
-const ATTENDED = "#f67010";
-const NO_SHOW = "#71717a";
-/** The chart surface, used as the 2px gap between touching marks. */
-const SURFACE = "#141416";
+/** Same warm gradient and glow as the dashboard's progress bars. */
+const FILL = "linear-gradient(90deg, #ffc48a 0%, #ff8c32 46%, #f67010 100%)";
+const GLOW = "0 0 10px rgba(246,112,16,0.45)";
 
-type Row = { name: string; attended: number; noShow: number; rate: number };
-
-function Legend() {
-  return (
-    <div className="flex items-center gap-4 text-[12px] text-white/60">
-      <span className="inline-flex items-center gap-1.5">
-        <span className="size-2.5 rounded-full" style={{ background: ATTENDED }} aria-hidden />
-        Asistieron
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <span className="size-2.5 rounded-full" style={{ background: NO_SHOW }} aria-hidden />
-        No asistieron
-      </span>
-    </div>
-  );
-}
-
-function RowTip({ active, payload }: { active?: boolean; payload?: Array<{ payload?: Row }> }) {
-  const row = payload?.[0]?.payload;
-  if (!active || !row) return null;
-  return (
-    <div className="rounded-[14px] border border-white/10 bg-[#141414] px-3 py-2 text-[12px]">
-      <p className="font-semibold text-white">{row.name}</p>
-      <p className="mt-0.5 text-white/70">
-        {row.attended} asistieron · {row.noShow} no asistieron
-      </p>
-      <p className="text-white/45">{formatRate(row.rate)} de asistencia</p>
-    </div>
-  );
+/** Flips true one frame after mount, so widths and rings animate in. */
+function useEntered() {
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return entered;
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="flex min-w-0 flex-col gap-3 rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
-      <p className="text-[13px] font-semibold text-white/80">{title}</p>
+    <section className="flex min-w-0 flex-col gap-4 rounded-[28px] border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+      <h3 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-white/45">{title}</h3>
       {children}
+    </section>
+  );
+}
+
+/** Activity-style ring: attended over registered, with the rate inside. */
+function AttendanceRing({ attended, registered, rate }: { attended: number; registered: number; rate: number }) {
+  const entered = useEntered();
+  const gradientId = `ring-${useId().replace(/:/g, "")}`;
+  const size = 200;
+  const stroke = 18;
+  const r = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * r;
+  const pct = registered > 0 ? Math.min(1, attended / registered) : 0;
+  return (
+    <div className="relative mx-auto aspect-square w-full max-w-[200px]">
+      <svg viewBox={`0 0 ${size} ${size}`} className="size-full -rotate-90" role="img" aria-label={`Asistencia ${formatRate(rate)}: ${attended} de ${registered}`}>
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#ffc48a" />
+            <stop offset="50%" stopColor="#ff8c32" />
+            <stop offset="100%" stopColor="#f67010" />
+          </linearGradient>
+        </defs>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={`url(#${gradientId})`}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={entered ? circumference * (1 - pct) : circumference}
+          style={{
+            filter: "drop-shadow(0 0 8px rgba(246,112,16,0.55))",
+            transition: "stroke-dashoffset 1.1s cubic-bezier(0.32,0.72,0,1)",
+          }}
+          className="motion-reduce:transition-none"
+        />
+      </svg>
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <p className="text-[34px] font-bold leading-none tracking-[-0.04em] tabular-nums">{formatRate(rate)}</p>
+        <p className="mt-1.5 text-[12px] font-medium uppercase tracking-[0.14em] text-white/40">asistencia</p>
+        <p className="mt-1 text-[13px] tabular-nums text-white/60">
+          {attended.toLocaleString("es-HN")} de {registered.toLocaleString("es-HN")}
+        </p>
+      </div>
     </div>
   );
 }
 
-/** Attended vs no-show, stacked, one bar per row; the tooltip names both. */
-function StackedBars({ rows }: { rows: Row[] }) {
-  const height = Math.max(120, rows.length * 34 + 16);
+type Row = { key: string; name: string; attended: number; registered: number; rate: number };
+
+/**
+ * Capsule bars: the track is everyone registered (longest row = full
+ * width), the glowing fill is who came. Name and numbers sit above the bar,
+ * so long names never wrap into the chart.
+ */
+function CapsuleBars({ rows, onOpen }: { rows: Row[]; onOpen: (key: string) => void }) {
+  const entered = useEntered();
+  const max = Math.max(...rows.map((r) => r.registered), 1);
   return (
-    <div style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 8, bottom: 4, left: 0 }} barCategoryGap={10}>
-          <XAxis type="number" hide />
-          <YAxis
-            type="category"
-            dataKey="name"
-            width={132}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 12 }}
-          />
-          <Tooltip cursor={{ fill: "rgba(255,255,255,0.04)" }} content={<RowTip />} />
-          <Bar dataKey="attended" stackId="a" fill={ATTENDED} stroke={SURFACE} strokeWidth={2} radius={[4, 0, 0, 4]} barSize={14} />
-          <Bar dataKey="noShow" stackId="a" fill={NO_SHOW} stroke={SURFACE} strokeWidth={2} radius={[0, 4, 4, 0]} barSize={14} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <ul className="-mx-2 flex flex-col">
+      {rows.map((r) => {
+        const track = (r.registered / max) * 100;
+        const fill = r.registered > 0 ? (r.attended / r.registered) * 100 : 0;
+        return (
+          <li key={r.key}>
+            <button
+              type="button"
+              onClick={() => onOpen(r.key)}
+              className="group flex w-full flex-col gap-2 rounded-[16px] px-2 py-2.5 text-left transition hover:bg-white/[0.04]"
+            >
+              <span className="flex items-baseline justify-between gap-3">
+                <span className="truncate text-[14px] font-semibold tracking-tight text-white/90">{r.name}</span>
+                <span className="shrink-0 text-[13px] tabular-nums text-white/50">
+                  <span className="font-semibold text-white/85">{r.attended}</span>/{r.registered}
+                  <span className="ml-2 text-white/35">{formatRate(r.rate)}</span>
+                </span>
+              </span>
+              <span className="relative block h-2.5 w-full" aria-hidden>
+                <span
+                  className="absolute inset-y-0 left-0 rounded-full bg-white/[0.07] transition-[width] duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
+                  style={{ width: entered ? `${track}%` : "0%" }}
+                >
+                  <span
+                    className="absolute inset-y-0 left-0 rounded-full transition-[width] delay-150 duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
+                    style={{
+                      width: entered ? `${fill}%` : "0%",
+                      minWidth: fill > 0 ? 10 : 0,
+                      background: FILL,
+                      boxShadow: GLOW,
+                    }}
+                  />
+                </span>
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
 /**
- * The report at a glance: overall attendance as a ring, then attended vs
- * no-show per comercio and per event. The rows below stay as the table view.
+ * The report at a glance, in the style of iOS Health and Fitness: an
+ * attendance ring, then capsule bars per comercio and per event. Each row
+ * opens its detail; the lists below stay as the table view.
  */
-export function CampaignCharts({ report }: { report: CampaignReport }) {
+export function CampaignCharts({
+  report,
+  onOpenComercio,
+  onOpenEvent,
+}: {
+  report: CampaignReport;
+  onOpenComercio: (providerId: string) => void;
+  onOpenEvent: (eventId: string) => void;
+}) {
   const t = report.totals;
-  const noShow = Math.max(t.registered - t.attended, 0);
-  const toRow = (r: { attended: number; registered: number; attendanceRate: number }, name: string): Row => ({
-    name,
-    attended: r.attended,
-    noShow: Math.max(r.registered - r.attended, 0),
-    rate: r.attendanceRate,
-  });
-  const comercios = report.byComercio.map((c) => toRow(c, c.name));
-  const events = [...report.byEvent]
-    .sort((a, b) => b.registered - a.registered)
-    .slice(0, 10)
-    .map((e) => toRow(e, e.title));
-
   if (t.registered === 0) return null;
+
+  const comercios: Row[] = report.byComercio.map((c) => ({
+    key: c.providerId,
+    name: c.name,
+    attended: c.attended,
+    registered: c.registered,
+    rate: c.attendanceRate,
+  }));
+  const events: Row[] = [...report.byEvent]
+    .sort((a, b) => b.registered - a.registered)
+    .map((e) => ({ key: e.eventId, name: e.title, attended: e.attended, registered: e.registered, rate: e.attendanceRate }));
 
   return (
     <div className="flex flex-col gap-3">
-      <Legend />
-      <div className="grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="grid gap-3 lg:grid-cols-[300px_minmax(0,1fr)]">
         <Panel title="Asistencia total">
-          <div className="relative h-[200px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Tooltip
-                  content={({ active, payload }) =>
-                    active && payload?.[0] ? (
-                      <div className="rounded-[14px] border border-white/10 bg-[#141414] px-3 py-2 text-[12px]">
-                        <p className="font-semibold text-white">{String(payload[0].name)}</p>
-                        <p className="text-white/70">{Number(payload[0].value).toLocaleString("es-HN")} personas</p>
-                      </div>
-                    ) : null
-                  }
-                />
-                <Pie
-                  data={[
-                    { name: "Asistieron", value: t.attended },
-                    { name: "No asistieron", value: noShow },
-                  ]}
-                  dataKey="value"
-                  innerRadius="68%"
-                  outerRadius="92%"
-                  startAngle={90}
-                  endAngle={-270}
-                  stroke={SURFACE}
-                  strokeWidth={2}
-                  cornerRadius={4}
-                  isAnimationActive={false}
-                >
-                  <Cell fill={ATTENDED} />
-                  <Cell fill={NO_SHOW} />
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <p className="text-[26px] font-bold tabular-nums tracking-tight">{formatRate(t.attendanceRate)}</p>
-              <p className="text-[12px] text-white/50">
-                {t.attended.toLocaleString("es-HN")} de {t.registered.toLocaleString("es-HN")}
-              </p>
-            </div>
+          <div className="flex flex-1 items-center justify-center py-2">
+            <AttendanceRing attended={t.attended} registered={t.registered} rate={t.attendanceRate} />
           </div>
         </Panel>
         <Panel title="Por comercio">
-          <StackedBars rows={comercios} />
+          <CapsuleBars rows={comercios} onOpen={onOpenComercio} />
         </Panel>
       </div>
       {events.length > 1 ? (
-        <Panel title={report.byEvent.length > 10 ? "Eventos con más registrados" : "Por evento"}>
-          <StackedBars rows={events} />
+        <Panel title="Por evento">
+          <CapsuleBars rows={events} onOpen={onOpenEvent} />
         </Panel>
       ) : null}
+      <p className="px-1 text-[12px] text-white/35">
+        La barra completa son los registrados; el tramo encendido, los que asistieron.
+      </p>
     </div>
   );
 }
