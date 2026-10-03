@@ -12,7 +12,8 @@ export function useCampaignEvents(slug: string) {
   return {
     events: query.data ?? [],
     loading: query.isLoading,
-    error: query.error as Error | null,
+    // A failed background refresh keeps the events already on screen.
+    error: query.data ? null : (query.error as Error | null),
     refetch: () => void query.refetch(),
   };
 }
