@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useCampaignsOverview } from "@/hooks/useCampaignsOverview";
+import { useDemoMode } from "@/hooks/useDemoMode";
+import { DEMO_COUNTS, DEMO_OPEN_CAMPAIGNS } from "@/lib/campaignDemo";
 import type { ComercioCampaignListItem } from "@/lib/api/campaigns";
 import { buttonClass } from "@/components/ui/Button";
 import { SectionTitle } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
+import { CampaignDemoBanner, CampaignDemoButton } from "./CampaignDemoControls";
 import { CampaignListCard } from "./CampaignListCard";
 import { CAMPAIGN_STATUS_LABEL, formatCampaignRange } from "./campaignFormat";
 
@@ -29,10 +32,18 @@ function Loading() {
 /** Invites, the hub's own campaigns and the open ones this comercio can join. */
 export function CampaignsView() {
   const o = useCampaignsOverview();
+  const demo = useDemoMode();
   const joinHref = (id: string) => `/comercio/campanas/unirse/${encodeURIComponent(id)}`;
 
   return (
     <div className="flex flex-col gap-8">
+      <div className="-mt-2 flex flex-col gap-3">
+        <div className="flex justify-end">
+          <CampaignDemoButton enabled={demo.enabled} onToggle={demo.toggle} />
+        </div>
+        {demo.enabled ? <CampaignDemoBanner onExit={demo.toggle} /> : null}
+      </div>
+
       {o.access.isError && !o.access.data ? (
         <ErrorState
           message="No pudimos confirmar los permisos de tu comercio."
@@ -85,7 +96,11 @@ export function CampaignsView() {
                   key={c.id}
                   href={`/comercio/campanas/${encodeURIComponent(c.id)}`}
                   name={c.name}
-                  subtitle={`${formatCampaignRange(c.startsAt, c.endsAt)} · ${c.memberCount} comercios · ${c.eventCount} eventos${c.pendingCount ? ` · ${c.pendingCount} pendientes` : ""}`}
+                  subtitle={`${formatCampaignRange(c.startsAt, c.endsAt)} · ${
+                    demo.enabled
+                      ? `${DEMO_COUNTS.members} comercios · ${DEMO_COUNTS.events} eventos · ${DEMO_COUNTS.pending} pendiente`
+                      : `${c.memberCount} comercios · ${c.eventCount} eventos${c.pendingCount ? ` · ${c.pendingCount} pendientes` : ""}`
+                  }`}
                   pill={CAMPAIGN_STATUS_LABEL[c.status]}
                 />
               ))}
@@ -96,7 +111,13 @@ export function CampaignsView() {
 
       <section>
         <SectionTitle>Campañas para tu comercio</SectionTitle>
-        {o.mine.isLoading ? (
+        {demo.enabled ? (
+          <div className="flex flex-col gap-2.5">
+            {DEMO_OPEN_CAMPAIGNS.map((c) => (
+              <CampaignListCard key={c.name} name={c.name} subtitle={c.subtitle} pill={c.pill} />
+            ))}
+          </div>
+        ) : o.mine.isLoading ? (
           <Loading />
         ) : o.mine.error && !o.mine.data ? (
           <ErrorState message={o.mine.error.message} onRetry={() => void o.mine.refetch()} />

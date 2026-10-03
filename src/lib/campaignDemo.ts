@@ -24,6 +24,27 @@ const COMERCIOS = [
   { id: "demo-fin", name: "Finanzas Claras", handle: "finanzasclaras", events: ["Finanzas para tu negocio"] },
 ];
 
+/** What the list shows for each of the hub's campaigns in the demo. */
+export const DEMO_COUNTS = {
+  members: COMERCIOS.length - 1,
+  events: COMERCIOS.reduce((n, c) => n + c.events.length, 0),
+  pending: 1,
+};
+
+/** Campaigns from other hubs, for the "Campañas para tu comercio" demo. */
+export const DEMO_OPEN_CAMPAIGNS = [
+  {
+    name: "Semana de la Innovación",
+    subtitle: "Organiza Tech Lab HN · te invitó a participar",
+    pill: "Te invitaron",
+  },
+  {
+    name: "Ruta del Café Hondureño",
+    subtitle: "Organiza Café Origen · 3 de tus eventos",
+    pill: "Participas",
+  },
+];
+
 /** Deterministic pseudo-random numbers, so the demo does not jump on refresh. */
 function seeded(seed: number) {
   let x = seed % 2147483647 || 1;

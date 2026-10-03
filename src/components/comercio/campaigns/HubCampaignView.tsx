@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Pencil, Sparkles } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useCampaignDemo } from "@/hooks/useCampaignDemo";
 import { useCampaignEventAttendees } from "@/hooks/useCampaignEventAttendees";
@@ -15,6 +15,7 @@ import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { ComercioPageHeader } from "@/components/comercio/ComercioPageHeader";
 import { CampaignComercioDetail } from "./CampaignComercioDetail";
+import { CampaignDemoBanner, CampaignDemoButton } from "./CampaignDemoControls";
 import { CampaignEventDetail } from "./CampaignEventDetail";
 import { CampaignEventsList } from "./CampaignEventsList";
 import { CampaignMembersPanel } from "./CampaignMembersPanel";
@@ -98,15 +99,7 @@ export function HubCampaignView({ id }: { id: string }) {
         <ComercioPageHeader title={campaign.name} subtitle={formatCampaignRange(campaign.startsAt, campaign.endsAt)} />
         <div className="flex items-center gap-2">
           <StatusPill tone="mute">{CAMPAIGN_STATUS_LABEL[campaign.status]}</StatusPill>
-          <Button
-            size="sm"
-            variant={demo.enabled ? "white" : "glass"}
-            aria-pressed={demo.enabled}
-            onClick={demo.toggle}
-          >
-            <Sparkles className="size-4" aria-hidden />
-            {demo.enabled ? "Salir de la demo" : "Ver demo"}
-          </Button>
+          <CampaignDemoButton enabled={demo.enabled} onToggle={demo.toggle} />
           <Link href={`/comercio/campanas/${encodeURIComponent(id)}/editar`} className={buttonClass({ variant: "secondary", size: "sm" })}>
             <Pencil className="size-4" aria-hidden />
             Editar
@@ -114,17 +107,7 @@ export function HubCampaignView({ id }: { id: string }) {
         </div>
       </div>
 
-      {demo.enabled ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-accent/30 bg-accent/10 px-4 py-3 text-[13px] text-white/80">
-          <span>
-            <strong className="font-semibold text-white">Demo:</strong> datos de ejemplo de cómo se verá
-            la campaña con comercios y asistentes. Nada de esto es real.
-          </span>
-          <button type="button" onClick={demo.toggle} className="font-semibold text-white underline-offset-2 hover:underline">
-            Salir
-          </button>
-        </div>
-      ) : null}
+      {demo.enabled ? <CampaignDemoBanner onExit={demo.toggle} /> : null}
 
       <Segmented label="Sección" tone="gray" value={tab} options={TABS} onChange={setTab} />
 
