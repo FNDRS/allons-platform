@@ -15,7 +15,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { AllonsLogo } from "@/components/AllonsLogo";
-import { useComercioName } from "@/hooks/useComercioName";
+import { useComercioPublicPage } from "@/hooks/useComercioPublicPage";
 import { useProviderRealtime } from "@/hooks/useProviderRealtime";
 import { isComercioUser } from "@/lib/role";
 import { useAuth } from "@/components/app/AuthProvider";
@@ -85,7 +85,7 @@ export function ComercioShellInner({
 }) {
   const pathname = usePathname();
   const [accountOpen, setAccountOpen] = useState(false);
-  const comercioName = useComercioName();
+  const publicPage = useComercioPublicPage();
 
   return (
     <div className="app-canvas min-h-dvh text-white lg:flex">
@@ -94,7 +94,7 @@ export function ComercioShellInner({
           <AllonsLogo className="h-auto w-[92px]" variant="orange" />
         </Link>
         <p className="mt-2 truncate px-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-dim">
-          {comercioName ?? "Comercio"}
+          Comercios
         </p>
         <nav className="mt-2 flex flex-col gap-1" aria-label="Comercio">
           {NAV.map(({ href, label, Icon, exact }) => {
@@ -144,9 +144,19 @@ export function ComercioShellInner({
                 variant="orange"
               />
             </Link>
-            <p className="hidden min-w-0 truncate text-[13px] font-semibold text-dim lg:block">
-              {comercioName ?? "Panel del comercio"}
-            </p>
+            {publicPage ? (
+              <Link
+                href={publicPage.href}
+                className="hidden min-w-0 truncate text-[13px] font-semibold text-dim transition hover:text-white lg:block"
+                title="Ver tu página pública"
+              >
+                {publicPage.label}
+              </Link>
+            ) : (
+              <p className="hidden min-w-0 truncate text-[13px] font-semibold text-dim lg:block">
+                allonsapp.com
+              </p>
+            )}
             <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
               <AccountButton onOpen={() => setAccountOpen(true)} />
             </div>
