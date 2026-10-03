@@ -16,6 +16,7 @@ import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
 import { HoldCountdown } from "./HoldCountdown";
 import { ReserveBikePicker } from "./ReserveBikePicker";
 import {
+  CampaignConsentField,
   DonationField,
   EntryTypePicker,
   GovernmentIdField,
@@ -295,6 +296,13 @@ export function ReserveView({ eventId }: { eventId: string }) {
           checkout={checkout}
         />
       ) : null}
+
+      <CampaignConsentField
+        campaigns={form.campaigns}
+        checked={form.campaignConsent}
+        onChange={form.setCampaignConsent}
+        showError={form.touched}
+      />
 
       {error ? <ErrorState message={error} /> : null}
 

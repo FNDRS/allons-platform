@@ -2,7 +2,12 @@
 
 import { Check, Minus, Plus } from "lucide-react";
 import { useId } from "react";
-import { isEntryTypeOnSale, type EventEntryType, type EventQuestion } from "@/lib/api/events";
+import {
+  isEntryTypeOnSale,
+  type EventCampaign,
+  type EventEntryType,
+  type EventQuestion,
+} from "@/lib/api/events";
 import { formatCents, formatDateTime } from "@/lib/format";
 import { ListedPrice } from "@/components/ui/ListedPrice";
 import type { HolderDraft } from "@/hooks/useReserveForm";
@@ -634,6 +639,65 @@ export function PromoCodeField({
             <FieldError>{error}</FieldError>
           </div>
         )}
+      </Shell>
+    </section>
+  );
+}
+
+/** Required checkbox when the event is part of a campaign. */
+export function CampaignConsentField({
+  campaigns,
+  checked,
+  onChange,
+  showError,
+}: {
+  campaigns: EventCampaign[];
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  /** Tras intentar pagar sin aceptar. */
+  showError: boolean;
+}) {
+  const errorId = useId();
+  if (campaigns.length === 0) return null;
+  const hubs = [...new Set(campaigns.map((c) => c.hub.name))];
+  const hubLabel =
+    hubs.length > 1 ? `${hubs.slice(0, -1).join(", ")} y ${hubs[hubs.length - 1]}` : hubs[0];
+  return (
+    <section>
+      <Shell>
+        <p className="text-[14px] leading-6 text-white/50">
+          Este evento es parte de {campaigns.map((c) => c.name).join(", ")}. {hubLabel}{" "}
+          {hubs.length > 1 ? "recibirán" : "recibirá"} el nombre de cada asistente,
+          si asistió y sus respuestas, para reportar la campaña.
+        </p>
+        <label className="mt-3 flex cursor-pointer items-center gap-3 text-[14px] text-white">
+          <input
+            type="checkbox"
+            className="peer sr-only"
+            checked={checked}
+            onChange={(event) => onChange(event.target.checked)}
+            aria-invalid={showError && !checked}
+            aria-describedby={showError && !checked ? errorId : undefined}
+          />
+          <span
+            aria-hidden
+            className={`flex size-5 shrink-0 items-center justify-center rounded-md border transition peer-focus-visible:ring-2 peer-focus-visible:ring-accent ${
+              checked
+                ? "border-white bg-white text-black"
+                : showError
+                  ? "border-red-300"
+                  : "border-white/25"
+            }`}
+          >
+            {checked ? <Check className="size-3.5" strokeWidth={3} /> : null}
+          </span>
+          Acepto compartir estos datos con {hubLabel}
+        </label>
+        {showError && !checked ? (
+          <p id={errorId} role="alert" className="mt-2 text-sm text-red-300">
+            Acepta para poder continuar.
+          </p>
+        ) : null}
       </Shell>
     </section>
   );

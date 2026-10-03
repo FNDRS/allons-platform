@@ -133,6 +133,10 @@ export function useReserveForm(
   const [quantity, setQuantity] = useState(1);
   const [holders, setHolders] = useState<HolderDraft[]>([emptyHolder()]);
   const [donation, setDonation] = useState("");
+  // Required whenever the event is in a campaign: its hub reads attendee data.
+  // Stored against the exact set shown, so a campaign added later is never
+  // covered by an earlier tick.
+  const [acceptedCampaignKey, setAcceptedCampaignKey] = useState<string | null>(null);
   /** Lo que el comprador está escribiendo, antes de confirmar "Aplicar". */
   const [promoCodeDraft, setPromoCodeDraft] = useState("");
   /** El código que de verdad viaja en la cotización, una vez confirmado. */
@@ -226,6 +230,16 @@ export function useReserveForm(
     () => [...(event?.questions ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
     [event],
   );
+  const campaigns = useMemo(() => event?.campaigns ?? [], [event]);
+  const campaignKey = campaigns.length
+    ? `${eventId}:${campaigns
+        .map((c) => c.id)
+        .sort()
+        .join(",")}`
+    : "";
+  const campaignConsent = campaignKey !== "" && acceptedCampaignKey === campaignKey;
+  // Only the campaigns shown here: the API records consent for these alone.
+  const consentedCampaignIds = campaignConsent ? campaigns.map((c) => c.id) : [];
 
   const isFree =
     event?.ticketMode === "free" || (entryType ? entryType.priceCents === 0 : false);
@@ -486,6 +500,10 @@ export function useReserveForm(
       );
       return null;
     }
+    if (campaigns.length > 0 && !campaignConsent) {
+      setError("Acepta compartir los datos con la campaña para continuar.");
+      return null;
+    }
     if (duplicateEmail) {
       setError("Cada ticket necesita un correo distinto.");
       return null;
@@ -528,6 +546,7 @@ export function useReserveForm(
       ...(promoCode ? { discountCode: promoCode } : {}),
       ...(resources.selectedIds.length ? { resourceIds: resources.selectedIds } : {}),
       ...(needsGovernmentId ? { governmentId: governmentId.trim() } : {}),
+      consentedCampaignIds,
     };
   }
 
@@ -559,6 +578,7 @@ export function useReserveForm(
           holders: holderPayload,
           answers: firstAnswers,
           ...(resources.selectedIds.length ? { resourceIds: resources.selectedIds } : {}),
+          consentedCampaignIds,
         });
         const ticketId = result.ticketIds?.[0];
         router.replace(
@@ -651,6 +671,10 @@ export function useReserveForm(
     applyPromoCode,
     removePromoCode,
     holdExpiresAt,
+    campaigns,
+    campaignConsent,
+    setCampaignConsent: (value: boolean) =>
+      setAcceptedCampaignKey(value ? campaignKey : null),
     resourceGroups,
     selectedResourceByGroup: resources.selected,
     onToggleResource: resources.toggle,
