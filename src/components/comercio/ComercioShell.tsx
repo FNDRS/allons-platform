@@ -7,6 +7,7 @@ import {
   Activity,
   ArrowUpRight,
   CalendarDays,
+  Flag,
   Handshake,
   LayoutDashboard,
   Smartphone,
@@ -56,6 +57,12 @@ const NAV = [
     label: "Colaboraciones",
     Icon: Handshake,
     exact: true,
+  },
+  {
+    href: "/comercio/campanas",
+    label: "Campañas",
+    Icon: Flag,
+    exact: false,
   },
   { href: "/comercio/staff", label: "Personal", Icon: Users, exact: true },
 ];
