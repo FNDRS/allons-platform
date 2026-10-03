@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus, X } from "lucide-react";
 import { useCampaignEditor } from "@/hooks/useCampaignEditor";
 import type { CampaignStatus } from "@/lib/api/campaigns";
 import { Button } from "@/components/ui/Button";
@@ -102,10 +103,18 @@ export function CampaignEditor({ id }: { id?: string }) {
         </div>
       </section>
 
-      <div>
+      <div className="flex items-center gap-3">
         <Button size="lg" loading={f.saving} onClick={f.submit}>
           {f.editing ? "Guardar cambios" : "Crear campaña"}
         </Button>
+        <Link
+          href={id ? `/comercio/campanas/${encodeURIComponent(id)}` : "/comercio/campanas"}
+          aria-label={f.editing ? "Cancelar cambios" : "Cancelar"}
+          title={f.editing ? "Cancelar cambios" : "Cancelar"}
+          className="inline-flex size-13 shrink-0 items-center justify-center rounded-full border border-border-strong text-white/70 transition hover:bg-surface-2 hover:text-white"
+        >
+          <X className="size-5" aria-hidden />
+        </Link>
       </div>
     </div>
   );

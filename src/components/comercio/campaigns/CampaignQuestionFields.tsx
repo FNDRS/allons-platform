@@ -43,7 +43,12 @@ export function CampaignQuestionFields({
             picks one, without a menu covering the rest of the form. */}
         <div role="group" aria-label="Tipo de pregunta" className="flex flex-wrap gap-2">
           {QUESTION_KINDS.map((k) => (
-            <Chip key={k.value} active={question.kind === k.value} onClick={() => onChange({ kind: k.value })}>
+            <Chip
+              key={k.value}
+              tone="gray"
+              active={question.kind === k.value}
+              onClick={() => onChange({ kind: k.value })}
+            >
               {k.label}
             </Chip>
           ))}

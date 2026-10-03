@@ -54,7 +54,7 @@ export function HubCampaignView({ id }: { id: string }) {
         </div>
       </div>
 
-      <Segmented label="Sección" value={tab} options={TABS} onChange={setTab} />
+      <Segmented label="Sección" tone="gray" value={tab} options={TABS} onChange={setTab} />
 
       {tab === "summary" ? (
         c.report.data ? (

@@ -50,10 +50,13 @@ export function Chip({
   active,
   onClick,
   children,
+  tone = "white",
 }: {
   active: boolean;
   onClick: () => void;
   children: ReactNode;
+  /** The selected look: white (default) or the quieter gray. */
+  tone?: "white" | "gray";
 }) {
   return (
     <button
@@ -62,7 +65,9 @@ export function Chip({
       aria-pressed={active}
       className={`h-10 shrink-0 rounded-full border px-4 text-[13px] font-semibold transition ${
         active
-          ? "border-white bg-white text-black"
+          ? tone === "gray"
+            ? "border-[#3f3f46] bg-[#3f3f46] text-white"
+            : "border-white bg-white text-black"
           : "border-border bg-surface text-muted hover:border-border-strong hover:text-white"
       }`}
     >
