@@ -10,11 +10,14 @@ export function Segmented<T extends string>({
   options,
   onChange,
   label,
+  tone = "white",
 }: {
   value: T;
   options: { value: T; label: string }[];
   onChange: (value: T) => void;
   label: string;
+  /** The selected thumb: white (default) or the quieter gray. */
+  tone?: "white" | "gray";
 }) {
   const reduced = useReducedMotion();
   return (
@@ -45,13 +48,19 @@ export function Segmented<T extends string>({
               ] as HTMLElement | undefined)?.focus();
             }}
             className={`relative z-0 h-full shrink-0 rounded-full px-3 text-[13px] font-semibold transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] sm:px-4 ${
-              active ? "text-black" : "text-muted hover:text-white"
+              active
+                ? tone === "gray"
+                  ? "text-white"
+                  : "text-black"
+                : "text-muted hover:text-white"
             }`}
           >
             {active ? (
               <motion.span
                 layoutId={`seg-${label}`}
-                className="absolute inset-0 rounded-full bg-white"
+                className={`absolute inset-0 rounded-full ${
+                  tone === "gray" ? "bg-[#3f3f46]" : "bg-white"
+                }`}
                 transition={
                   reduced
                     ? { duration: 0 }

@@ -61,7 +61,13 @@ export function CampaignEditor({ id }: { id?: string }) {
         </div>
         <div className="flex flex-col gap-1.5">
           <Label>Visibilidad</Label>
-          <Segmented label="Visibilidad" value={f.status} options={STATUS_OPTIONS} onChange={f.setStatus} />
+          <Segmented
+            label="Visibilidad"
+            tone="gray"
+            value={f.status}
+            options={STATUS_OPTIONS}
+            onChange={f.setStatus}
+          />
           <p className="text-[12px] text-dim">
             Solo una campaña publicada aparece en la app y recibe solicitudes de comercios.
           </p>
