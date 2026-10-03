@@ -48,7 +48,7 @@ export function CampaignEventDetail({
       ) : !list || list.attendees.length === 0 ? (
         <p className="text-[13px] text-white/50">Todavía no hay personas registradas en este evento.</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-border rounded-[18px] border border-border">
+        <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-[18px] border border-border">
           {list.attendees.map((a, i) => {
             const answers = Object.entries(a.answers).filter(([, v]) => v?.trim());
             return (

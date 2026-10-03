@@ -25,7 +25,7 @@ export function CampaignComercioDetail({
         <Stat label="Asistieron" value={comercio.attended} />
         <Stat label="Tasa" value={formatRate(comercio.attendanceRate)} />
       </div>
-      <ul className="flex flex-col divide-y divide-border rounded-[18px] border border-border">
+      <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-[18px] border border-border">
         {events.map((e) => (
           <li key={e.eventId}>
             <button

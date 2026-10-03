@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/States";
 import { Progress, Stat } from "@/components/ui/Stat";
+import { CampaignCharts } from "./CampaignCharts";
 import { formatRate } from "./campaignFormat";
 
 function Row({
@@ -82,6 +83,8 @@ export function CampaignReportPanel({
           Exportar CSV
         </Button>
       </div>
+
+      <CampaignCharts report={report} />
 
       <section>
         <SectionTitle>Por comercio</SectionTitle>
