@@ -134,7 +134,9 @@ export function useReserveForm(
   const [holders, setHolders] = useState<HolderDraft[]>([emptyHolder()]);
   const [donation, setDonation] = useState("");
   // Required whenever the event is in a campaign: its hub reads attendee data.
-  const [campaignConsent, setCampaignConsent] = useState(false);
+  // Stored against the exact set shown, so a campaign added later is never
+  // covered by an earlier tick.
+  const [acceptedCampaignKey, setAcceptedCampaignKey] = useState<string | null>(null);
   /** Lo que el comprador está escribiendo, antes de confirmar "Aplicar". */
   const [promoCodeDraft, setPromoCodeDraft] = useState("");
   /** El código que de verdad viaja en la cotización, una vez confirmado. */
@@ -229,6 +231,13 @@ export function useReserveForm(
     [event],
   );
   const campaigns = useMemo(() => event?.campaigns ?? [], [event]);
+  const campaignKey = campaigns.length
+    ? `${eventId}:${campaigns
+        .map((c) => c.id)
+        .sort()
+        .join(",")}`
+    : "";
+  const campaignConsent = campaignKey !== "" && acceptedCampaignKey === campaignKey;
   // Only the campaigns shown here: the API records consent for these alone.
   const consentedCampaignIds = campaignConsent ? campaigns.map((c) => c.id) : [];
 
@@ -664,7 +673,8 @@ export function useReserveForm(
     holdExpiresAt,
     campaigns,
     campaignConsent,
-    setCampaignConsent,
+    setCampaignConsent: (value: boolean) =>
+      setAcceptedCampaignKey(value ? campaignKey : null),
     resourceGroups,
     selectedResourceByGroup: resources.selected,
     onToggleResource: resources.toggle,

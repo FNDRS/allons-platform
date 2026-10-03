@@ -667,8 +667,8 @@ export function CampaignConsentField({
       <Shell>
         <p className="text-[14px] leading-6 text-white/50">
           Este evento es parte de {campaigns.map((c) => c.name).join(", ")}. {hubLabel}{" "}
-          recibirá el nombre de cada asistente, si asistió y sus respuestas, para
-          reportar la campaña.
+          {hubs.length > 1 ? "recibirán" : "recibirá"} el nombre de cada asistente,
+          si asistió y sus respuestas, para reportar la campaña.
         </p>
         <label className="mt-3 flex cursor-pointer items-center gap-3 text-[14px] text-white">
           <input
