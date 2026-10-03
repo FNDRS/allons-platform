@@ -67,6 +67,13 @@ export type EventQuestionKind =
   | "checkbox"
   | "boolean";
 
+export interface EventCampaign {
+  id: string;
+  slug: string;
+  name: string;
+  hub: { id: string; name: string; handle: string | null };
+}
+
 export interface EventQuestion {
   id: string;
   label: string;
@@ -148,6 +155,11 @@ export interface EventDetail extends EventListItem {
   gallery?: Array<{ id: string; url: string }>;
   entryTypes: EventEntryType[];
   questions: EventQuestion[];
+  /**
+   * Published campaigns the event is in. Each hub sees the name and answers
+   * of attendees whose buyer agreed to share them at checkout.
+   */
+  campaigns?: EventCampaign[];
   resourceGroups?: PublicResourceGroup[];
   refundPolicy?: "none" | "partial" | "full";
   refundPartialPct?: number | null;

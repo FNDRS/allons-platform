@@ -24,6 +24,8 @@ export interface InitiatePaymentInput {
   donationCents?: number;
   /** Código promocional del comercio (`provider_discounts`); rebaja el precio del boleto. */
   discountCode?: string | null;
+  /** Campaigns whose hub the buyer agreed may see attendee data. */
+  consentedCampaignIds?: string[];
   resourceIds?: string[] | null;
   /**
    * Buyer's national id, forwarded to Clinpays when its RedirectLink opens
