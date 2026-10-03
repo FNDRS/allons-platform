@@ -5,7 +5,7 @@ import { QUESTION_KINDS, needsOptions, type QuestionDraft } from "@/hooks/useCam
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input, Label } from "@/components/ui/Field";
-import { Select, SelectItem } from "@/components/ui/Select";
+import { Chip } from "@/components/ui/Pill";
 import { SwitchRow } from "@/components/ui/SwitchRow";
 
 /** One campaign question: text, kind, options and the hub's two requirements. */
@@ -39,17 +39,15 @@ export function CampaignQuestionFields({
       />
       <div className="flex flex-col gap-1.5">
         <Label>Tipo</Label>
-        <Select
-          value={question.kind}
-          onValueChange={(kind) => onChange({ kind: kind as QuestionDraft["kind"] })}
-          aria-label="Tipo de pregunta"
-        >
+        {/* Chips, not a dropdown: all eight kinds stay visible and one click
+            picks one, without a menu covering the rest of the form. */}
+        <div role="group" aria-label="Tipo de pregunta" className="flex flex-wrap gap-2">
           {QUESTION_KINDS.map((k) => (
-            <SelectItem key={k.value} value={k.value}>
+            <Chip key={k.value} active={question.kind === k.value} onClick={() => onChange({ kind: k.value })}>
               {k.label}
-            </SelectItem>
+            </Chip>
           ))}
-        </Select>
+        </div>
       </div>
       {needsOptions(question.kind) ? (
         <div className="flex flex-col gap-1.5">
