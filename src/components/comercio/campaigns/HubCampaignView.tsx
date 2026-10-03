@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useCampaignDemo } from "@/hooks/useCampaignDemo";
+import { DEMO_QUESTIONS } from "@/lib/campaignDemo";
 import { useCampaignEventAttendees } from "@/hooks/useCampaignEventAttendees";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useHubCampaignPanel } from "@/hooks/useHubCampaignPanel";
@@ -56,7 +57,7 @@ export function HubCampaignView({ id }: { id: string }) {
   const eventList = demo.data
     ? openEventId
       ? {
-          questions: campaign.questions.map((q) => ({ id: q.id, label: q.label })),
+          questions: DEMO_QUESTIONS.map((q) => ({ id: q.id, label: q.label })),
           attendees: demo.data.attendeesByEvent.get(openEventId) ?? [],
         }
       : undefined

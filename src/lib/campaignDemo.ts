@@ -9,8 +9,8 @@ import type {
 
 /**
  * Example data for a hub to see what a running campaign looks like before
- * real comercios and attendees arrive. Built on the campaign's own dates and
- * questions so the preview matches what it will report. Never sent anywhere.
+ * real comercios and attendees arrive. Built on the campaign's own dates, with
+ * example questions (DEMO_QUESTIONS) so the form looks complete. Never sent anywhere.
  */
 
 const FIRST = ["Ana", "Luis", "María", "José", "Daniela", "Carlos", "Sofía", "Andrés", "Valeria", "Diego", "Camila", "Jorge"];
@@ -22,6 +22,67 @@ const COMERCIOS = [
   { id: "demo-tech", name: "Tech Lab HN", handle: "techlabhn", events: ["Pitch night", "Taller de IA para pymes"] },
   { id: "demo-verde", name: "Verde Market", handle: "verdemarket", events: ["Feria de productores locales"] },
   { id: "demo-fin", name: "Finanzas Claras", handle: "finanzasclaras", events: ["Finanzas para tu negocio"] },
+];
+
+/**
+ * The demo's own questions, so the preview shows a full, realistic form
+ * whatever the hub has set up so far.
+ */
+export const DEMO_QUESTIONS: CampaignQuestion[] = [
+  {
+    id: "demo-q-stage",
+    label: "¿En qué etapa está tu emprendimiento?",
+    kind: "select",
+    options: ["Idea", "Validación", "En crecimiento", "Consolidado"],
+    requiredForComercio: true,
+    requiredForAttendee: true,
+    sortOrder: 0,
+  },
+  {
+    id: "demo-q-sector",
+    label: "¿En qué sector emprendes?",
+    kind: "checkbox",
+    options: ["Tecnología", "Alimentos", "Moda", "Servicios", "Turismo"],
+    requiredForComercio: true,
+    requiredForAttendee: false,
+    sortOrder: 1,
+  },
+  {
+    id: "demo-q-first",
+    label: "¿Es tu primer evento de emprendimiento?",
+    kind: "boolean",
+    options: null,
+    requiredForComercio: true,
+    requiredForAttendee: true,
+    sortOrder: 2,
+  },
+  {
+    id: "demo-q-source",
+    label: "¿Cómo te enteraste?",
+    kind: "radio",
+    options: ["Redes sociales", "Un amigo", "Universidad", "Correo"],
+    requiredForComercio: false,
+    requiredForAttendee: false,
+    sortOrder: 3,
+  },
+  {
+    id: "demo-q-team",
+    label: "¿Cuántas personas trabajan contigo?",
+    kind: "number",
+    options: null,
+    requiredForComercio: false,
+    requiredForAttendee: false,
+    sortOrder: 4,
+  },
+  {
+    id: "demo-q-learn",
+    label: "¿Qué te gustaría aprender?",
+    kind: "text",
+    options: null,
+    requiredForComercio: false,
+    requiredForAttendee: false,
+    sortOrder: 5,
+  },
 ];
 
 /** What the list shows for each of the hub's campaigns in the demo. */
@@ -63,9 +124,9 @@ function demoAnswer(q: CampaignQuestion, rand: () => number): string {
   if ((q.kind === "select" || q.kind === "radio" || q.kind === "checkbox") && q.options?.length) {
     return q.options[Math.floor(rand() * q.options.length)];
   }
-  if (q.kind === "number") return String(18 + Math.floor(rand() * 22));
+  if (q.kind === "number") return String(1 + Math.floor(rand() * 12));
   if (q.kind === "date") return "2027-01-15";
-  return ["Me interesa emprender", "Vengo por networking", "Quiero aprender", "Me invitó un amigo"][
+  return ["Finanzas para mi negocio", "Marketing digital", "Cómo conseguir inversión", "Ventas en línea"][
     Math.floor(rand() * 4)
   ];
 }
@@ -86,8 +147,7 @@ function demoAnswers(q: CampaignQuestion, answered: number, rand: () => number) 
     };
   }
   if (q.kind === "number") {
-    const min = 18 + Math.floor(rand() * 4);
-    return { numeric: { average: Math.round((min + 9 + rand() * 4) * 10) / 10, min, max: min + 22 } };
+    return { numeric: { average: Math.round((3 + rand() * 2) * 10) / 10, min: 1, max: 12 } };
   }
   return {};
 }
@@ -152,7 +212,7 @@ export function buildCampaignDemo(campaign: HubCampaign) {
     },
     byComercio,
     byEvent,
-    questions: campaign.questions.map((q) => {
+    questions: DEMO_QUESTIONS.map((q) => {
       const answered = Math.round(attended * (q.requiredForAttendee ? 1 : 0.6 + rand() * 0.25));
       return { id: q.id, label: q.label, answered, ...demoAnswers(q, answered, rand) };
     }),
@@ -185,7 +245,7 @@ export function buildCampaignDemo(campaign: HubCampaign) {
         consented,
         attended: i < Math.round(shown * (e.attended / Math.max(e.registered, 1))),
         answers: consented
-          ? Object.fromEntries(campaign.questions.map((q) => [q.id, demoAnswer(q, rand)]))
+          ? Object.fromEntries(DEMO_QUESTIONS.map((q) => [q.id, demoAnswer(q, rand)]))
           : {},
       });
     }
