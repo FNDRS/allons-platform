@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import Link from "next/link";
-import { Handshake, Package, Undo2 } from "lucide-react";
+import { Flag, Handshake, Package, Undo2 } from "lucide-react";
 import { formatEventWhen } from "@/lib/allons-api";
 import { instagramLink } from "@/lib/instagram";
 import { whatsappLink } from "@/lib/whatsapp";
@@ -68,6 +68,26 @@ export function EventHero({ event }: { event: EventDetail }) {
         {collaborators.length > 0 ? (
           <EventCollaborators collaborators={collaborators} />
         ) : null}
+        {(event.campaigns ?? []).map((campaign) => (
+          <Link
+            key={campaign.id}
+            href={`/campanas/${encodeURIComponent(campaign.slug)}`}
+            className="mt-4 flex items-center gap-3 rounded-[20px] border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 transition hover:bg-white/[0.06]"
+          >
+            <Flag className="size-4 shrink-0 text-accent" strokeWidth={1.7} aria-hidden />
+            <span className="min-w-0">
+              <span className="block text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
+                Parte de una campaña
+              </span>
+              <span className="block truncate text-[15px] font-semibold tracking-tight">
+                {campaign.name}
+              </span>
+              <span className="block truncate text-[13px] text-white/45">
+                Ver todos sus eventos
+              </span>
+            </span>
+          </Link>
+        ))}
       </div>
     </header>
   );

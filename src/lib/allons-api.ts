@@ -9,6 +9,7 @@ const REVALIDATE_SECONDS = 300;
 /** Un evento que tarda en responder no debe colgar el render de la página. */
 const TIMEOUT_MS = 3500;
 
+import type { PublicCampaign } from "@/lib/api/campaigns";
 import type { ComercioProfile } from "@/lib/api/comercios";
 
 /**
@@ -37,6 +38,37 @@ export async function getPublicComercio(
     );
     if (!response.ok) return null;
     const data = (await response.json()) as ComercioProfile;
+    return data && typeof data === "object" && typeof data.id === "string"
+      ? data
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Slugs are generated lowercase from the campaign name. */
+const CAMPAIGN_SLUG_RE = /^[a-z0-9][a-z0-9-]{0,80}$/i;
+
+/**
+ * A published campaign for `allonsapp.com/campanas/<slug>`, fetched on the
+ * server for the page and its metadata. `null` on any problem so the route
+ * falls through to the 404 page.
+ */
+export async function getPublicCampaign(
+  slug: string,
+): Promise<PublicCampaign | null> {
+  const key = slug.trim();
+  if (!CAMPAIGN_SLUG_RE.test(key)) return null;
+  try {
+    const response = await fetch(
+      `${getApiUrl()}/campaigns/${encodeURIComponent(key)}`,
+      {
+        next: { revalidate: 120 },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      },
+    );
+    if (!response.ok) return null;
+    const data = (await response.json()) as PublicCampaign;
     return data && typeof data === "object" && typeof data.id === "string"
       ? data
       : null;
