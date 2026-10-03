@@ -1,4 +1,5 @@
 import type {
+  CampaignAttendee,
   CampaignEventRow,
   CampaignQuestion,
   CampaignReport,
@@ -11,6 +12,9 @@ import type {
  * real comercios and attendees arrive. Built on the campaign's own dates and
  * questions so the preview matches what it will report. Never sent anywhere.
  */
+
+const FIRST = ["Ana", "Luis", "María", "José", "Daniela", "Carlos", "Sofía", "Andrés", "Valeria", "Diego", "Camila", "Jorge"];
+const LAST = ["Mejía", "Rodríguez", "Martínez", "López", "Hernández", "Zelaya", "Flores", "Castro", "Reyes", "Paz"];
 
 const COMERCIOS = [
   { id: "demo-cafe", name: "Café Origen", handle: "cafeorigen", events: ["Cata y networking", "Taller de barismo"] },
@@ -31,6 +35,19 @@ function seeded(seed: number) {
 
 const rate = (attended: number, registered: number) =>
   registered > 0 ? Math.round((attended / registered) * 1000) / 10 : 0;
+
+/** A plausible answer for one attendee, matching the question's kind. */
+function demoAnswer(q: CampaignQuestion, rand: () => number): string {
+  if (q.kind === "boolean") return rand() < 0.7 ? "Sí" : "No";
+  if ((q.kind === "select" || q.kind === "radio" || q.kind === "checkbox") && q.options?.length) {
+    return q.options[Math.floor(rand() * q.options.length)];
+  }
+  if (q.kind === "number") return String(18 + Math.floor(rand() * 22));
+  if (q.kind === "date") return "2027-01-15";
+  return ["Me interesa emprender", "Vengo por networking", "Quiero aprender", "Me invitó un amigo"][
+    Math.floor(rand() * 4)
+  ];
+}
 
 function demoAnswers(q: CampaignQuestion, answered: number, rand: () => number) {
   if (q.kind === "boolean") {
@@ -128,5 +145,31 @@ export function buildCampaignDemo(campaign: HubCampaign) {
     eventCount: c.events.length,
   }));
 
-  return { report, members, events };
+  // Up to 24 sample people per event, enough to see the list; the totals
+  // above stay the full counts.
+  const attendeesByEvent = new Map<string, CampaignAttendee[]>();
+  for (const e of byEvent) {
+    const people: CampaignAttendee[] = [];
+    const shown = Math.min(e.registered, 24);
+    for (let i = 0; i < shown; i++) {
+      const consented = rand() < 0.75;
+      people.push({
+        eventId: e.eventId,
+        eventTitle: e.title,
+        providerName: e.providerName,
+        registeredAt: new Date(start + span * rand() * 0.5).toISOString(),
+        name: consented
+          ? `${FIRST[Math.floor(rand() * FIRST.length)]} ${LAST[Math.floor(rand() * LAST.length)]}`
+          : "Anónimo",
+        consented,
+        attended: i < Math.round(shown * (e.attended / Math.max(e.registered, 1))),
+        answers: consented
+          ? Object.fromEntries(campaign.questions.map((q) => [q.id, demoAnswer(q, rand)]))
+          : {},
+      });
+    }
+    attendeesByEvent.set(e.eventId, people);
+  }
+
+  return { report, members, events, attendeesByEvent };
 }

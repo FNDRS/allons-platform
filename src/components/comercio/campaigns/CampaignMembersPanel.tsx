@@ -77,7 +77,7 @@ export function CampaignMembersPanel({
                   <p className="truncate font-semibold">{m.provider.name}</p>
                   <p className="truncate text-[13px] text-white/50">
                     {m.provider.handle ? `@${m.provider.handle} · ` : ""}
-                    {isRequest(m) ? "Quiere unirse" : m.status === "pending" ? "Invitación enviada" : `${m.eventCount} eventos`}
+                    {isRequest(m) ? "Quiere unirse" : m.status === "pending" ? "Invitación enviada" : m.eventCount === 1 ? "1 evento" : `${m.eventCount} eventos`}
                   </p>
                 </div>
                 <StatusPill tone="mute">{MEMBER_STATUS_LABEL[m.status]}</StatusPill>

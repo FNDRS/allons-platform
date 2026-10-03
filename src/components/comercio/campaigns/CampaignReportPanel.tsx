@@ -5,17 +5,8 @@ import type { CampaignReport } from "@/lib/api/campaigns";
 import { Button } from "@/components/ui/Button";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/States";
-import { Stat } from "@/components/ui/Stat";
+import { Progress, Stat } from "@/components/ui/Stat";
 import { formatRate } from "./campaignFormat";
-
-function Bar({ value, max }: { value: number; max: number }) {
-  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
-  return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10" aria-hidden>
-      <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
-    </div>
-  );
-}
 
 function Row({
   title,
@@ -23,14 +14,16 @@ function Row({
   registered,
   attended,
   rate,
+  onOpen,
 }: {
   title: string;
   subtitle?: string;
   registered: number;
   attended: number;
   rate: number;
+  onOpen?: () => void;
 }) {
-  return (
+  const body = (
     <div className="flex flex-col gap-2 py-3">
       <div className="flex items-baseline justify-between gap-3">
         <div className="min-w-0">
@@ -41,8 +34,18 @@ function Row({
           {attended}/{registered} · {formatRate(rate)}
         </p>
       </div>
-      <Bar value={attended} max={registered} />
+      <Progress value={attended} max={registered} />
     </div>
+  );
+  if (!onOpen) return body;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="-mx-2 block w-[calc(100%+1rem)] rounded-[14px] px-2 text-left transition hover:bg-surface-2"
+    >
+      {body}
+    </button>
   );
 }
 
@@ -51,10 +54,14 @@ export function CampaignReportPanel({
   report,
   exporting,
   onExport,
+  onOpenEvent,
+  onOpenComercio,
 }: {
   report: CampaignReport;
   exporting: "pdf" | "csv" | null;
   onExport: (format: "pdf" | "csv") => void;
+  onOpenEvent: (eventId: string) => void;
+  onOpenComercio: (providerId: string) => void;
 }) {
   const t = report.totals;
   return (
@@ -83,7 +90,15 @@ export function CampaignReportPanel({
         ) : (
           <Card className="divide-y divide-border">
             {report.byComercio.map((c) => (
-              <Row key={c.providerId} title={c.name} subtitle={`${c.events} eventos`} registered={c.registered} attended={c.attended} rate={c.attendanceRate} />
+              <Row
+                key={c.providerId}
+                title={c.name}
+                subtitle={c.events === 1 ? "1 evento" : `${c.events} eventos`}
+                registered={c.registered}
+                attended={c.attended}
+                rate={c.attendanceRate}
+                onOpen={() => onOpenComercio(c.providerId)}
+              />
             ))}
           </Card>
         )}
@@ -101,6 +116,7 @@ export function CampaignReportPanel({
                 registered={e.registered}
                 attended={e.attended}
                 rate={e.attendanceRate}
+                onOpen={() => onOpenEvent(e.eventId)}
               />
             ))}
           </Card>
@@ -121,7 +137,7 @@ export function CampaignReportPanel({
                       <span className="truncate text-white/60">{o.option}</span>
                       <span className="font-semibold">{o.count}</span>
                     </div>
-                    <Bar value={o.count} max={q.answered} />
+                    <Progress value={o.count} max={q.answered} />
                   </div>
                 ))}
                 {q.numeric ? (

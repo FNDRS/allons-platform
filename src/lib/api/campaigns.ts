@@ -230,3 +230,26 @@ export const addEventToCampaign = (id: string, eventId: string) =>
   apiFetch(`${mine(id)}/events`, { method: "POST", body: { eventId } });
 export const removeEventFromCampaign = (id: string, eventId: string) =>
   apiFetch(`${mine(id)}/events/${encodeURIComponent(eventId)}`, { method: "DELETE" });
+
+export interface CampaignAttendee {
+  eventId: string;
+  eventTitle: string;
+  providerName: string;
+  registeredAt: string;
+  /** The holder's name with consent, otherwise "Anónimo". */
+  name: string;
+  consented: boolean;
+  attended: boolean;
+  /** Keyed by campaign question id; empty without consent. */
+  answers: Record<string, string>;
+}
+
+export interface CampaignAttendeeList {
+  questions: { id: string; label: string }[];
+  attendees: CampaignAttendee[];
+}
+
+export const getHubCampaignAttendees = (id: string, eventId?: string) =>
+  apiFetch<CampaignAttendeeList>(
+    `${hub(id)}/attendees${eventId ? `?eventId=${encodeURIComponent(eventId)}` : ""}`,
+  );

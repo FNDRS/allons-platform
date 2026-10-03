@@ -5,13 +5,17 @@ import { useState } from "react";
 import { Pencil, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useCampaignDemo } from "@/hooks/useCampaignDemo";
+import { useCampaignEventAttendees } from "@/hooks/useCampaignEventAttendees";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useHubCampaignPanel } from "@/hooks/useHubCampaignPanel";
 import { Button, buttonClass } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { StatusPill } from "@/components/ui/Pill";
 import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { ComercioPageHeader } from "@/components/comercio/ComercioPageHeader";
+import { CampaignComercioDetail } from "./CampaignComercioDetail";
+import { CampaignEventDetail } from "./CampaignEventDetail";
 import { CampaignEventsList } from "./CampaignEventsList";
 import { CampaignMembersPanel } from "./CampaignMembersPanel";
 import { CampaignReportPanel } from "./CampaignReportPanel";
@@ -31,6 +35,9 @@ export function HubCampaignView({ id }: { id: string }) {
   const [tab, setTab] = useState<Tab>("summary");
   const campaign = c.campaign.data;
   const demo = useCampaignDemo(campaign);
+  const [openEventId, setOpenEventId] = useState<string | null>(null);
+  const [openComercioId, setOpenComercioId] = useState<string | null>(null);
+  const attendees = useCampaignEventAttendees(id, openEventId, !demo.enabled);
 
   if (!campaign) {
     if (c.campaign.isLoading) return <Skeleton className="h-[320px] w-full rounded-[28px]" />;
@@ -43,6 +50,20 @@ export function HubCampaignView({ id }: { id: string }) {
   const report = demo.data?.report ?? c.report.data;
   const members = demo.data?.members ?? c.members.data;
   const events = demo.data?.events ?? c.events.data;
+  const openEvent = report?.byEvent.find((e) => e.eventId === openEventId) ?? null;
+  const openComercio = report?.byComercio.find((x) => x.providerId === openComercioId) ?? null;
+  const eventList = demo.data
+    ? openEventId
+      ? {
+          questions: campaign.questions.map((q) => ({ id: q.id, label: q.label })),
+          attendees: demo.data.attendeesByEvent.get(openEventId) ?? [],
+        }
+      : undefined
+    : attendees.data;
+  const openEventDetail = (eventId: string) => {
+    setOpenComercioId(null);
+    setOpenEventId(eventId);
+  };
 
   const busyMember = c.answer.isPending
     ? c.answer.variables?.memberId
@@ -53,6 +74,26 @@ export function HubCampaignView({ id }: { id: string }) {
   return (
     <div className="flex flex-col gap-6">
       {dialog}
+      <Modal open={Boolean(openEvent)} onClose={() => setOpenEventId(null)} title={openEvent?.title ?? "Evento"}>
+        {openEvent ? (
+          <CampaignEventDetail
+            event={openEvent}
+            list={eventList}
+            loading={!demo.enabled && attendees.isLoading}
+            error={demo.enabled ? null : (attendees.error as Error | null)}
+            onRetry={() => void attendees.refetch()}
+          />
+        ) : null}
+      </Modal>
+      <Modal open={Boolean(openComercio)} onClose={() => setOpenComercioId(null)} title={openComercio?.name ?? "Comercio"}>
+        {openComercio && report ? (
+          <CampaignComercioDetail
+            comercio={openComercio}
+            events={report.byEvent.filter((e) => e.providerName === openComercio.name)}
+            onOpenEvent={openEventDetail}
+          />
+        ) : null}
+      </Modal>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <ComercioPageHeader title={campaign.name} subtitle={formatCampaignRange(campaign.startsAt, campaign.endsAt)} />
         <div className="flex items-center gap-2">
@@ -93,6 +134,8 @@ export function HubCampaignView({ id }: { id: string }) {
             report={report}
             exporting={c.exportReport.isPending ? (c.exportReport.variables ?? null) : null}
             onExport={(format) => (demo.enabled ? demoOnly() : c.exportReport.mutate(format))}
+            onOpenEvent={openEventDetail}
+            onOpenComercio={setOpenComercioId}
           />
         ) : c.report.isLoading ? (
           <Skeleton className="h-[240px] w-full rounded-[28px]" />
@@ -140,6 +183,7 @@ export function HubCampaignView({ id }: { id: string }) {
           ) : (
             <CampaignEventsList
               events={events}
+              onSelect={(e) => openEventDetail(e.id)}
               action={(e) => (
                 <Button
                   size="sm"
