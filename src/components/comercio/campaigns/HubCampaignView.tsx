@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { useCampaignDemo } from "@/hooks/useCampaignDemo";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useHubCampaignPanel } from "@/hooks/useHubCampaignPanel";
 import { Button, buttonClass } from "@/components/ui/Button";
@@ -28,11 +30,19 @@ export function HubCampaignView({ id }: { id: string }) {
   const { confirm, dialog } = useConfirm();
   const [tab, setTab] = useState<Tab>("summary");
   const campaign = c.campaign.data;
+  const demo = useCampaignDemo(campaign);
 
   if (!campaign) {
     if (c.campaign.isLoading) return <Skeleton className="h-[320px] w-full rounded-[28px]" />;
     return <ErrorState message={c.campaign.error?.message} onRetry={() => void c.campaign.refetch()} />;
   }
+
+  // Demo mode swaps in example data and turns every action into a notice:
+  // nothing in it is real, so nothing in it may reach the API.
+  const demoOnly = () => toast.info("Estás viendo una demo: las acciones están desactivadas.");
+  const report = demo.data?.report ?? c.report.data;
+  const members = demo.data?.members ?? c.members.data;
+  const events = demo.data?.events ?? c.events.data;
 
   const busyMember = c.answer.isPending
     ? c.answer.variables?.memberId
@@ -47,6 +57,15 @@ export function HubCampaignView({ id }: { id: string }) {
         <ComercioPageHeader title={campaign.name} subtitle={formatCampaignRange(campaign.startsAt, campaign.endsAt)} />
         <div className="flex items-center gap-2">
           <StatusPill tone="mute">{CAMPAIGN_STATUS_LABEL[campaign.status]}</StatusPill>
+          <Button
+            size="sm"
+            variant={demo.enabled ? "white" : "glass"}
+            aria-pressed={demo.enabled}
+            onClick={demo.toggle}
+          >
+            <Sparkles className="size-4" aria-hidden />
+            {demo.enabled ? "Salir de la demo" : "Ver demo"}
+          </Button>
           <Link href={`/comercio/campanas/${encodeURIComponent(id)}/editar`} className={buttonClass({ variant: "secondary", size: "sm" })}>
             <Pencil className="size-4" aria-hidden />
             Editar
@@ -54,14 +73,26 @@ export function HubCampaignView({ id }: { id: string }) {
         </div>
       </div>
 
+      {demo.enabled ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-accent/30 bg-accent/10 px-4 py-3 text-[13px] text-white/80">
+          <span>
+            <strong className="font-semibold text-white">Demo:</strong> datos de ejemplo de cómo se verá
+            la campaña con comercios y asistentes. Nada de esto es real.
+          </span>
+          <button type="button" onClick={demo.toggle} className="font-semibold text-white underline-offset-2 hover:underline">
+            Salir
+          </button>
+        </div>
+      ) : null}
+
       <Segmented label="Sección" tone="gray" value={tab} options={TABS} onChange={setTab} />
 
       {tab === "summary" ? (
-        c.report.data ? (
+        report ? (
           <CampaignReportPanel
-            report={c.report.data}
+            report={report}
             exporting={c.exportReport.isPending ? (c.exportReport.variables ?? null) : null}
-            onExport={(format) => c.exportReport.mutate(format)}
+            onExport={(format) => (demo.enabled ? demoOnly() : c.exportReport.mutate(format))}
           />
         ) : c.report.isLoading ? (
           <Skeleton className="h-[240px] w-full rounded-[28px]" />
@@ -71,14 +102,19 @@ export function HubCampaignView({ id }: { id: string }) {
       ) : null}
 
       {tab === "members" ? (
-        c.members.data ? (
+        members ? (
           <CampaignMembersPanel
-            members={c.members.data}
+            members={members}
             inviting={c.invite.isPending}
-            onInvite={(handle) => c.invite.mutateAsync(handle)}
+            onInvite={(handle) =>
+              demo.enabled ? (demoOnly(), Promise.reject()) : c.invite.mutateAsync(handle)
+            }
             busyMemberId={busyMember}
-            onAnswer={(memberId, approve) => c.answer.mutate({ memberId, approve })}
+            onAnswer={(memberId, approve) =>
+              demo.enabled ? demoOnly() : c.answer.mutate({ memberId, approve })
+            }
             onRemove={async (m) => {
+              if (demo.enabled) return demoOnly();
               const ok = await confirm(
                 "Quitar comercio",
                 `${m.provider.name} sale de la campaña con todos sus eventos. Lo que ya pasó queda en el reporte.`,
@@ -95,21 +131,22 @@ export function HubCampaignView({ id }: { id: string }) {
       ) : null}
 
       {tab === "events" ? (
-        c.events.data ? (
-          c.events.data.length === 0 ? (
+        events ? (
+          events.length === 0 ? (
             <EmptyState
               title="Sin eventos todavía"
               body="Cada comercio elige cuáles de sus eventos, dentro de las fechas de la campaña, entran."
             />
           ) : (
             <CampaignEventsList
-              events={c.events.data}
+              events={events}
               action={(e) => (
                 <Button
                   size="sm"
                   variant="ghost"
                   disabled={c.removeEvent.isPending && c.removeEvent.variables === e.id}
                   onClick={async () => {
+                    if (demo.enabled) return demoOnly();
                     const ok = await confirm(
                       "Quitar evento",
                       `"${e.title}" sale de la campaña. Lo que ya pasó queda en el reporte.`,
@@ -130,7 +167,7 @@ export function HubCampaignView({ id }: { id: string }) {
         )
       ) : null}
 
-      <div className="pt-6">
+      <div className={demo.enabled ? "hidden" : "pt-6"}>
         <Button
           variant="danger"
           loading={c.remove.isPending}
