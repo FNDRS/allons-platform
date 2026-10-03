@@ -804,3 +804,37 @@
 main[tabindex="-1"]:focus {
   outline: none;
 }
+
+/* NewBadge: bright fusion gradient that drifts, with a matching glow. */
+.new-badge {
+  background-image: linear-gradient(
+    110deg,
+    #ff2d95 0%,
+    #ff7a18 25%,
+    #a855f7 50%,
+    #22d3ee 75%,
+    #ff2d95 100%
+  );
+  background-size: 250% 100%;
+  box-shadow:
+    0 0 14px rgba(255, 45, 149, 0.45),
+    0 0 26px rgba(168, 85, 247, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  animation: new-badge-flow 4.5s linear infinite;
+}
+
+@keyframes new-badge-flow {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 250% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .new-badge {
+    animation: none;
+  }
+}

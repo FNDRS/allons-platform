@@ -16,6 +16,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { AllonsLogo } from "@/components/AllonsLogo";
+import { NewBadge } from "@/components/ui/NewBadge";
 import { useComercioPublicPage } from "@/hooks/useComercioPublicPage";
 import { useProviderRealtime } from "@/hooks/useProviderRealtime";
 import { isComercioUser } from "@/lib/role";
@@ -26,7 +27,16 @@ import { BottomTabs } from "@/components/app/BottomTabs";
 import { isComercioNavActive } from "@/components/app/AppNav";
 import { PageTransition } from "@/components/app/PageTransition";
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  Icon: typeof Flag;
+  exact: boolean;
+  /** Freshly shipped: shows the NEW badge. */
+  isNew?: boolean;
+};
+
+const NAV: NavItem[] = [
   { href: "/comercio", label: "Dashboard", Icon: LayoutDashboard, exact: false },
   {
     href: "/comercio/events",
@@ -63,6 +73,7 @@ const NAV = [
     label: "Campañas",
     Icon: Flag,
     exact: false,
+    isNew: true,
   },
   { href: "/comercio/staff", label: "Personal", Icon: Users, exact: true },
 ];
@@ -104,7 +115,7 @@ export function ComercioShellInner({
           Comercios
         </p>
         <nav className="mt-2 flex flex-col gap-1" aria-label="Comercio">
-          {NAV.map(({ href, label, Icon, exact }) => {
+          {NAV.map(({ href, label, Icon, exact, isNew }) => {
             const active = isNavActive(pathname, href, exact);
             return (
               <Link
@@ -119,6 +130,7 @@ export function ComercioShellInner({
               >
                 <Icon className="size-[18px]" aria-hidden />
                 {label}
+                {isNew ? <NewBadge className="ml-auto" /> : null}
               </Link>
             );
           })}
