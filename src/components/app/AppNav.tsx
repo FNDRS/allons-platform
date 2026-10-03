@@ -48,7 +48,6 @@ const COMERCIO_BRANCHES = [
   "/comercio/finanzas",
   "/comercio/staff",
   "/comercio/actividades",
-  "/comercio/hub",
   "/comercio/descuentos",
   "/comercio/events",
   "/comercio/colaboraciones",

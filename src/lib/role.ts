@@ -22,13 +22,3 @@ export function isComercioUser(user: User | null | undefined): boolean {
     staffRole === "finance"
   );
 }
-
-/**
- * A Hub comercio (e.g. la Semana del Emprendimiento) reads straight from the
- * JWT, no extra request: same field the seed sets via `comercio_kind`.
- */
-export function isHubUser(user: User | null | undefined): boolean {
-  if (!user) return false;
-  const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-  return meta.comercio_kind === "hub";
-}
