@@ -265,6 +265,18 @@ export function getProviderDashboard() {
   return apiFetch<ProviderDashboard>("/provider/dashboard");
 }
 
+/** The comercio the signed-in member belongs to. */
+export interface ProviderProfile {
+  id: string;
+  name: string;
+  handle: string | null;
+  logoUrl: string | null;
+}
+
+export function getProviderProfile() {
+  return apiFetch<ProviderProfile>("/provider/profile");
+}
+
 export function listProviderEvents() {
   return apiFetch<ProviderEventListItem[]>("/provider/events");
 }
@@ -473,6 +485,7 @@ export function getProviderActivity(limit = 20) {
 
 export const providerKeys = {
   dashboard: ["provider", "dashboard"] as const,
+  profile: ["provider", "profile"] as const,
   billingInfo: ["provider", "billing-info"] as const,
   activity: ["provider", "activity"] as const,
   payouts: ["provider", "payouts"] as const,

@@ -15,6 +15,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { AllonsLogo } from "@/components/AllonsLogo";
+import { useComercioName } from "@/hooks/useComercioName";
 import { useProviderRealtime } from "@/hooks/useProviderRealtime";
 import { isComercioUser } from "@/lib/role";
 import { useAuth } from "@/components/app/AuthProvider";
@@ -84,6 +85,7 @@ export function ComercioShellInner({
 }) {
   const pathname = usePathname();
   const [accountOpen, setAccountOpen] = useState(false);
+  const comercioName = useComercioName();
 
   return (
     <div className="app-canvas min-h-dvh text-white lg:flex">
@@ -91,8 +93,8 @@ export function ComercioShellInner({
         <Link href="/eventos" aria-label="Allons, ir a eventos" className="px-3">
           <AllonsLogo className="h-auto w-[92px]" variant="orange" />
         </Link>
-        <p className="mt-2 px-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-dim">
-          Comercio
+        <p className="mt-2 truncate px-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-dim">
+          {comercioName ?? "Comercio"}
         </p>
         <nav className="mt-2 flex flex-col gap-1" aria-label="Comercio">
           {NAV.map(({ href, label, Icon, exact }) => {
@@ -143,7 +145,7 @@ export function ComercioShellInner({
               />
             </Link>
             <p className="hidden min-w-0 truncate text-[13px] font-semibold text-dim lg:block">
-              allonsapp.com/comercio
+              {comercioName ?? "Panel del comercio"}
             </p>
             <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
               <AccountButton onOpen={() => setAccountOpen(true)} />
