@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { AllonsLogo } from "@/components/AllonsLogo";
 import { useProviderRealtime } from "@/hooks/useProviderRealtime";
-import { isComercioUser, isHubUser } from "@/lib/role";
+import { isComercioUser } from "@/lib/role";
 import { useAuth } from "@/components/app/AuthProvider";
 import { ProviderLiveProvider } from "./ProviderLive";
 import { AccountButton, AccountSheet } from "@/components/app/AccountSheet";
@@ -24,72 +24,48 @@ import { BottomTabs } from "@/components/app/BottomTabs";
 import { isComercioNavActive } from "@/components/app/AppNav";
 import { PageTransition } from "@/components/app/PageTransition";
 
-/**
- * A Hub comercio (la Semana del Emprendimiento) sees registrations across its
- * campaign instead of Finanzas — most of those events are never monetized,
- * so it gets no Descuentos tab either: there is nothing there to discount.
- */
-function buildNav(isHub: boolean) {
-  return [
-    { href: "/comercio", label: "Dashboard", Icon: LayoutDashboard, exact: false },
-    {
-      href: "/comercio/events",
-      label: "Eventos",
-      Icon: CalendarDays,
-      exact: false,
-    },
-    {
-      href: "/comercio/actividades",
-      label: "Actividades",
-      Icon: Activity,
-      exact: false,
-    },
-    ...(isHub
-      ? [
-          {
-            href: "/comercio/hub",
-            label: "Semana del Emprendimiento",
-            Icon: Users,
-            exact: true,
-          },
-        ]
-      : [
-          {
-            href: "/comercio/finanzas",
-            label: "Finanzas",
-            Icon: Wallet,
-            exact: false,
-          },
-          {
-            href: "/comercio/descuentos",
-            label: "Descuentos",
-            Icon: Tag,
-            exact: true,
-          },
-        ]),
-    {
-      href: "/comercio/colaboraciones",
-      label: "Colaboraciones",
-      Icon: Handshake,
-      exact: true,
-    },
-    { href: "/comercio/staff", label: "Personal", Icon: Users, exact: true },
-  ];
-}
+const NAV = [
+  { href: "/comercio", label: "Dashboard", Icon: LayoutDashboard, exact: false },
+  {
+    href: "/comercio/events",
+    label: "Eventos",
+    Icon: CalendarDays,
+    exact: false,
+  },
+  {
+    href: "/comercio/actividades",
+    label: "Actividades",
+    Icon: Activity,
+    exact: false,
+  },
+  {
+    href: "/comercio/finanzas",
+    label: "Finanzas",
+    Icon: Wallet,
+    exact: false,
+  },
+  {
+    href: "/comercio/descuentos",
+    label: "Descuentos",
+    Icon: Tag,
+    exact: true,
+  },
+  {
+    href: "/comercio/colaboraciones",
+    label: "Colaboraciones",
+    Icon: Handshake,
+    exact: true,
+  },
+  { href: "/comercio/staff", label: "Personal", Icon: Users, exact: true },
+];
 
-function buildTabs(isHub: boolean) {
-  return [
-    { href: "/comercio", label: "Dashboard", Icon: LayoutDashboard },
-    { href: "/comercio/actividades", label: "Actividad", Icon: Activity },
-    ...(isHub
-      ? [{ href: "/comercio/hub", label: "Hub", Icon: Users }]
-      : [
-          { href: "/comercio/finanzas", label: "Finanzas", Icon: Wallet },
-          { href: "/comercio/descuentos", label: "Descuentos", Icon: Tag },
-        ]),
-    { href: "/comercio/staff", label: "Personal", Icon: Users },
-  ];
-}
+const TABS = [
+  { href: "/comercio", label: "Dashboard", Icon: LayoutDashboard },
+  { href: "/comercio/actividades", label: "Actividad", Icon: Activity },
+  { href: "/comercio/finanzas", label: "Finanzas", Icon: Wallet },
+  { href: "/comercio/descuentos", label: "Descuentos", Icon: Tag },
+  { href: "/comercio/staff", label: "Personal", Icon: Users },
+];
 
 function isNavActive(pathname: string, href: string, exact: boolean) {
   if (exact) return pathname === href;
@@ -103,15 +79,11 @@ function isNavActive(pathname: string, href: string, exact: boolean) {
  */
 export function ComercioShellInner({
   children,
-  isHub = false,
 }: {
   children: React.ReactNode;
-  isHub?: boolean;
 }) {
   const pathname = usePathname();
   const [accountOpen, setAccountOpen] = useState(false);
-  const nav = buildNav(isHub);
-  const tabs = buildTabs(isHub);
 
   return (
     <div className="app-canvas min-h-dvh text-white lg:flex">
@@ -123,7 +95,7 @@ export function ComercioShellInner({
           Comercio
         </p>
         <nav className="mt-2 flex flex-col gap-1" aria-label="Comercio">
-          {nav.map(({ href, label, Icon, exact }) => {
+          {NAV.map(({ href, label, Icon, exact }) => {
             const active = isNavActive(pathname, href, exact);
             return (
               <Link
@@ -183,7 +155,7 @@ export function ComercioShellInner({
           <PageTransition>{children}</PageTransition>
         </main>
 
-        <BottomTabs tabs={tabs} />
+        <BottomTabs tabs={TABS} />
       </div>
       <AccountSheet open={accountOpen} onClose={() => setAccountOpen(false)} />
     </div>
@@ -195,13 +167,13 @@ export function ComercioShellInner({
  * once per session and its state is shared with whatever page is on screen.
  */
 export function ComercioShell(
-  props: Omit<Parameters<typeof ComercioShellInner>[0], "isHub">,
+  props: Parameters<typeof ComercioShellInner>[0],
 ) {
   const { user } = useAuth();
   const state = useProviderRealtime(isComercioUser(user));
   return (
     <ProviderLiveProvider state={state}>
-      <ComercioShellInner {...props} isHub={isHubUser(user)} />
+      <ComercioShellInner {...props} />
     </ProviderLiveProvider>
   );
 }
