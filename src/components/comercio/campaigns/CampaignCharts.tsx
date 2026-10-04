@@ -78,17 +78,15 @@ function AttendanceRing({ attended, registered, rate }: { attended: number; regi
 type Row = { key: string; name: string; attended: number; registered: number; rate: number };
 
 /**
- * Capsule bars: the track is everyone registered (longest row = full
- * width), the glowing fill is who came. Name and numbers sit above the bar,
- * so long names never wrap into the chart.
+ * Capsule bars: every track runs full width, and the glowing fill is the
+ * share that came, so rates compare at a glance; the counts sit above the
+ * bar next to the name, so long names never wrap into the chart.
  */
 function CapsuleBars({ rows, onOpen }: { rows: Row[]; onOpen: (key: string) => void }) {
   const entered = useEntered();
-  const max = Math.max(...rows.map((r) => r.registered), 1);
   return (
     <ul className="-mx-2 flex flex-col">
       {rows.map((r) => {
-        const track = (r.registered / max) * 100;
         const fill = r.registered > 0 ? (r.attended / r.registered) * 100 : 0;
         return (
           <li key={r.key}>
@@ -105,10 +103,7 @@ function CapsuleBars({ rows, onOpen }: { rows: Row[]; onOpen: (key: string) => v
                 </span>
               </span>
               <span className="relative block h-2.5 w-full" aria-hidden>
-                <span
-                  className="absolute inset-y-0 left-0 rounded-full bg-white/[0.07] transition-[width] duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
-                  style={{ width: entered ? `${track}%` : "0%" }}
-                >
+                <span className="absolute inset-0 rounded-full bg-white/[0.07]">
                   <span
                     className="absolute inset-y-0 left-0 rounded-full transition-[width] delay-150 duration-1000 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
                     style={{
@@ -174,7 +169,7 @@ export function CampaignCharts({
         </Panel>
       ) : null}
       <p className="px-1 text-[12px] text-white/35">
-        La barra completa son los registrados; el tramo encendido, los que asistieron.
+        Cada barra completa son los registrados; el tramo encendido, el porcentaje que asistió.
       </p>
     </div>
   );
