@@ -23,12 +23,15 @@ import {
 } from "@/lib/api/events";
 import {
   initiatePayment,
+  PENDING_ORDER_EXISTS_CODE,
+  paymentKeys,
   paymentLinkStorageKey,
+  payOrderHref,
   type InitiatePaymentInput,
 } from "@/lib/api/payments";
 import { reserveFreeTickets, type AnswerInput } from "@/lib/api/tickets";
 import { useReserveResourceSelection } from "@/hooks/useReserveResourceSelection";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface HolderDraft {
   name: string;
@@ -125,6 +128,7 @@ export function useReserveForm(
   initialEntryTypeId?: string | null,
 ) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const detail = useEventDetail(eventId);
   const event = detail.event;
@@ -605,10 +609,19 @@ export function useReserveForm(
       } catch {
         /* the query param below still carries it */
       }
-      router.replace(
-        `/pagar/${encodeURIComponent(order.orderId)}?link=${encodeURIComponent(order.paymentLink)}&event=${encodeURIComponent(event.id)}`,
-      );
+      // Coming back to this page should offer this order, not a cached "none".
+      queryClient.setQueryData(paymentKeys.active(event.id), {
+        orderId: order.orderId,
+        paymentLink: order.paymentLink,
+        expiresAt: order.expiresAt,
+      });
+      router.replace(payOrderHref(order.orderId, event.id, order.paymentLink));
     } catch (err) {
+      // Su propio pago anterior sigue abierto: el aviso para retomarlo se
+      // vuelve a pedir por si ese pago empezó en otra pestaña.
+      if (isApiError(err) && err.code === PENDING_ORDER_EXISTS_CODE) {
+        void queryClient.invalidateQueries({ queryKey: paymentKeys.active(eventId) });
+      }
       // La pasarela cambió de canal sin que la cotización lo dijera: se
       // muestra el campo y el siguiente intento ya lo lleva.
       if (isApiError(err) && err.code === GOVERNMENT_ID_REQUIRED_CODE) {

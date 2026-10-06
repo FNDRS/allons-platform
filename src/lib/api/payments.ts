@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, isApiError } from "./client";
 import type { AnswerInput } from "./tickets";
 
 export type PaymentOrderStatus =
@@ -86,6 +86,30 @@ export function chargeWithSavedCard(input: ChargeSavedCardInput) {
   });
 }
 
+/** The API refused a new checkout because the buyer's own one is still open. */
+export const PENDING_ORDER_EXISTS_CODE = "pending_order_exists";
+
+export interface ActivePaymentOrder {
+  orderId: string;
+  /** Empty when the API could not read the link back from Paygate. */
+  paymentLink: string;
+  expiresAt: string | null;
+}
+
+/** The buyer's open checkout on this event, or null when there is none. */
+export async function getActivePaymentOrder(
+  eventId: string,
+): Promise<ActivePaymentOrder | null> {
+  try {
+    return await apiFetch<ActivePaymentOrder>(
+      `/me/payments/orders/active?eventId=${encodeURIComponent(eventId)}`,
+    );
+  } catch (err) {
+    if (isApiError(err) && err.status === 404) return null;
+    throw err;
+  }
+}
+
 export function getPaymentOrder(orderId: string) {
   return apiFetch<PaymentOrderDetail>(
     `/me/payments/orders/${encodeURIComponent(orderId)}`,
@@ -94,9 +118,16 @@ export function getPaymentOrder(orderId: string) {
 
 export const paymentKeys = {
   order: (id: string) => ["me", "payments", "orders", id] as const,
+  active: (eventId: string) =>
+    ["me", "payments", "orders", "active", eventId] as const,
 };
 
 /** sessionStorage key where the reserve step keeps the hosted-page link. */
 export function paymentLinkStorageKey(orderId: string) {
   return `allons.paymentLink.${orderId}`;
+}
+
+/** The `/pagar` page for an order whose hosted form is still open. */
+export function payOrderHref(orderId: string, eventId: string, link: string) {
+  return `/pagar/${encodeURIComponent(orderId)}?link=${encodeURIComponent(link)}&event=${encodeURIComponent(eventId)}`;
 }

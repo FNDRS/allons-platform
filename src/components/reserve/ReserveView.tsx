@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Lock } from "lucide-react";
+import { useActivePaymentOrder } from "@/hooks/useActivePaymentOrder";
 import { useCardCheckout } from "@/hooks/useCardCheckout";
 import { useBuyerUnitPrices } from "@/hooks/useBuyerUnitPrices";
 import { useReserveForm } from "@/hooks/useReserveForm";
@@ -14,6 +15,7 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { EventCover, EventPosterWash } from "@/components/events/EventCover";
 import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
 import { HoldCountdown } from "./HoldCountdown";
+import { PendingOrderNotice } from "./PendingOrderNotice";
 import { ReserveBikePicker } from "./ReserveBikePicker";
 import {
   CampaignConsentField,
@@ -50,6 +52,10 @@ export function ReserveView({ eventId }: { eventId: string }) {
     userId: user?.id ?? null,
     enabled: ready && Boolean(user) && !chargesNothing && Boolean(form.entryType),
   });
+  const pendingOrder = useActivePaymentOrder(
+    eventId,
+    ready && Boolean(user) && !form.preview,
+  );
   const payInApp = !chargesNothing && checkout.available && checkout.cardReady;
   // While the card list loads the CTA must not send anyone to the hosted
   // page: the buyer is about to be offered the in-app card. Same while a
@@ -115,16 +121,22 @@ export function ReserveView({ eventId }: { eventId: string }) {
   const place = [event.venue, event.city].filter(Boolean).join(" · ");
 
   if (form.availableTypes.length === 0) {
+    // The open order may hold the last seat; it stays payable either way.
     return (
-      <EmptyState
-        title="No hay entradas disponibles"
-        body="Este evento está agotado o la venta está cerrada."
-        action={
-          <Link href={back} className={buttonClass({ variant: "secondary" })}>
-            Volver al evento
-          </Link>
-        }
-      />
+      <div className="flex flex-col gap-6">
+        {pendingOrder ? (
+          <PendingOrderNotice order={pendingOrder} eventId={eventId} />
+        ) : null}
+        <EmptyState
+          title="No hay entradas disponibles"
+          body="Este evento está agotado o la venta está cerrada."
+          action={
+            <Link href={back} className={buttonClass({ variant: "secondary" })}>
+              Volver al evento
+            </Link>
+          }
+        />
+      </div>
     );
   }
 
@@ -167,6 +179,12 @@ export function ReserveView({ eventId }: { eventId: string }) {
         {form.holdExpiresAt ? (
           <div className="mt-5">
             <HoldCountdown expiresAt={form.holdExpiresAt} />
+          </div>
+        ) : null}
+
+        {pendingOrder ? (
+          <div className="mt-5">
+            <PendingOrderNotice order={pendingOrder} eventId={eventId} />
           </div>
         ) : null}
       </header>
