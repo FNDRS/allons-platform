@@ -609,6 +609,12 @@ export function useReserveForm(
       } catch {
         /* the query param below still carries it */
       }
+      // Coming back to this page should offer this order, not a cached "none".
+      queryClient.setQueryData(paymentKeys.active(event.id), {
+        orderId: order.orderId,
+        paymentLink: order.paymentLink,
+        expiresAt: order.expiresAt,
+      });
       router.replace(payOrderHref(order.orderId, event.id, order.paymentLink));
     } catch (err) {
       // Su propio pago anterior sigue abierto: el aviso para retomarlo se

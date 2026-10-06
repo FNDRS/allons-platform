@@ -121,16 +121,22 @@ export function ReserveView({ eventId }: { eventId: string }) {
   const place = [event.venue, event.city].filter(Boolean).join(" · ");
 
   if (form.availableTypes.length === 0) {
+    // The open order may hold the last seat; it stays payable either way.
     return (
-      <EmptyState
-        title="No hay entradas disponibles"
-        body="Este evento está agotado o la venta está cerrada."
-        action={
-          <Link href={back} className={buttonClass({ variant: "secondary" })}>
-            Volver al evento
-          </Link>
-        }
-      />
+      <div className="flex flex-col gap-6">
+        {pendingOrder ? (
+          <PendingOrderNotice order={pendingOrder} eventId={eventId} />
+        ) : null}
+        <EmptyState
+          title="No hay entradas disponibles"
+          body="Este evento está agotado o la venta está cerrada."
+          action={
+            <Link href={back} className={buttonClass({ variant: "secondary" })}>
+              Volver al evento
+            </Link>
+          }
+        />
+      </div>
     );
   }
 
