@@ -34,8 +34,15 @@ function readStored(token: string): { draft: OnboardingDraft; step: number } | n
       step?: number;
     };
     if (!parsed.draft?.company || !parsed.draft.event) return null;
+    // Se completa con los campos vacíos: un borrador de antes de un cambio
+    // del formulario no trae los campos nuevos.
+    const empty = emptyDraft(null);
     return {
-      draft: { ...parsed.draft, billing: emptyDraft(null).billing },
+      draft: {
+        company: { ...empty.company, ...parsed.draft.company },
+        event: { ...empty.event, ...parsed.draft.event },
+        billing: empty.billing,
+      },
       step: Math.min(Math.max(parsed.step ?? 0, 0), 3),
     };
   } catch {

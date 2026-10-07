@@ -32,6 +32,7 @@ export type OnboardingSubmission = {
     mapsUrl: string | null;
     category: string;
     ticketPrice: number | null;
+    ticketPlan: string;
     capacity: number;
     croquisUrls: string[];
   };
