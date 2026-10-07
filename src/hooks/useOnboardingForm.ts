@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { isApiError } from "@/lib/api/client";
 import { submitOnboarding } from "@/lib/api/onboarding";
 import {
@@ -20,6 +20,25 @@ export const ONBOARDING_STEPS: { id: OnboardingStep; label: string }[] = [
 ];
 
 type Outcome = "editing" | "sent" | "used";
+
+const STEP_PARAM = "paso";
+
+/**
+ * Cada paso es una entrada del historial (`?paso=2`): así el botón o el gesto
+ * de atrás del teléfono vuelve al paso anterior en vez de salir del registro
+ * y perder lo que no se guarda, como los datos de pago.
+ */
+function writeStepToHistory(index: number, mode: "push" | "replace") {
+  const url = new URL(window.location.href);
+  url.searchParams.set(STEP_PARAM, String(index + 1));
+  if (mode === "push") window.history.pushState(null, "", url);
+  else window.history.replaceState(null, "", url);
+}
+
+function readStepFromUrl(): number | null {
+  const raw = Number(new URL(window.location.href).searchParams.get(STEP_PARAM));
+  return Number.isInteger(raw) && raw >= 1 && raw <= ONBOARDING_STEPS.length ? raw - 1 : null;
+}
 
 function storageKey(token: string) {
   return `allons:onboarding:${token}`;
@@ -75,8 +94,24 @@ export function useOnboardingForm(token: string, invitedEmail: string | null) {
       setDraft(stored.draft);
       setStepIndex(stored.step);
     }
+    writeStepToHistory(stored?.step ?? 0, "replace");
     setHydrated(true);
   }, [token]);
+
+  const stepRef = useRef(stepIndex);
+  stepRef.current = stepIndex;
+
+  useEffect(() => {
+    function onPopState() {
+      const index = readStepFromUrl();
+      if (index === null || index === stepRef.current) return;
+      setDirection(index > stepRef.current ? 1 : -1);
+      setStepIndex(index);
+      setSubmitError(null);
+    }
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   useEffect(() => {
     if (!hydrated || outcome !== "editing") return;
@@ -116,9 +151,11 @@ export function useOnboardingForm(token: string, invitedEmail: string | null) {
   }, []);
 
   function goTo(index: number) {
+    if (index === stepIndex) return;
     setDirection(index > stepIndex ? 1 : -1);
     setStepIndex(index);
     setSubmitError(null);
+    writeStepToHistory(index, "push");
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
