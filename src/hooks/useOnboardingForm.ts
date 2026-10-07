@@ -29,9 +29,15 @@ function readStored(token: string): { draft: OnboardingDraft; step: number } | n
   try {
     const raw = window.localStorage.getItem(storageKey(token));
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { draft?: OnboardingDraft; step?: number };
-    if (!parsed.draft?.company || !parsed.draft.billing || !parsed.draft.event) return null;
-    return { draft: parsed.draft, step: Math.min(Math.max(parsed.step ?? 0, 0), 3) };
+    const parsed = JSON.parse(raw) as {
+      draft?: Omit<OnboardingDraft, "billing">;
+      step?: number;
+    };
+    if (!parsed.draft?.company || !parsed.draft.event) return null;
+    return {
+      draft: { ...parsed.draft, billing: emptyDraft(null).billing },
+      step: Math.min(Math.max(parsed.step ?? 0, 0), 3),
+    };
   } catch {
     return null;
   }
@@ -40,8 +46,8 @@ function readStored(token: string): { draft: OnboardingDraft; step: number } | n
 /**
  * Estado del registro de comercio: el borrador, en qué paso va y qué falta.
  * El borrador vive en localStorage por enlace, así un refresh o un cierre de
- * pestaña no hace perder lo escrito. El número de cuenta y el RTN no se
- * guardan: en un equipo compartido quedarían a la vista de quien lo use.
+ * pestaña no hace perder lo escrito. Los datos de pago no se guardan: en un
+ * equipo compartido quedarían a la vista de quien lo use.
  */
 export function useOnboardingForm(token: string, invitedEmail: string | null) {
   const [draft, setDraft] = useState<OnboardingDraft>(() => emptyDraft(invitedEmail));
@@ -71,7 +77,7 @@ export function useOnboardingForm(token: string, invitedEmail: string | null) {
       window.localStorage.setItem(
         storageKey(token),
         JSON.stringify({
-          draft: { ...draft, billing: { ...draft.billing, accountNumber: "", taxId: "" } },
+          draft: { company: draft.company, event: draft.event },
           step: stepIndex,
         }),
       );

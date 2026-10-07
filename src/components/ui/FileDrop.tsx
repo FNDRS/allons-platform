@@ -220,10 +220,15 @@ export function FileDrop({
   );
 }
 
+/** Sólo URLs subidas (https) o vistas previas locales (blob:). */
+function isSafeImageSrc(src: string) {
+  return src.startsWith("https://") || src.startsWith("blob:");
+}
+
 /** HEIC no se ve en casi ningún navegador: entonces queda el ícono. */
 function Thumb({ src, alt, dim = false }: { src: string; alt: string; dim?: boolean }) {
   const [broken, setBroken] = useState(false);
-  if (broken) {
+  if (broken || !isSafeImageSrc(src)) {
     return (
       <div className="flex size-full items-center justify-center text-dim">
         <ImageIcon className="size-6" strokeWidth={1.5} aria-hidden />
