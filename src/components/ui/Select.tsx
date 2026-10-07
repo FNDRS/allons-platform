@@ -56,7 +56,9 @@ export function Select({
     <div className={`relative ${className}`}>
       {name ? <input type="hidden" name={name} value={current} required={required} /> : null}
       <SelectPrimitive.Root
-        value={toRadixValue(current)}
+        // Con placeholder, el valor vacío es "nada elegido": Radix sólo muestra
+        // el placeholder cuando recibe "", no el centinela de un item vacío.
+        value={current === "" && placeholder ? "" : toRadixValue(current)}
         onValueChange={handleChange}
         disabled={disabled}
       >
