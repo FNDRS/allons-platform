@@ -82,7 +82,8 @@ export function Select({
             collisionPadding={8}
             className="select-content z-[90] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[14px] border border-border-strong bg-[#0c0c0e] shadow-[0_16px_48px_rgba(0,0,0,0.55)]"
           >
-            <SelectPrimitive.Viewport className="p-1.5">
+            {/* Sin tope, una lista larga se sale de la pantalla y no se ve completa. */}
+            <SelectPrimitive.Viewport className="max-h-[min(var(--radix-select-content-available-height),20rem)] p-1.5">
               {children}
             </SelectPrimitive.Viewport>
           </SelectPrimitive.Content>

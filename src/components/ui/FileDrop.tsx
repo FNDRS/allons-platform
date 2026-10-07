@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ImageIcon, ImagePlus, Loader2, X } from "lucide-react";
+import { IconTile } from "./IconTile";
 import { Button } from "./Button";
 
 const EASE = [0.32, 0.72, 0, 1] as const;
@@ -121,9 +122,9 @@ export function FileDrop({
         }`}
       >
         <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-accent">
-            <ImagePlus className="size-5" strokeWidth={1.75} aria-hidden />
-          </span>
+          <IconTile>
+            <ImagePlus className="size-5" strokeWidth={2.25} aria-hidden />
+          </IconTile>
           <div className="min-w-0 flex-1">
             <p className="text-[14px] font-semibold text-white">{title}</p>
             <p className="mt-0.5 text-[12.5px] text-muted">

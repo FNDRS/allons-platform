@@ -1,12 +1,19 @@
 "use client";
 
 import { ShieldCheck } from "lucide-react";
-import { Input, Select, SelectItem } from "@/components/ui/Field";
+import { Combobox } from "@/components/ui/Combobox";
+import { Input } from "@/components/ui/Field";
+import { IconTile } from "@/components/ui/IconTile";
 import { Segmented } from "@/components/ui/Segmented";
 import type { OnboardingForm } from "@/hooks/useOnboardingForm";
 import { HN_BANKS, OTHER_BANK } from "@/lib/onboarding/banks";
 import { digitsOnly, formatRtn } from "@/lib/onboarding/validate";
 import { FormField, StepHeading } from "./FormField";
+
+const BANK_OPTIONS = [
+  ...HN_BANKS.map((bank) => ({ value: bank, label: bank })),
+  { value: OTHER_BANK, label: "Otro banco" },
+];
 
 export function BillingStep({ form }: { form: OnboardingForm }) {
   const { draft, errors, update } = form;
@@ -21,9 +28,9 @@ export function BillingStep({ form }: { form: OnboardingForm }) {
         description="La cuenta a la que Allons te paga lo que vendas en tus eventos."
       />
       <div className="mb-6 flex items-center gap-4 rounded-[16px] border border-border bg-surface p-4">
-        <span className="relative flex size-11 shrink-0 items-center justify-center rounded-[13px] bg-gradient-to-b from-accent to-accent-deep text-black shadow-[0_8px_24px_-6px_rgba(246,112,16,0.55),inset_0_1px_0_rgba(255,255,255,0.35)] ring-1 ring-white/10">
+        <IconTile>
           <ShieldCheck className="size-5" strokeWidth={2.25} aria-hidden />
-        </span>
+        </IconTile>
         <p className="text-[13.5px] leading-relaxed text-muted">
           Estos datos sólo se usan para tus liquidaciones. En nuestro panel el número de cuenta
           aparece oculto, sólo con los últimos 4 dígitos.
@@ -47,20 +54,15 @@ export function BillingStep({ form }: { form: OnboardingForm }) {
           />
         </FormField>
         <FormField group label="Banco" error={err("bank")} errorId="e-bank">
-          <Select
+          <Combobox
             value={b.bank}
-            onValueChange={(bank) => set({ bank })}
+            onChange={(bank) => set({ bank })}
+            options={BANK_OPTIONS}
             placeholder="Elige tu banco"
+            searchPlaceholder="Buscar banco"
             aria-label="Banco"
-            aria-invalid={Boolean(err("bank"))}
-          >
-            {HN_BANKS.map((bank) => (
-              <SelectItem key={bank} value={bank}>
-                {bank}
-              </SelectItem>
-            ))}
-            <SelectItem value={OTHER_BANK}>Otro banco</SelectItem>
-          </Select>
+            invalid={Boolean(err("bank"))}
+          />
         </FormField>
         <FormField group label="Tipo de cuenta" errorId="e-accountType">
           <Segmented
