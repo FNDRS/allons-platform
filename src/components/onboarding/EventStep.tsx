@@ -2,7 +2,8 @@
 
 import { useCallback } from "react";
 import { DateField } from "@/components/ui/DateField";
-import { Input, Select, SelectItem, Textarea } from "@/components/ui/Field";
+import { Combobox } from "@/components/ui/Combobox";
+import { Input, Textarea } from "@/components/ui/Field";
 import { FileDrop } from "@/components/ui/FileDrop";
 import { SmoothInput } from "@/components/ui/SmoothInput";
 import { Segmented } from "@/components/ui/Segmented";
@@ -12,6 +13,8 @@ import { uploadOnboardingFile } from "@/lib/api/onboarding";
 import { EVENT_CATEGORIES } from "@/lib/eventCategories";
 import { MAX_IMAGES, todayInHonduras } from "@/lib/onboarding/validate";
 import { FormField, StepHeading } from "./FormField";
+
+const CATEGORY_OPTIONS = EVENT_CATEGORIES.map((category) => ({ value: category, label: category }));
 
 export function EventStep({ form, token }: { form: OnboardingForm; token: string }) {
   const { draft, errors, update, setFieldUploading } = form;
@@ -41,19 +44,15 @@ export function EventStep({ form, token }: { form: OnboardingForm; token: string
           />
         </FormField>
         <FormField group label="Tipo de evento" error={err("category")} errorId="e-category" className="sm:col-span-2">
-          <Select
+          <Combobox
             value={e.category}
-            onValueChange={(category) => set({ category })}
+            onChange={(category) => set({ category })}
+            options={CATEGORY_OPTIONS}
             placeholder="Elige uno"
+            searchPlaceholder="Buscar tipo de evento"
             aria-label="Tipo de evento"
-            aria-invalid={Boolean(err("category"))}
-          >
-            {EVENT_CATEGORIES.map((category) => (
-              <SelectItem key={category} value={category}>
-                {category}
-              </SelectItem>
-            ))}
-          </Select>
+            invalid={Boolean(err("category"))}
+          />
         </FormField>
         <FormField label="Descripción" error={err("description")} errorId="e-eventDescription" className="sm:col-span-2">
           <Textarea
