@@ -1,6 +1,6 @@
 "use client";
 
-import { LockKeyhole } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { Input, Select, SelectItem } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
 import type { OnboardingForm } from "@/hooks/useOnboardingForm";
@@ -20,9 +20,9 @@ export function BillingStep({ form }: { form: OnboardingForm }) {
         title="¿Dónde te depositamos?"
         description="La cuenta a la que Allons te paga lo que vendas en tus eventos."
       />
-      <div className="mb-6 flex gap-3 rounded-[16px] border border-border bg-surface p-4">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-          <LockKeyhole className="size-4" strokeWidth={2} aria-hidden />
+      <div className="mb-6 flex items-center gap-4 rounded-[16px] border border-border bg-surface p-4">
+        <span className="relative flex size-11 shrink-0 items-center justify-center rounded-[13px] bg-gradient-to-b from-accent to-accent-deep text-black shadow-[0_8px_24px_-6px_rgba(246,112,16,0.55),inset_0_1px_0_rgba(255,255,255,0.35)] ring-1 ring-white/10">
+          <ShieldCheck className="size-5" strokeWidth={2.25} aria-hidden />
         </span>
         <p className="text-[13.5px] leading-relaxed text-muted">
           Estos datos sólo se usan para tus liquidaciones. En nuestro panel el número de cuenta
