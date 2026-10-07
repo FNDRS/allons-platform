@@ -11,7 +11,7 @@ const ACCEPT_EXT = /\.(jpe?g|png|webp|heic|heif)$/i;
 
 export type DroppedFile = { url: string; name: string };
 
-type Pending = { id: string; name: string; preview: string; progress: number };
+type Pending = { id: string; name: string; progress: number };
 
 /**
  * Zona para soltar imágenes, o elegirlas con el botón. Cada archivo se sube
@@ -78,7 +78,6 @@ export function FileDrop({
     const item: Pending = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name: file.name,
-      preview: URL.createObjectURL(file),
       progress: 0,
     };
     setPending((current) => [...current, item]);
@@ -93,7 +92,6 @@ export function FileDrop({
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No se pudo subir la imagen.");
     } finally {
-      URL.revokeObjectURL(item.preview);
       setPending((current) => current.filter((entry) => entry.id !== item.id));
     }
   }
@@ -192,7 +190,6 @@ export function FileDrop({
                   transition={{ duration: 0.28, ease: EASE }}
                   className="relative aspect-square overflow-hidden rounded-[14px] border border-border bg-[#0c0c0e]"
                 >
-                  <Thumb src={item.preview} alt={item.name} dim />
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Loader2 className="size-5 animate-spin text-white" aria-hidden />
                   </div>
@@ -220,13 +217,13 @@ export function FileDrop({
   );
 }
 
-/** Sólo URLs subidas (https) o vistas previas locales (blob:). */
+/** Sólo URLs subidas: el borrador viene de localStorage y podría traer otra cosa. */
 function isSafeImageSrc(src: string) {
-  return src.startsWith("https://") || src.startsWith("blob:");
+  return src.startsWith("https://");
 }
 
 /** HEIC no se ve en casi ningún navegador: entonces queda el ícono. */
-function Thumb({ src, alt, dim = false }: { src: string; alt: string; dim?: boolean }) {
+function Thumb({ src, alt }: { src: string; alt: string }) {
   const [broken, setBroken] = useState(false);
   if (broken || !isSafeImageSrc(src)) {
     return (
@@ -241,7 +238,7 @@ function Thumb({ src, alt, dim = false }: { src: string; alt: string; dim?: bool
       src={src}
       alt={alt}
       onError={() => setBroken(true)}
-      className={`size-full object-cover ${dim ? "opacity-40" : ""}`}
+      className="size-full object-cover"
     />
   );
 }
