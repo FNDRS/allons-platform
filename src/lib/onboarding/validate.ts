@@ -41,8 +41,7 @@ export type OnboardingDraft = {
     address: string;
     mapsUrl: string;
     category: string;
-    isFree: boolean;
-    ticketPrice: string;
+    ticketPlan: string;
     capacity: string;
     croquis: UploadedImage[];
   };
@@ -85,8 +84,7 @@ export function emptyDraft(email: string | null): OnboardingDraft {
       address: "",
       mapsUrl: "",
       category: "",
-      isFree: false,
-      ticketPrice: "",
+      ticketPlan: "",
       capacity: "",
       croquis: [],
     },
@@ -222,7 +220,6 @@ export function validateBilling(b: OnboardingDraft["billing"]): OnboardingErrors
 }
 
 export function validateEvent(e: OnboardingDraft["event"]): OnboardingErrors {
-  const price = Number(e.ticketPrice);
   const capacity = Number(e.capacity);
   const maps = e.mapsUrl.trim() ? isHttpUrl(e.mapsUrl.trim()) : null;
   return collect([
@@ -251,16 +248,7 @@ export function validateEvent(e: OnboardingDraft["event"]): OnboardingErrors {
       "event.category",
       EVENT_CATEGORIES.includes(e.category) ? null : "Elige el tipo de evento.",
     ],
-    [
-      "event.ticketPrice",
-      e.isFree
-        ? null
-        : !e.ticketPrice.trim()
-          ? "Escribe el precio o marca el evento como gratis."
-          : Number.isFinite(price) && price > 0
-            ? null
-            : "Escribe un precio mayor a 0.",
-    ],
+    ["event.ticketPlan", required(e.ticketPlan, 2000, "El plan de entradas")],
     [
       "event.capacity",
       Number.isInteger(capacity) && capacity >= 1 && capacity <= 100000
@@ -313,7 +301,8 @@ export function toSubmission(draft: OnboardingDraft): OnboardingSubmission {
       address: e.address.trim(),
       mapsUrl: nullable(e.mapsUrl),
       category: e.category,
-      ticketPrice: e.isFree ? null : Number(e.ticketPrice),
+      ticketPrice: null,
+      ticketPlan: e.ticketPlan.trim(),
       capacity: Number(e.capacity),
       croquisUrls: e.croquis.map((file) => file.url),
     },

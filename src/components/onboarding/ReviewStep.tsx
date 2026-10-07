@@ -3,7 +3,6 @@
 import { Pencil } from "lucide-react";
 import { formatTime12 } from "@/components/ui/TimePicker";
 import type { OnboardingForm } from "@/hooks/useOnboardingForm";
-import { formatHNL } from "@/lib/format";
 import {
   bankName,
   formatPhone,
@@ -76,9 +75,9 @@ export function ReviewStep({ form }: { form: OnboardingForm }) {
                 : null,
             ],
             ["Dónde", [e.venue.trim(), e.address.trim()].filter(Boolean).join(", ")],
-            ["Google Maps", e.mapsUrl || null],
-            ["Entrada", e.isFree ? "Gratis" : formatHNL(Number(e.ticketPrice) || 0)],
+            ["Google Maps", e.mapsUrl ? shortUrl(e.mapsUrl) : null],
             ["Cupos", e.capacity],
+            ["Entradas", e.ticketPlan.trim()],
             ["Descripción", e.description.trim()],
           ]}
           images={e.croquis}
@@ -95,6 +94,19 @@ export function ReviewStep({ form }: { form: OnboardingForm }) {
       </p>
     </div>
   );
+}
+
+/** "google.com/maps/place/Las Pinequitas…": el enlace completo no cabe. */
+function shortUrl(raw: string) {
+  try {
+    const url = new URL(raw.trim());
+    const text = decodeURIComponent(`${url.host.replace(/^www\./, "")}${url.pathname}`)
+      .replace(/\+/g, " ")
+      .replace(/\/$/, "");
+    return text.length > 48 ? `${text.slice(0, 47)}…` : text;
+  } catch {
+    return raw;
+  }
 }
 
 function Section({
@@ -122,13 +134,13 @@ function Section({
           Editar
         </button>
       </div>
-      <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-[9rem_1fr]">
+      <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
         {rows
           .filter((row): row is [string, string] => Boolean(row[1]))
           .map(([label, value]) => (
             <div key={label} className="contents">
               <dt className="text-[13px] text-dim">{label}</dt>
-              <dd className="-mt-2.5 whitespace-pre-line break-words text-[14.5px] text-white sm:mt-0">
+              <dd className="-mt-2.5 min-w-0 whitespace-pre-line text-[14.5px] [overflow-wrap:anywhere] text-white sm:mt-0">
                 {value}
               </dd>
             </div>

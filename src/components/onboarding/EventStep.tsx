@@ -5,8 +5,6 @@ import { DateField } from "@/components/ui/DateField";
 import { Combobox } from "@/components/ui/Combobox";
 import { Input, Textarea } from "@/components/ui/Field";
 import { FileDrop } from "@/components/ui/FileDrop";
-import { SmoothInput } from "@/components/ui/SmoothInput";
-import { Segmented } from "@/components/ui/Segmented";
 import { TimePicker } from "@/components/ui/TimePicker";
 import type { OnboardingForm } from "@/hooks/useOnboardingForm";
 import { uploadOnboardingFile } from "@/lib/api/onboarding";
@@ -120,34 +118,7 @@ export function EventStep({ form, token }: { form: OnboardingForm; token: string
             aria-describedby="e-mapsUrl"
           />
         </FormField>
-        <FormField group label="Entrada" error={err("ticketPrice")} errorId="e-ticketPrice">
-          <div className="flex flex-col gap-3">
-            <Segmented
-              label="Tipo de entrada"
-              value={e.isFree ? "free" : "paid"}
-              onChange={(value) => set({ isFree: value === "free" })}
-              options={[
-                { value: "paid", label: "De pago" },
-                { value: "free", label: "Gratis" },
-              ]}
-            />
-            {e.isFree ? null : (
-              <SmoothInput
-                prefix={<span className="text-[15px] font-semibold text-muted">L</span>}
-                value={e.ticketPrice}
-                onChange={(event) =>
-                  set({ ticketPrice: event.target.value.replace(/[^\d.]/g, "").slice(0, 9) })
-                }
-                placeholder="350"
-                inputMode="decimal"
-                aria-label="Precio de la entrada en lempiras"
-                aria-invalid={Boolean(err("ticketPrice"))}
-                aria-describedby="e-ticketPrice"
-              />
-            )}
-          </div>
-        </FormField>
-        <FormField label="Cupos" hint="Personas en total" error={err("capacity")} errorId="e-capacity">
+        <FormField label="Cupos" hint="Personas en total, sumando todo" error={err("capacity")} errorId="e-capacity">
           <Input
             value={e.capacity}
             onChange={(event) => set({ capacity: event.target.value.replace(/\D/g, "").slice(0, 6) })}
@@ -155,6 +126,23 @@ export function EventStep({ form, token }: { form: OnboardingForm; token: string
             inputMode="numeric"
             aria-invalid={Boolean(err("capacity"))}
             aria-describedby="e-capacity"
+          />
+        </FormField>
+        <FormField
+          label="Entradas"
+          hint="Tipos, precios y horarios"
+          error={err("ticketPlan")}
+          errorId="e-ticketPlan"
+          className="sm:col-span-2"
+        >
+          <Textarea
+            value={e.ticketPlan}
+            onChange={(event) => set({ ticketPlan: event.target.value })}
+            maxLength={2000}
+            rows={5}
+            placeholder={"Cuéntanos cómo quieres vender las entradas. Por ejemplo:\nGeneral L 300 y VIP L 600 con bebida incluida.\nDos tandas: 6:00 p. m. y 8:30 p. m., 100 cupos cada una.\nPreventa a L 250 hasta el 1 de noviembre."}
+            aria-invalid={Boolean(err("ticketPlan"))}
+            aria-describedby="e-ticketPlan"
           />
         </FormField>
         <FormField
