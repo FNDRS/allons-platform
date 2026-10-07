@@ -222,3 +222,53 @@ export function formatEventWhen(startsAt: string | null): string | null {
   });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
+
+/** 32 bytes en base64url, sin relleno: lo que genera la API. */
+const ONBOARDING_TOKEN_RE = /^[A-Za-z0-9_-]{43}$/;
+
+export type OnboardingSession = {
+  label: string | null;
+  email: string | null;
+  expiresAt: string;
+};
+
+/**
+ * Estado de un enlace de `/onboarding/<token>`. `invalid` es un token que no
+ * existe, venció o fue revocado (la página da 404). `used` es uno que ya se
+ * envió. `unavailable` es la API caída: no es culpa del enlace, así que no
+ * se trata como 404.
+ */
+export type OnboardingSessionResult =
+  | { status: "ok"; session: OnboardingSession }
+  | { status: "used" }
+  | { status: "invalid" }
+  | { status: "unavailable" };
+
+export async function getOnboardingSession(
+  token: string,
+): Promise<OnboardingSessionResult> {
+  if (!ONBOARDING_TOKEN_RE.test(token)) return { status: "invalid" };
+  try {
+    const response = await fetch(
+      `${getApiUrl()}/onboarding/${encodeURIComponent(token)}`,
+      { cache: "no-store", signal: AbortSignal.timeout(TIMEOUT_MS) },
+    );
+    if (response.status === 410) return { status: "used" };
+    if (response.status === 404 || response.status === 400) {
+      return { status: "invalid" };
+    }
+    if (!response.ok) return { status: "unavailable" };
+    const data = (await response.json()) as Record<string, unknown>;
+    if (typeof data?.expiresAt !== "string") return { status: "unavailable" };
+    return {
+      status: "ok",
+      session: {
+        label: readString(data.label),
+        email: readString(data.email),
+        expiresAt: data.expiresAt,
+      },
+    };
+  } catch {
+    return { status: "unavailable" };
+  }
+}

@@ -19,6 +19,7 @@ export default function robots(): MetadataRoute.Robots {
         "/pagar/",
         "/login",
         "/verify",
+        "/onboarding/",
         "/eventos/*/reservar",
         "/events/*/reservar",
       ],
