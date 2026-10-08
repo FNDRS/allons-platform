@@ -73,7 +73,11 @@ export function ReserveView({ eventId }: { eventId: string }) {
   const refreshing = !form.preview && !submitting && form.paymentDataRefreshing;
   const error = form.error ?? checkout.error;
   // Un paso más cuando la pasarela pide identidad; corre la numeración de abajo.
-  const idStep = form.needsGovernmentId ? 1 : 0;
+  // Con tarjeta en Allons no se pide: el DNI va en el formulario de la tarjeta.
+  // Tampoco mientras cargan las tarjetas, para que no aparezca y desaparezca.
+  const showGovernmentId =
+    form.needsGovernmentId && !payInApp && !(checkout.loading && !chargesNothing);
+  const idStep = showGovernmentId ? 1 : 0;
   const donationStep = form.donationAllowed ? 1 : 0;
   // El código promocional sólo aplica a lo que se cobra: no tiene sentido en
   // una entrada gratuita.
@@ -247,7 +251,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
         ) : null}
       </section>
 
-      {form.needsGovernmentId ? (
+      {showGovernmentId ? (
         <GovernmentIdField
           value={form.governmentId}
           onChange={form.setGovernmentId}
