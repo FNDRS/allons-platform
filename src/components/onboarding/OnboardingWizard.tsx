@@ -50,7 +50,7 @@ export function OnboardingWizard({
           Registro de comercio
         </p>
         <h1 className="mt-2 text-[30px] font-bold leading-[1.1] tracking-tight sm:text-[38px]">
-          {session.label ? `Hola, ${session.label}` : "Bienvenido a Allons"}
+          {session.label ? `Hola, ${session.label}` : "¡Hola!"}
         </h1>
         <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-muted">
           Cuatro pasos y listo. Lo que escribas se guarda en este navegador mientras avanzas.
