@@ -6,6 +6,7 @@ import type { CardCheckout } from "@/hooks/useCardCheckout";
 import { StepHeading } from "@/components/reserve/ReserveSections";
 import { Skeleton } from "@/components/ui/States";
 import { CardForm } from "./CardForm";
+import { RemoveCardButton } from "./RemoveCardButton";
 import { OptionRow, SavedCardRow } from "./SavedCardRow";
 
 /**
@@ -42,13 +43,22 @@ export function PaymentMethodStep({
       </StepHeading>
       <div role="radiogroup" aria-label="Método de pago" className="flex flex-col gap-2.5">
         {checkout.cards.map((card) => (
-          <SavedCardRow
-            key={card.id}
-            card={card}
-            selected={checkout.choice === card.id}
-            disabled={checkout.submitting}
-            onSelect={() => checkout.setChoice(card.id)}
-          />
+          <div key={card.id} className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <SavedCardRow
+                card={card}
+                selected={checkout.choice === card.id}
+                disabled={checkout.submitting || checkout.removingId === card.id}
+                onSelect={() => checkout.setChoice(card.id)}
+              />
+            </div>
+            <RemoveCardButton
+              last4={card.last4}
+              removing={checkout.removingId === card.id}
+              disabled={checkout.submitting}
+              onRemove={() => void checkout.removeCard(card.id)}
+            />
+          </div>
         ))}
 
         {checkout.enrollmentEnabled ? (
