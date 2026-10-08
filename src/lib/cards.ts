@@ -119,8 +119,9 @@ export function parseExpiry(
   const month = Number(digits.slice(0, 2));
   const year = 2000 + Number(digits.slice(2));
   if (month < 1 || month > 12) return null;
-  // Valid through the last day of the expiry month.
-  if (now.getTime() >= Date.UTC(year, month, 1)) return null;
+  // Valid through the last day of the expiry month, on the buyer's own
+  // calendar: a UTC cutoff would expire it hours early in Honduras.
+  if (now.getTime() >= new Date(year, month, 1).getTime()) return null;
   return { month, year };
 }
 
