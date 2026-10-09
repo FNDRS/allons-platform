@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Minus, Plus } from "lucide-react";
-import { useId } from "react";
+import { useId, useState } from "react";
 import {
   isEntryTypeOnSale,
   type EventCampaign,
@@ -581,65 +581,82 @@ export function PromoCodeField({
   error: string | null;
   step: number;
 }) {
+  // Closed until asked for: most buyers have no code. An applied code or a
+  // pending error keeps it open so neither is hidden.
+  const [open, setOpen] = useState(false);
+  const expanded = open || Boolean(applied) || Boolean(error);
   return (
     <section>
       <StepHeading n={step} hint="opcional">
         Código promocional
       </StepHeading>
-      <Shell active={Boolean(applied)}>
-        {applied ? (
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-accent bg-accent/15 text-accent">
-                <Check className="size-4" strokeWidth={2.5} />
-              </span>
-              <p className="min-w-0 truncate text-[14px] font-semibold tracking-tight">
-                {applied.code}
-                <span className="font-medium text-white/40">
-                  {" "}
-                  · {applied.percent}% de descuento
+      {expanded ? (
+        <Shell active={Boolean(applied)}>
+          {applied ? (
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-accent bg-accent/15 text-accent">
+                  <Check className="size-4" strokeWidth={2.5} />
                 </span>
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onRemove}
-              className="shrink-0 text-[13px] font-semibold text-white/40 transition hover:text-white"
-            >
-              Quitar
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2.5">
-            <div className="flex gap-2">
-              <Input
-                value={value}
-                onChange={(event) => onChange(event.target.value.toUpperCase())}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    onApply();
-                  }
-                }}
-                placeholder="Escribe tu código"
-                autoCapitalize="characters"
-                maxLength={64}
-                className="tracking-[0.06em]"
-                aria-label="Código promocional"
-              />
+                <p className="min-w-0 truncate text-[14px] font-semibold tracking-tight">
+                  {applied.code}
+                  <span className="font-medium text-white/40">
+                    {" "}
+                    · {applied.percent}% de descuento
+                  </span>
+                </p>
+              </div>
               <button
                 type="button"
-                onClick={onApply}
-                disabled={!value.trim() || applying}
-                className="shrink-0 rounded-2xl border border-white/15 bg-white/[0.06] px-4 text-[13px] font-semibold text-white transition hover:bg-white/[0.1] disabled:opacity-40"
+                onClick={onRemove}
+                className="shrink-0 text-[13px] font-semibold text-white/40 transition hover:text-white"
               >
-                {applying ? "Aplicando…" : "Aplicar"}
+                Quitar
               </button>
             </div>
-            <FieldError>{error}</FieldError>
-          </div>
-        )}
-      </Shell>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              <div className="flex gap-2">
+                <Input
+                  value={value}
+                  onChange={(event) => onChange(event.target.value.toUpperCase())}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      onApply();
+                    }
+                  }}
+                  placeholder="Escribe tu código"
+                  autoFocus={open && !applied}
+                  autoCapitalize="characters"
+                  maxLength={64}
+                  className="tracking-[0.06em]"
+                  aria-label="Código promocional"
+                />
+                <button
+                  type="button"
+                  onClick={onApply}
+                  disabled={!value.trim() || applying}
+                  className="shrink-0 rounded-2xl border border-white/15 bg-white/[0.06] px-4 text-[13px] font-semibold text-white transition hover:bg-white/[0.1] disabled:opacity-40"
+                >
+                  {applying ? "Aplicando…" : "Aplicar"}
+                </button>
+              </div>
+              <FieldError>{error}</FieldError>
+            </div>
+          )}
+        </Shell>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-expanded={false}
+          className="flex w-full items-center gap-3 rounded-[22px] border border-white/8 bg-white/3 px-4 py-3.5 text-left text-[14px] font-semibold tracking-tight text-white/70 transition hover:border-white/14 hover:bg-white/5 hover:text-white"
+        >
+          <Plus className="size-4" strokeWidth={2} aria-hidden />
+          ¿Tienes un código? Agrégalo
+        </button>
+      )}
     </section>
   );
 }

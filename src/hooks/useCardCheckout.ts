@@ -54,6 +54,7 @@ export function useCardCheckout({
   const [touched, setTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   // Preselect the default card once the list lands, so a returning buyer
   // pays in one tap. Only runs while the buyer has not picked anything.
@@ -178,6 +179,23 @@ export function useCardCheckout({
     }
   }
 
+  /** Deletes a saved card from the vault and drops it from the list. */
+  async function removeCard(id: string) {
+    setRemovingId(id);
+    setError(null);
+    try {
+      await removePaymentMethod(id);
+      queryClient.setQueryData(listKey, (current: PaymentMethodList | undefined) =>
+        current ? { ...current, data: current.data.filter((row) => row.id !== id) } : current,
+      );
+      void queryClient.invalidateQueries({ queryKey: listKey });
+    } catch (err) {
+      setError(isApiError(err) ? err.message : "No pudimos eliminar la tarjeta. Intenta de nuevo.");
+    } finally {
+      setRemovingId(null);
+    }
+  }
+
   return {
     /** False when this deployment has saved cards off: hide the step. */
     available: saved.available,
@@ -204,6 +222,9 @@ export function useCardCheckout({
     submitting,
     error,
     pay,
+    removeCard,
+    /** Card being deleted right now, to disable its row. */
+    removingId,
   };
 }
 

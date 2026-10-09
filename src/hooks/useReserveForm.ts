@@ -472,7 +472,7 @@ export function useReserveForm(
    * Marks the form as touched and returns the holders payload when every
    * field checks out, or null after setting the error to show.
    */
-  function validateDraft() {
+  function validateDraft({ inAppCard = false }: { inAppCard?: boolean } = {}) {
     setTouched(true);
     setError(null);
     if (!event || !entryType) return null;
@@ -512,7 +512,9 @@ export function useReserveForm(
       setError("Cada ticket necesita un correo distinto.");
       return null;
     }
-    if (needsGovernmentId && !governmentIdValid) {
+    // Only Clinpays' own page needs it; an in-app card carries the DNI in
+    // the card form, and a saved card's customer already has one.
+    if (!inAppCard && needsGovernmentId && !governmentIdValid) {
       setError("Escribe tu número de identidad para abrir el pago.");
       return null;
     }
@@ -539,7 +541,10 @@ export function useReserveForm(
 
   type ValidDraft = NonNullable<ReturnType<typeof validateDraft>>;
 
-  function paidOrderInput(draft: ValidDraft): InitiatePaymentInput {
+  function paidOrderInput(
+    draft: ValidDraft,
+    { inAppCard = false }: { inAppCard?: boolean } = {},
+  ): InitiatePaymentInput {
     return {
       eventId: draft.event.id,
       entryTypeId: draft.entryType.id,
@@ -549,7 +554,7 @@ export function useReserveForm(
       ...(donationAllowed && donationCents > 0 ? { donationCents } : {}),
       ...(promoCode ? { discountCode: promoCode } : {}),
       ...(resources.selectedIds.length ? { resourceIds: resources.selectedIds } : {}),
-      ...(needsGovernmentId ? { governmentId: governmentId.trim() } : {}),
+      ...(needsGovernmentId && !inAppCard ? { governmentId: governmentId.trim() } : {}),
       consentedCampaignIds,
     };
   }
@@ -561,9 +566,9 @@ export function useReserveForm(
    */
   function preparePaidOrder(): InitiatePaymentInput | null {
     if (preview) return null;
-    const draft = validateDraft();
+    const draft = validateDraft({ inAppCard: true });
     if (!draft || isFree) return null;
-    return paidOrderInput(draft);
+    return paidOrderInput(draft, { inAppCard: true });
   }
 
   async function submit() {
