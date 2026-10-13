@@ -3,7 +3,7 @@
 import confetti from "canvas-confetti";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Check, Loader2, XCircle } from "lucide-react";
+import { Check, Clock, Loader2, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useCountdown } from "@/hooks/useCountdown";
 import { usePaymentOrder } from "@/hooks/usePaymentOrder";
@@ -152,19 +152,40 @@ export function PaymentView({ orderId }: { orderId: string }) {
     );
   }
 
-  if (phase === "minting") {
+  if (phase === "minting" || phase === "still_minting") {
+    const stalled = phase === "still_minting";
     return (
       <Card className="flex flex-col items-center py-10 text-center">
-        <Loader2 className="size-12 animate-spin text-accent" aria-hidden />
+        {stalled ? (
+          <Clock className="size-12 text-accent" aria-hidden />
+        ) : (
+          <Loader2 className="size-12 animate-spin text-accent" aria-hidden />
+        )}
         <h1 className="mt-5 break-words text-[24px] font-bold tracking-[-0.03em] sm:text-[26px]">
-          {forClass ? "Estamos agregando tus sesiones" : "Estamos emitiendo tu ticket"}
+          {stalled
+            ? forClass
+              ? "Tus sesiones están tardando"
+              : "Tu ticket está tardando"
+            : forClass
+              ? "Estamos agregando tus sesiones"
+              : "Estamos emitiendo tu ticket"}
         </h1>
         <p className="mt-2 max-w-sm text-sm text-muted">
-          {forClass
-            ? "El pago entró. En unos segundos tus sesiones estarán listas para agendar; si tarda, revisa en un momento."
-            : "El pago entró. En unos segundos aparecerá en Mis tickets; si tarda, revisa ahí en un momento."}
+          {stalled
+            ? "El pago entró y no se te cobrará de nuevo. Dejamos de revisar automáticamente; vuelve a revisar o búscalo en Mis tickets en un momento."
+            : forClass
+              ? "El pago entró. En unos segundos tus sesiones estarán listas para agendar; si tarda, revisa en un momento."
+              : "El pago entró. En unos segundos aparecerá en Mis tickets; si tarda, revisa ahí en un momento."}
         </p>
-        <Link href="/tickets" className={buttonClass({ variant: "secondary", className: "mt-7" })}>
+        {stalled ? (
+          <Button size="lg" onClick={resume} className="mt-7">
+            Volver a revisar
+          </Button>
+        ) : null}
+        <Link
+          href="/tickets"
+          className={buttonClass({ variant: "secondary", className: stalled ? "mt-3" : "mt-7" })}
+        >
           Ir a mis tickets
         </Link>
       </Card>

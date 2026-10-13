@@ -20,6 +20,7 @@ export type PayPhase =
   | "waiting"
   | "still_pending"
   | "minting"
+  | "still_minting"
   | "paid"
   | "failed"
   | "error";
@@ -33,6 +34,7 @@ export function usePaymentOrder(orderId: string) {
   const [pollingSince, setPollingSince] = useState(() => Date.now());
   const [paidSince, setPaidSince] = useState<number | null>(null);
   const [timedOut, setTimedOut] = useState(false);
+  const [mintingTimedOut, setMintingTimedOut] = useState(false);
   const paidRef = useRef<number | null>(null);
   const refreshedRef = useRef(false);
 
@@ -75,6 +77,18 @@ export function usePaymentOrder(orderId: string) {
     return () => clearTimeout(timer);
   }, [data, pollingSince]);
 
+  // Polling stops once the grace window ends; say so instead of spinning forever.
+  useEffect(() => {
+    if (data?.status !== "paid" || delivered || paidSince === null) return;
+    const remaining = MINTING_GRACE_MS - (Date.now() - paidSince);
+    if (remaining <= 0) {
+      setMintingTimedOut(true);
+      return;
+    }
+    const timer = setTimeout(() => setMintingTimedOut(true), remaining);
+    return () => clearTimeout(timer);
+  }, [data?.status, delivered, paidSince]);
+
   // New passes change the buyer's balance on the class page; drop the cached one once.
   useEffect(() => {
     if (!data || !delivered || refreshedRef.current || !isClassPackageOrder(data)) return;
@@ -90,6 +104,11 @@ export function usePaymentOrder(orderId: string) {
   const resume = useCallback(() => {
     setTimedOut(false);
     setPollingSince(Date.now());
+    if (paidRef.current !== null) {
+      paidRef.current = Date.now();
+      setPaidSince(paidRef.current);
+    }
+    setMintingTimedOut(false);
     void query.refetch();
   }, [query]);
 
@@ -98,7 +117,7 @@ export function usePaymentOrder(orderId: string) {
   else if (data) {
     if (data.status === "pending_payment") phase = timedOut ? "still_pending" : "waiting";
     else if (data.status === "paid")
-      phase = delivered ? "paid" : "minting";
+      phase = delivered ? "paid" : mintingTimedOut ? "still_minting" : "minting";
     else phase = "failed";
   }
 
