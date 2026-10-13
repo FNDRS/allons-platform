@@ -37,7 +37,7 @@ function originsFrom(raw: string | undefined): string[] {
  * request. Framing, plugins, <base> hijacking and foreign form targets are
  * all closed.
  */
-function contentSecurityPolicy(): string {
+function contentSecurityPolicy(overrides: Record<string, string[]> = {}): string {
   // Without the env var the build cannot know the project, so it falls back
   // to the wildcard rather than breaking sign-in.
   const supabase =
@@ -69,7 +69,8 @@ function contentSecurityPolicy(): string {
     "media-src": Array.from(new Set([...media, "blob:"])),
     "connect-src": Array.from(new Set(connect)),
     "worker-src": ["'self'", "blob:"],
-    "frame-src": ["'none'"],
+    // Only our own 3DS page (`/pagar/:orderId/verificar`), which hosts the bank's window.
+    "frame-src": ["'self'"],
     "object-src": ["'none'"],
     "base-uri": ["'self'"],
     "form-action": ["'self'"],
@@ -77,7 +78,7 @@ function contentSecurityPolicy(): string {
     "manifest-src": ["'self'"],
   };
 
-  const policy = Object.entries(directives)
+  const policy = Object.entries({ ...directives, ...overrides })
     .map(([name, sources]) => `${name} ${sources.join(" ")}`)
     .join("; ");
   return isDev ? policy : `${policy}; upgrade-insecure-requests`;
@@ -123,6 +124,48 @@ const config: NextConfig = {
               "camera=(), microphone=(), geolocation=(), payment=(), usb=(), " +
               "serial=(), hid=(), magnetometer=(), gyroscope=(), " +
               "accelerometer=(), browsing-topics=()",
+          },
+        ],
+      },
+      {
+        // The issuer's 3DS window. Its HTML comes from the bank through
+        // Clinpays and loads the bank's own scripts, frames and forms, so this
+        // page is open to any https origin. It holds no card data, and only
+        // the checkout on this site may frame it.
+        source: "/pagar/:orderId/verificar",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: contentSecurityPolicy({
+              "script-src": [
+                "'self'",
+                "'unsafe-inline'",
+                "https:",
+                ...(isDev ? ["'unsafe-eval'"] : []),
+              ],
+              "style-src": ["'self'", "'unsafe-inline'", "https:"],
+              "img-src": ["'self'", "data:", "https:"],
+              "font-src": ["'self'", "data:", "https:"],
+              "connect-src": ["'self'", "https:"],
+              "frame-src": ["'self'", "https:"],
+              "form-action": ["'self'", "https:"],
+              "frame-ancestors": ["'self'"],
+            }),
+          },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+        ],
+      },
+      {
+        // Where the bank's window lands when it closes. It loads inside the
+        // sandboxed frame, possibly nested in the bank's own frames (opaque
+        // origins no source can name), and only posts the order id to the
+        // checkout, so any ancestor may frame it. `frame-ancestors` makes
+        // browsers ignore the X-Frame-Options set above.
+        source: "/pagar/:orderId/3ds",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: contentSecurityPolicy({ "frame-ancestors": ["*"] }),
           },
         ],
       },

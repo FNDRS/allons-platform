@@ -50,6 +50,7 @@ const COMERCIO_BRANCHES = [
   "/comercio/actividades",
   "/comercio/descuentos",
   "/comercio/events",
+  "/comercio/clases",
   "/comercio/colaboraciones",
   "/comercio/campanas",
 ];

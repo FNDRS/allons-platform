@@ -76,8 +76,13 @@ export interface ChargeSavedCardInput extends InitiatePaymentInput {
 
 export interface ChargeSavedCardResponse {
   orderId: string;
-  /** Terminal already: a stored-card charge settles synchronously. */
-  status: "paid" | "failed";
+  /**
+   * `pending` when the bank asked for 3DS: show `redirectData`, then poll the
+   * order. `paid` and `failed` are final.
+   */
+  status: "paid" | "failed" | "pending";
+  /** The bank's 3DS window (HTML with script). Null unless pending. */
+  redirectData: string | null;
   /** False when the charge went through but the tickets are still being issued. */
   fulfilled: boolean;
   amountCents: number;
