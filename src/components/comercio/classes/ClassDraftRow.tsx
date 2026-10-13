@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 
 /** One authored schedule or package: opens its editor, or removes it. */
 export function ClassDraftRow({
@@ -36,6 +36,14 @@ export function ClassDraftRow({
         {aside ? (
           <span className="shrink-0 text-[14px] font-semibold tabular-nums">{aside}</span>
         ) : null}
+      </button>
+      <button
+        type="button"
+        onClick={onEdit}
+        aria-label={editLabel}
+        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted transition hover:bg-white/10 hover:text-white"
+      >
+        <Pencil className="size-3.5" aria-hidden />
       </button>
       <button
         type="button"
