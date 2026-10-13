@@ -26,7 +26,8 @@ export function ClassProgramPreviewView({ id }: { id: string }) {
   const { program } = p;
 
   return (
-    <div className="flex flex-col gap-8">
+    // Same width as the public class page, so the preview matches what customers get.
+    <div className="mx-auto flex w-full max-w-[720px] flex-col gap-8">
       <Link
         href={`/comercio/clases/${encodeURIComponent(program.id)}`}
         className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-muted hover:text-white"
