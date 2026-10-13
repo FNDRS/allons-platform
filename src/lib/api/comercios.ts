@@ -52,7 +52,7 @@ export interface ClassSessionTemplate {
   active: boolean;
 }
 
-/** A recurring class the comercio publishes; bought and booked from the app. */
+/** A recurring class the comercio publishes, as its public profile lists it. */
 export interface ClassProgramPublic {
   id: string;
   title: string;

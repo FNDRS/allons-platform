@@ -53,7 +53,21 @@ export interface PaymentOrderDetail {
   orderType: string;
   ticketIds: string[];
   eventId: string | null;
+  /** Passes a paid `class_package` order created. */
+  classPassIds?: string[];
+  classPackageId?: string | null;
+  classProgramId?: string | null;
   expiresAt: string | null;
+}
+
+/** A class package order rather than event tickets. */
+export function isClassPackageOrder(order: Pick<PaymentOrderDetail, "orderType">) {
+  return order.orderType === "class_package";
+}
+
+/** What a paid order delivered: its tickets, or the passes of a class package. */
+export function deliveredIds(order: PaymentOrderDetail): string[] {
+  return isClassPackageOrder(order) ? (order.classPassIds ?? []) : order.ticketIds;
 }
 
 export interface ChargeSavedCardInput extends InitiatePaymentInput {

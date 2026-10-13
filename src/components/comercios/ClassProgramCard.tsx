@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowUpRight, Building2, CalendarDays, Clock, User } from "lucide-react";
 import type { ClassProgramPublic } from "@/lib/api/comercios";
@@ -8,8 +9,24 @@ import { glassCtaClass } from "@/components/ui/cta";
 
 const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
+/** What the card reads: a profile program and a discovery one both fit. */
+type ClassProgramCardData = Pick<
+  ClassProgramPublic,
+  | "title"
+  | "discipline"
+  | "durationMinutes"
+  | "instructorName"
+  | "locationName"
+  | "city"
+  | "coverImageUrl"
+  | "themeColor"
+> & {
+  packages: { price: number; active: boolean }[];
+  sessionTemplates: { weekday: number; startTime: string; active: boolean }[];
+};
+
 /** "Lun · Mié 17:30" from the active session templates. */
-function scheduleLabel(program: ClassProgramPublic): string | null {
+function scheduleLabel(program: ClassProgramCardData): string | null {
   const active = program.sessionTemplates.filter((template) => template.active);
   if (active.length === 0) return null;
   const days = [...new Set(active.map((template) => template.weekday))]
@@ -21,10 +38,10 @@ function scheduleLabel(program: ClassProgramPublic): string | null {
   return `${days.join(" · ")}${time}`;
 }
 
-function priceLabel(program: ClassProgramPublic): string | null {
+function priceLabel(program: ClassProgramCardData): string | null {
   const prices = program.packages
-    .filter((pkg) => pkg.active && Number.isFinite(pkg.price))
-    .map((pkg) => pkg.price);
+    .filter((pkg) => pkg.active && Number.isFinite(Number(pkg.price)))
+    .map((pkg) => Number(pkg.price));
   if (prices.length === 0) return null;
   const lowest = Math.min(...prices);
   if (lowest <= 0) return "Gratis";
@@ -34,17 +51,17 @@ function priceLabel(program: ClassProgramPublic): string | null {
 /** Overlay class card: same poster language as the event listing. */
 export function ClassProgramCard({
   program,
-  appDeepLink,
+  href,
 }: {
-  program: ClassProgramPublic;
-  appDeepLink: string;
+  program: ClassProgramCardData;
+  href: string;
 }) {
   const schedule = scheduleLabel(program);
   const price = priceLabel(program);
   const place = [program.locationName, program.city].filter(Boolean).join(", ");
 
   return (
-    <a href={appDeepLink} className="group block h-full w-full">
+    <Link href={href} className="group block h-full w-full">
       <article className="event-phone relative flex aspect-[4/4.2] flex-col overflow-hidden rounded-[32px] border border-white/10 bg-black shadow-[0_24px_50px_rgba(0,0,0,0.38)]">
         <div className="absolute inset-0">
           {program.coverImageUrl ? (
@@ -116,7 +133,7 @@ export function ClassProgramCard({
           </div>
         </div>
       </article>
-    </a>
+    </Link>
   );
 }
 

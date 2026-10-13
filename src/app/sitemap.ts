@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { listPublicEvents } from "@/lib/allons-api";
+import { listPublicClassProgramIds } from "@/lib/classPrograms.server";
 import { SITE_URL } from "@/lib/seo";
 
 /** Rebuilt hourly, so a newly published event is findable the same day. */
@@ -17,7 +18,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/eliminar-cuenta",
   ];
 
-  const events = await listPublicEvents();
+  const [events, classProgramIds] = await Promise.all([
+    listPublicEvents(),
+    listPublicClassProgramIds(),
+  ]);
   const now = Date.now();
 
   return [
@@ -37,6 +41,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: upcoming ? 0.8 : 0.4,
       };
     }),
+    ...classProgramIds.map((id) => ({
+      url: `${SITE_URL}/clases/${encodeURIComponent(id)}`,
+      lastModified,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    })),
     ...legalPaths.map((path) => ({
       url: `${SITE_URL}${path}`,
       lastModified,

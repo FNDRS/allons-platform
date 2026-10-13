@@ -3,12 +3,13 @@
 import confetti from "canvas-confetti";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Check, Loader2, XCircle } from "lucide-react";
+import { Check, Clock, Loader2, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useCountdown } from "@/hooks/useCountdown";
 import { usePaymentOrder } from "@/hooks/usePaymentOrder";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { paymentLinkStorageKey } from "@/lib/api/payments";
+import { isClassPackageOrder, paymentLinkStorageKey } from "@/lib/api/payments";
+import { paidOutcomeFor, retryHrefFor } from "@/lib/paymentOrderLinks";
 import { formatCents } from "@/lib/format";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -102,12 +103,11 @@ export function PaymentView({ orderId }: { orderId: string }) {
     return <ErrorState message={error?.message} onRetry={resume} />;
   }
 
-  const retryHref = eventId
-    ? `/eventos/${encodeURIComponent(eventId)}/reservar`
-    : "/eventos";
+  const retryHref = retryHrefFor(order, eventId);
+  const forClass = order ? isClassPackageOrder(order) : false;
 
   if (phase === "paid" && order) {
-    const ticketId = order.ticketIds[0];
+    const outcome = paidOutcomeFor(order);
     return (
       <div className="flex flex-col items-center px-4 py-12 text-center sm:py-16">
         <span className="flex size-14 items-center justify-center rounded-[18px] bg-white/[0.04] ring-1 ring-white/12">
@@ -117,16 +117,16 @@ export function PaymentView({ orderId }: { orderId: string }) {
           ¡Pago confirmado!
         </h1>
         <p className="mt-2 max-w-sm text-[14px] leading-relaxed text-white/50">
-          Pagaste {formatCents(order.amountCents)}. Tu ticket ya está en tu cuenta.
+          Pagaste {formatCents(order.amountCents)}. {outcome.body}
         </p>
         <Link
-          href={`/tickets/${encodeURIComponent(ticketId)}?nuevo=1`}
+          href={outcome.primary.href}
           className={buttonClass({ size: "lg", full: true, className: "mt-8 max-w-xs" })}
         >
-          Ver mi ticket
+          {outcome.primary.label}
         </Link>
-        <Link href="/tickets" className="mt-4 text-[13px] text-white/40 transition hover:text-white">
-          Ir a mis tickets
+        <Link href={outcome.secondary.href} className="mt-4 text-[13px] text-white/40 transition hover:text-white">
+          {outcome.secondary.label}
         </Link>
       </div>
     );
@@ -152,15 +152,40 @@ export function PaymentView({ orderId }: { orderId: string }) {
     );
   }
 
-  if (phase === "minting") {
+  if (phase === "minting" || phase === "still_minting") {
+    const stalled = phase === "still_minting";
     return (
       <Card className="flex flex-col items-center py-10 text-center">
-        <Loader2 className="size-12 animate-spin text-accent" aria-hidden />
-        <h1 className="mt-5 break-words text-[24px] font-bold tracking-[-0.03em] sm:text-[26px]">Estamos emitiendo tu ticket</h1>
+        {stalled ? (
+          <Clock className="size-12 text-accent" aria-hidden />
+        ) : (
+          <Loader2 className="size-12 animate-spin text-accent" aria-hidden />
+        )}
+        <h1 className="mt-5 break-words text-[24px] font-bold tracking-[-0.03em] sm:text-[26px]">
+          {stalled
+            ? forClass
+              ? "Tus sesiones están tardando"
+              : "Tu ticket está tardando"
+            : forClass
+              ? "Estamos agregando tus sesiones"
+              : "Estamos emitiendo tu ticket"}
+        </h1>
         <p className="mt-2 max-w-sm text-sm text-muted">
-          El pago entró. En unos segundos aparecerá en Mis tickets; si tarda, revisa ahí en un momento.
+          {stalled
+            ? "El pago entró y no se te cobrará de nuevo. Dejamos de revisar automáticamente; vuelve a revisar o búscalo en Mis tickets en un momento."
+            : forClass
+              ? "El pago entró. En unos segundos tus sesiones estarán listas para agendar; si tarda, revisa en un momento."
+              : "El pago entró. En unos segundos aparecerá en Mis tickets; si tarda, revisa ahí en un momento."}
         </p>
-        <Link href="/tickets" className={buttonClass({ variant: "secondary", className: "mt-7" })}>
+        {stalled ? (
+          <Button size="lg" onClick={resume} className="mt-7">
+            Volver a revisar
+          </Button>
+        ) : null}
+        <Link
+          href="/tickets"
+          className={buttonClass({ variant: "secondary", className: stalled ? "mt-3" : "mt-7" })}
+        >
           Ir a mis tickets
         </Link>
       </Card>
@@ -196,12 +221,12 @@ export function PaymentView({ orderId }: { orderId: string }) {
         </h1>
         <p className="mt-2 text-sm text-muted">
           {returnedOk
-            ? "Clinpays aprobó el cargo. En cuanto nos confirme, tu ticket aparece aquí."
+            ? `Clinpays aprobó el cargo. En cuanto nos confirme, ${forClass ? "tus sesiones aparecen" : "tu ticket aparece"} aquí.`
             : returnedFailed
-              ? "Clinpays no aprobó el cargo y no se cobró nada. En cuanto nos lo confirme podrás intentarlo de nuevo desde el evento."
+              ? `Clinpays no aprobó el cargo y no se cobró nada. En cuanto nos lo confirme podrás intentarlo de nuevo desde ${forClass ? "la clase" : "el evento"}.`
               : byCard
-                ? "Tu banco está confirmando el cargo. Tu ticket aparece aquí en cuanto lo apruebe."
-                : "El pago es de Paygate (Clinpays). Se abre en su página; aquí confirmamos el ticket."}
+                ? `Tu banco está confirmando el cargo. ${forClass ? "Tus sesiones aparecen" : "Tu ticket aparece"} aquí en cuanto lo apruebe.`
+                : `El pago es de Paygate (Clinpays). Se abre en su página; aquí confirmamos ${forClass ? "tus sesiones" : "el ticket"}.`}
         </p>
       </div>
 
@@ -249,7 +274,7 @@ export function PaymentView({ orderId }: { orderId: string }) {
       </Card>
 
       <Link href={retryHref} className="text-center text-sm text-dim hover:text-white">
-        Cancelar y volver al evento
+        {forClass ? "Cancelar y volver a la clase" : "Cancelar y volver al evento"}
       </Link>
     </div>
   );

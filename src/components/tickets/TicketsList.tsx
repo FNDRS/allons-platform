@@ -1,17 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import { useMyClasses } from "@/hooks/useMyClasses";
 import { useMyTickets } from "@/hooks/useMyTickets";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Hero } from "@/components/app/Hero";
 import { Button } from "@/components/ui/Button";
 import { SectionTitle } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
+import { MyClassesSection } from "@/components/classes/MyClassesSection";
 import { TicketCard } from "./TicketCard";
 
 export function TicketsList() {
   const { ready } = useRequireAuth();
   const { upcoming, past, isLoading, error, refetch } = useMyTickets(ready);
+  // Shares the query with MyClassesSection; only decides whether the
+  // "no tickets" empty state would contradict classes listed above it.
+  const classes = useMyClasses(ready);
+  const hasClasses = classes.passes.length > 0 || classes.reservations.length > 0;
 
   return (
     <div>
@@ -27,6 +33,8 @@ export function TicketsList() {
         body="Muestra el QR o dicta el código en la entrada. También están en la app."
       />
 
+      <MyClassesSection enabled={ready} />
+
       {!ready || isLoading ? (
         <div className="flex flex-col gap-5">
           {Array.from({ length: 2 }).map((_, index) => (
@@ -39,6 +47,7 @@ export function TicketsList() {
       ) : error ? (
         <ErrorState message={(error as Error).message} onRetry={() => void refetch()} />
       ) : upcoming.length === 0 && past.length === 0 ? (
+        hasClasses ? null : (
         <EmptyState
           title="Aún no tienes tickets"
           body="Cuando compres una entrada aparecerá aquí, y también en la app."
@@ -48,6 +57,7 @@ export function TicketsList() {
             </Link>
           }
         />
+        )
       ) : (
         <div className="flex flex-col gap-10">
           {upcoming.length > 0 ? (

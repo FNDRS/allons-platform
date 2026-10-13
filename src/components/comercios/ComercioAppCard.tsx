@@ -25,7 +25,7 @@ export function ComercioAppCard({
           Entérate primero de lo nuevo de {name}
         </p>
         <p className="mt-1.5 text-[13px] leading-5 text-white/60">
-          Síguelo en la app para recibir avisos de eventos y reservar sus clases.
+          Síguelo en la app para recibir avisos de sus eventos y clases nuevas.
         </p>
         <div className="mt-4 flex flex-col gap-2">
           <a
