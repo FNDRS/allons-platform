@@ -92,7 +92,7 @@ export function PaymentMethodStep({
                   saveCard={checkout.saveCard}
                   disabled={checkout.submitting}
                   onChange={checkout.updateDraft}
-                  onSaveCard={checkout.setSaveCard}
+                  onSaveCard={checkout.canSaveCard ? checkout.setSaveCard : undefined}
                 />
               </div>
             </motion.div>
