@@ -43,11 +43,14 @@ export function Modal({
       if (event.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    // Locked on <html>, not <body>: body is height 100%, so hiding its
+    // overflow clamps the page scroll to the top and it never comes back.
+    const root = document.documentElement;
+    const previous = root.style.overflowY;
+    root.style.overflowY = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = previous;
+      root.style.overflowY = previous;
     };
   }, [open, onClose]);
 
