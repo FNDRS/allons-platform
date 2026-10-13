@@ -111,9 +111,11 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
         // before the program itself: a failure among them must not leave a
         // program freshly published with half-updated schedules or packages.
         // Each write that lands is recorded at once, so a retry patches it.
+        // Every write settles before Save comes back, so a quick retry never
+        // races a create still in flight and duplicates it.
         const scheduleDiff = schedule.toDiff();
         const packageDiff = packages.toDiff();
-        await Promise.all([
+        const results = await Promise.allSettled([
           ...scheduleDiff.create.map(({ draftId, payload }) =>
             createClassSessionTemplate(program.id, payload).then((created) =>
               schedule.markPersisted(draftId, created.id),
@@ -133,6 +135,10 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
             deleteClassPackage(id).then(() => packages.markDeleted(id)),
           ),
         ]);
+        const failed = results.find(
+          (result): result is PromiseRejectedResult => result.status === "rejected",
+        );
+        if (failed) throw failed.reason;
         await updateProviderClassProgram(program.id, { ...fields, status });
         savedId = program.id;
       } else {
