@@ -62,8 +62,13 @@ export interface ChargeSavedCardInput extends InitiatePaymentInput {
 
 export interface ChargeSavedCardResponse {
   orderId: string;
-  /** Terminal already: a stored-card charge settles synchronously. */
-  status: "paid" | "failed";
+  /**
+   * `pending` when the bank asked for 3DS: show `redirectData`, then poll the
+   * order. `paid` and `failed` are final.
+   */
+  status: "paid" | "failed" | "pending";
+  /** The bank's 3DS window (HTML with script). Null unless pending. */
+  redirectData: string | null;
   /** False when the charge went through but the tickets are still being issued. */
   fulfilled: boolean;
   amountCents: number;
@@ -131,3 +136,11 @@ export function paymentLinkStorageKey(orderId: string) {
 export function payOrderHref(orderId: string, eventId: string, link: string) {
   return `/pagar/${encodeURIComponent(orderId)}?link=${encodeURIComponent(link)}&event=${encodeURIComponent(eventId)}`;
 }
+
+/** sessionStorage key that hands the bank's 3DS window to its own page. */
+export function threeDsStorageKey(orderId: string) {
+  return `allons.3ds.${orderId}`;
+}
+
+/** What the 3DS return page posts to the checkout when the bank is done. */
+export const THREE_DS_DONE_MESSAGE = "allons:3ds-done";

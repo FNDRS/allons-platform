@@ -14,6 +14,7 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { EventCover, EventPosterWash } from "@/components/events/EventCover";
 import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
+import { ThreeDsChallenge } from "@/components/pay/ThreeDsChallenge";
 import { HoldCountdown } from "./HoldCountdown";
 import { PendingOrderNotice } from "./PendingOrderNotice";
 import { ReserveBikePicker } from "./ReserveBikePicker";
@@ -383,6 +384,11 @@ export function ReserveView({ eventId }: { eventId: string }) {
           </p>
         ) : null}
       </div>
+
+      <ThreeDsChallenge
+        orderId={checkout.threeDsOrderId}
+        onDone={checkout.finishThreeDs}
+      />
     </div>
   );
 }

@@ -167,7 +167,9 @@ export function PaymentView({ orderId }: { orderId: string }) {
     );
   }
 
-  // waiting | still_pending
+  // waiting | still_pending. Without a Paygate link the order was paid by
+  // card here and only waits on the bank's 3DS answer.
+  const byCard = !link && !estado;
   return (
     <div className="flex flex-col gap-5">
       {link ? (
@@ -187,14 +189,18 @@ export function PaymentView({ orderId }: { orderId: string }) {
               ? "El pago no se completó"
               : phase === "still_pending"
                 ? "Tu pago sigue pendiente"
-                : "Completa tu pago"}
+                : byCard
+                  ? "Confirmando tu pago"
+                  : "Completa tu pago"}
         </h1>
         <p className="mt-2 text-sm text-muted">
           {returnedOk
             ? "Clinpays aprobó el cargo. En cuanto nos confirme, tu ticket aparece aquí."
             : returnedFailed
               ? "Clinpays no aprobó el cargo y no se cobró nada. En cuanto nos lo confirme podrás intentarlo de nuevo desde el evento."
-              : "El pago es de Paygate (Clinpays). Se abre en su página; aquí confirmamos el ticket."}
+              : byCard
+                ? "Tu banco está confirmando el cargo. Tu ticket aparece aquí en cuanto lo apruebe."
+                : "El pago es de Paygate (Clinpays). Se abre en su página; aquí confirmamos el ticket."}
         </p>
       </div>
 
@@ -205,7 +211,7 @@ export function PaymentView({ orderId }: { orderId: string }) {
             {order ? formatCents(order.amountCents) : "—"}
           </span>
         </div>
-        {countdown ? (
+        {countdown && !byCard ? (
           <p className="text-sm text-dim">
             El enlace de pago vence en <span className="font-semibold text-white">{countdown}</span>
           </p>
@@ -214,7 +220,7 @@ export function PaymentView({ orderId }: { orderId: string }) {
           <Button size="lg" full onClick={() => setCheckoutOpen(true)}>
             {checkoutOpen ? "Pago en curso" : "Abrir pago"}
           </Button>
-        ) : (
+        ) : byCard ? null : (
           <p className="text-sm text-amber-200">
             No encontramos el enlace de pago. Vuelve al evento e inicia la compra otra vez.
           </p>
@@ -225,7 +231,9 @@ export function PaymentView({ orderId }: { orderId: string }) {
         {phase === "waiting" ? (
           <>
             <Loader2 className="size-5 shrink-0 animate-spin text-accent" aria-hidden />
-            <p className="text-sm text-muted">Esperando la confirmación de Paygate…</p>
+            <p className="text-sm text-muted">
+              {byCard ? "Esperando la respuesta de tu banco…" : "Esperando la confirmación de Paygate…"}
+            </p>
           </>
         ) : (
           <>
