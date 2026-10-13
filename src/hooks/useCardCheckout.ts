@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
+import { useThreeDsChallenge } from "@/hooks/useThreeDsChallenge";
 import { isApiError } from "@/lib/api/client";
 import {
   enrollCard,
@@ -45,6 +46,7 @@ export function useCardCheckout({
   const router = useRouter();
   const queryClient = useQueryClient();
   const saved = usePaymentMethods({ userId, enabled });
+  const threeDs = useThreeDsChallenge();
   const listKey = paymentMethodKeys.list(userId ?? "");
 
   const [choice, setChoice] = useState<CardChoice>("new");
@@ -142,6 +144,11 @@ export function useCardCheckout({
         setError(DECLINED_MESSAGE);
         return;
       }
+      // The bank asked for 3DS. Waiting here keeps a one-off card in the
+      // vault until the bank is done with it; /pagar then reads the outcome.
+      if (result.status === "pending" && result.redirectData) {
+        await threeDs.run(result.orderId, result.redirectData);
+      }
       paidOrderId = result.orderId;
     } catch (err) {
       setError(messageFor(err));
@@ -174,7 +181,7 @@ export function useCardCheckout({
     }
     if (paidOrderId) {
       router.replace(
-        `/pagar/${encodeURIComponent(paidOrderId)}?event=${encodeURIComponent(input.eventId)}`,
+        `/pagar/${encodeURIComponent(paidOrderId)}?event=${encodeURIComponent(input.eventId)}&pago=tarjeta`,
       );
     }
   }
@@ -225,6 +232,9 @@ export function useCardCheckout({
     removeCard,
     /** Card being deleted right now, to disable its row. */
     removingId,
+    /** The bank's 3DS window that is open, or null. */
+    threeDsChallenge: threeDs.challenge,
+    finishThreeDs: threeDs.finish,
   };
 }
 
