@@ -5,6 +5,7 @@ import { useEvents } from "@/hooks/useEvents";
 import { Hero } from "@/components/app/Hero";
 import { SmoothInput } from "@/components/ui/SmoothInput";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
+import { DiscoverClassesSection } from "@/components/classes/DiscoverClassesSection";
 import { EventCard } from "./EventCard";
 
 export function EventsBrowser() {
@@ -76,6 +77,8 @@ export function EventsBrowser() {
           ))}
         </div>
       )}
+
+      <DiscoverClassesSection search={search} />
     </div>
   );
 }

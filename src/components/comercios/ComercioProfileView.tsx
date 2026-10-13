@@ -39,7 +39,6 @@ export function ComercioProfileView({
           <ComercioClassProgramsSection
             programs={catalogue.programs}
             loading={catalogue.programsLoading}
-            appDeepLink={appDeepLink}
           />
         </div>
 

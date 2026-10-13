@@ -2,11 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getPaymentOrder, paymentKeys } from "@/lib/api/payments";
+import { deliveredIds, getPaymentOrder, paymentKeys } from "@/lib/api/payments";
 
 const POLL_MS = 3_000;
 const MAX_POLL_MS = 3 * 60_000;
-/** After `paid`, tickets are minted asynchronously; give the worker a moment. */
+/** After `paid`, tickets or passes are issued asynchronously; give the worker a moment. */
 const MINTING_GRACE_MS = 45_000;
 
 export type PayPhase =
@@ -38,7 +38,7 @@ export function usePaymentOrder(orderId: string) {
       if (data.status === "pending_payment") {
         return Date.now() - pollingSince > MAX_POLL_MS ? false : POLL_MS;
       }
-      if (data.status === "paid" && data.ticketIds.length === 0) {
+      if (data.status === "paid" && deliveredIds(data).length === 0) {
         const since = paidRef.current ?? Date.now();
         return Date.now() - since > MINTING_GRACE_MS ? false : POLL_MS;
       }
@@ -77,7 +77,7 @@ export function usePaymentOrder(orderId: string) {
   else if (data) {
     if (data.status === "pending_payment") phase = timedOut ? "still_pending" : "waiting";
     else if (data.status === "paid")
-      phase = data.ticketIds.length > 0 ? "paid" : "minting";
+      phase = deliveredIds(data).length > 0 ? "paid" : "minting";
     else phase = "failed";
   }
 

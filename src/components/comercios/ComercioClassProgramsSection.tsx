@@ -7,11 +7,9 @@ import { ClassProgramCard } from "./ClassProgramCard";
 export function ComercioClassProgramsSection({
   programs,
   loading,
-  appDeepLink,
 }: {
   programs: ClassProgramPublic[];
   loading: boolean;
-  appDeepLink: string;
 }) {
   if (!loading && programs.length === 0) return null;
   return (
@@ -31,7 +29,10 @@ export function ComercioClassProgramsSection({
               className="rise h-full"
               style={{ "--i": index } as React.CSSProperties}
             >
-              <ClassProgramCard program={program} appDeepLink={appDeepLink} />
+              <ClassProgramCard
+                program={program}
+                href={`/clases/${encodeURIComponent(program.id)}`}
+              />
             </div>
           ))}
         </div>

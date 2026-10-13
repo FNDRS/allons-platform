@@ -100,7 +100,7 @@ export type PublicEventSummary = {
   startsAt: string | null;
 };
 
-function getApiUrl() {
+export function getApiUrl() {
   return (process.env.ALLONS_API_URL?.trim() || DEFAULT_API_URL).replace(
     /\/+$/,
     "",

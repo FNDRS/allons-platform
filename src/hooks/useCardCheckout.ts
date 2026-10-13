@@ -25,6 +25,13 @@ import {
   type CardDraft,
 } from "@/lib/cards";
 
+/** What a card charge answers, whatever was bought. */
+export type CardChargeResult = {
+  orderId: string;
+  status: "paid" | "failed" | "pending";
+  redirectData?: string | null;
+};
+
 /** A saved card id, or "new" for the form. */
 export type CardChoice = string;
 
@@ -93,10 +100,25 @@ export function useCardCheckout({
   }
 
   /**
-   * Settles the order with the chosen card. Returns once the buyer has been
-   * sent to /pagar or an error is showing.
+   * Settles an event order with the chosen card. Returns once the buyer has
+   * been sent to /pagar or an error is showing.
    */
-  async function pay(input: InitiatePaymentInput) {
+  function pay(input: InitiatePaymentInput) {
+    return settle(
+      (paymentMethodId) => chargeWithSavedCard({ ...input, paymentMethodId }),
+      (orderId) =>
+        `/pagar/${encodeURIComponent(orderId)}?event=${encodeURIComponent(input.eventId)}`,
+    );
+  }
+
+  /**
+   * Charges the chosen card through `charge` (an event order, a class
+   * package) and then sends the buyer to `hrefFor(orderId)`.
+   */
+  async function settle(
+    charge: (paymentMethodId: string) => Promise<CardChargeResult>,
+    hrefFor: (orderId: string) => string,
+  ) {
     setTouched(true);
     setError(null);
     if (!cardReady) {
@@ -137,7 +159,7 @@ export function useCardCheckout({
         }
       }
 
-      const result = await chargeWithSavedCard({ ...input, paymentMethodId });
+      const result = await charge(paymentMethodId);
       if (result.status === "failed") {
         setError(DECLINED_MESSAGE);
         return;
@@ -173,9 +195,7 @@ export function useCardCheckout({
       setSubmitting(false);
     }
     if (paidOrderId) {
-      router.replace(
-        `/pagar/${encodeURIComponent(paidOrderId)}?event=${encodeURIComponent(input.eventId)}`,
-      );
+      router.replace(hrefFor(paidOrderId));
     }
   }
 
@@ -222,6 +242,7 @@ export function useCardCheckout({
     submitting,
     error,
     pay,
+    settle,
     removeCard,
     /** Card being deleted right now, to disable its row. */
     removingId,
