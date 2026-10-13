@@ -8,18 +8,28 @@ export { Select, SelectItem } from "./Select";
 const BASE =
   "w-full rounded-[14px] border border-border bg-surface-2 px-4 text-[15px] text-white placeholder:text-dim outline-none transition focus:border-accent/60 focus:bg-white/[0.08] disabled:opacity-50";
 
+/** Renders a real `<label>` when `htmlFor` names a control, a span otherwise. */
 export function Label({
   children,
   hint,
+  id,
+  htmlFor,
 }: {
   children: React.ReactNode;
   hint?: string;
+  id?: string;
+  htmlFor?: string;
 }) {
+  const Tag = htmlFor ? "label" : "span";
   return (
-    <span className="mb-1.5 block text-[12px] font-semibold uppercase tracking-[0.14em] text-muted">
+    <Tag
+      id={id}
+      htmlFor={htmlFor}
+      className="mb-1.5 block text-[12px] font-semibold uppercase tracking-[0.14em] text-muted"
+    >
       {children}
       {hint ? <span className="ml-1 font-medium normal-case tracking-normal text-dim">{hint}</span> : null}
-    </span>
+    </Tag>
   );
 }
 
