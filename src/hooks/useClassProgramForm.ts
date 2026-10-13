@@ -14,15 +14,10 @@ import {
   updateClassPackage,
   updateClassSessionTemplate,
   updateProviderClassProgram,
-  type ClassCancellationPolicy,
   type ClassProgramStatus,
   type ProviderClassProgram,
 } from "@/lib/api/providerClassPrograms";
 import { classProgramErrorMessage } from "@/hooks/useProviderClassPrograms";
-import {
-  DEFAULT_CANCELLATION_HOURS,
-  MAX_CANCELLATION_HOURS,
-} from "./class-program-form/constants";
 import { useClassPackagesForm } from "./class-program-form/useClassPackagesForm";
 import { useClassSessionTemplatesForm } from "./class-program-form/useClassSessionTemplatesForm";
 
@@ -52,12 +47,6 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
     program?.coverImageUrl ?? null,
   );
   const [coverBusy, setCoverBusy] = useState(false);
-  const [cancellationPolicy, setCancellationPolicy] = useState<ClassCancellationPolicy>(
-    program?.cancellationPolicy ?? "credit",
-  );
-  const [cancellationWindowHours, setCancellationWindowHours] = useState(
-    String(program?.cancellationWindowHours ?? DEFAULT_CANCELLATION_HOURS),
-  );
   const [savingTarget, setSavingTarget] = useState<ClassProgramStatus | null>(null);
 
   const schedule = useClassSessionTemplatesForm(
@@ -96,12 +85,6 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
         capacityPerSession: Number(capacityPerSession),
         locationName: locationName.trim() || null,
         coverImageUrl,
-        cancellationPolicy,
-        // An emptied field asks for the default back, not a zero-hour window.
-        cancellationWindowHours:
-          cancellationWindowHours.trim() === ""
-            ? DEFAULT_CANCELLATION_HOURS
-            : Number(cancellationWindowHours),
         ...(pinned ? {} : { address: address.trim() || null, city: city.trim() || null }),
       };
 
@@ -194,17 +177,6 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
     setCoverImageUrl,
     setCoverBusy,
 
-    cancellationPolicy,
-    setCancellationPolicy,
-    cancellationWindowHours,
-    // Clamped here: the API has a CHECK for the same bound, and a refused
-    // save after filling the whole form is a worse way to learn about it.
-    setCancellationWindowHours: (value: string) => {
-      const digits = digitsOnly(value);
-      setCancellationWindowHours(
-        digits === "" ? "" : String(Math.min(Number(digits), MAX_CANCELLATION_HOURS)),
-      );
-    },
 
     schedule,
     packages,

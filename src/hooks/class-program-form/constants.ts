@@ -44,11 +44,6 @@ export const CLASS_PROGRAM_STATUS_LABELS: Record<ClassProgramStatus, string> = {
   archived: "Archivado",
 };
 
-/** Matches the API column default, so an untouched form changes nothing. */
-export const DEFAULT_CANCELLATION_HOURS = 6;
-/** Matches the API CHECK constraint: one week. */
-export const MAX_CANCELLATION_HOURS = 168;
-
 /** Digits only, as a positive integer, or null when empty or zero. */
 export function parsePositiveInt(value: string): number | null {
   const digits = value.replace(/\D/g, "");

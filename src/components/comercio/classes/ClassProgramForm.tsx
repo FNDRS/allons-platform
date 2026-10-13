@@ -4,7 +4,6 @@ import { useClassProgramForm } from "@/hooks/useClassProgramForm";
 import type { ProviderClassProgram } from "@/lib/api/providerClassPrograms";
 import { ClassPackageEditorModal } from "./ClassPackageEditorModal";
 import { ClassProgramBasicsFields } from "./ClassProgramBasicsFields";
-import { ClassProgramCancellationFields } from "./ClassProgramCancellationFields";
 import { ClassProgramCoverField } from "./ClassProgramCoverField";
 import { ClassProgramFormActions } from "./ClassProgramFormActions";
 import { ClassProgramLocationFields } from "./ClassProgramLocationFields";
@@ -39,12 +38,6 @@ export function ClassProgramForm({ program }: { program: ProviderClassProgram | 
         onAdd={f.packages.openNew}
         onEdit={f.packages.openExisting}
         onRemove={f.packages.remove}
-      />
-      <ClassProgramCancellationFields
-        policy={f.cancellationPolicy}
-        onChangePolicy={f.setCancellationPolicy}
-        windowHours={f.cancellationWindowHours}
-        onChangeWindowHours={f.setCancellationWindowHours}
       />
       <ClassProgramFormActions
         canSaveDraft={f.canSaveDraft}
