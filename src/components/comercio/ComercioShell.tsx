@@ -50,7 +50,6 @@ const NAV: NavItem[] = [
     label: "Clases",
     Icon: Dumbbell,
     exact: false,
-    isNew: true,
   },
   {
     href: "/comercio/actividades",
