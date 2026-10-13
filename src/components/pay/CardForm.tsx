@@ -173,8 +173,9 @@ export function CardForm({
 
       <p className="flex items-start gap-2 text-[12px] leading-relaxed text-white/40">
         <Lock className="mt-0.5 size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
-        Tus datos viajan cifrados y se guardan en la bóveda de Paygate (Clinpays).
-        Allons nunca almacena el número completo ni el CVV.
+        {onSaveCard
+          ? "Tus datos viajan cifrados y se guardan en la bóveda de Paygate (Clinpays). Allons nunca almacena el número completo ni el CVV."
+          : "Tus datos viajan cifrados a Paygate (Clinpays) solo para este cobro. Ni Allons ni Paygate guardan la tarjeta."}
       </p>
     </div>
   );
