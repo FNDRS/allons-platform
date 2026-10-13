@@ -7,6 +7,7 @@ import {
   Activity,
   ArrowUpRight,
   CalendarDays,
+  Dumbbell,
   Flag,
   Handshake,
   LayoutDashboard,
@@ -43,6 +44,13 @@ const NAV: NavItem[] = [
     label: "Eventos",
     Icon: CalendarDays,
     exact: false,
+  },
+  {
+    href: "/comercio/clases",
+    label: "Clases",
+    Icon: Dumbbell,
+    exact: false,
+    isNew: true,
   },
   {
     href: "/comercio/actividades",
