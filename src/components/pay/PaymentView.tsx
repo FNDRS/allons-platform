@@ -221,12 +221,12 @@ export function PaymentView({ orderId }: { orderId: string }) {
         </h1>
         <p className="mt-2 text-sm text-muted">
           {returnedOk
-            ? "Clinpays aprobó el cargo. En cuanto nos confirme, tu ticket aparece aquí."
+            ? `Clinpays aprobó el cargo. En cuanto nos confirme, ${forClass ? "tus sesiones aparecen" : "tu ticket aparece"} aquí.`
             : returnedFailed
-              ? "Clinpays no aprobó el cargo y no se cobró nada. En cuanto nos lo confirme podrás intentarlo de nuevo desde el evento."
+              ? `Clinpays no aprobó el cargo y no se cobró nada. En cuanto nos lo confirme podrás intentarlo de nuevo desde ${forClass ? "la clase" : "el evento"}.`
               : byCard
-                ? "Tu banco está confirmando el cargo. Tu ticket aparece aquí en cuanto lo apruebe."
-                : "El pago es de Paygate (Clinpays). Se abre en su página; aquí confirmamos el ticket."}
+                ? `Tu banco está confirmando el cargo. ${forClass ? "Tus sesiones aparecen" : "Tu ticket aparece"} aquí en cuanto lo apruebe.`
+                : `El pago es de Paygate (Clinpays). Se abre en su página; aquí confirmamos ${forClass ? "tus sesiones" : "el ticket"}.`}
         </p>
       </div>
 
