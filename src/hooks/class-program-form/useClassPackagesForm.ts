@@ -78,16 +78,22 @@ function fromPackage(item: ClassPackage): ClassPackageDraft {
   };
 }
 
+/**
+ * Fields that no longer apply go as explicit nulls, so an update clears
+ * them on the server instead of keeping the values from before.
+ */
 function toPayload(draft: ClassPackageDraft, sortOrder: number): ClassPackageInput {
-  const validityDays = parsePositiveInt(draft.validityDays);
   return {
     name: draft.name.trim(),
     price: Number(draft.price) || 0,
     kind: draft.kind,
-    ...(draft.kind === "unlimited"
-      ? {}
-      : { credits: draft.kind === "drop_in" ? 1 : (parsePositiveInt(draft.credits) ?? undefined) }),
-    ...(validityDays !== null ? { validityDays } : {}),
+    credits:
+      draft.kind === "unlimited"
+        ? null
+        : draft.kind === "drop_in"
+          ? 1
+          : parsePositiveInt(draft.credits),
+    validityDays: parsePositiveInt(draft.validityDays),
     sortOrder,
   };
 }
