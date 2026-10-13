@@ -701,6 +701,8 @@ export function useReserveForm(
     paymentDataLoading,
     paymentDataRefreshing,
     needsGovernmentId,
+    /** The quote says the card can be charged here without saving it. */
+    cardPaymentEnabled: quoteQuery.data?.cardPaymentEnabled === true,
     governmentId,
     governmentIdValid,
     governmentIdRejectedMessage:

@@ -200,6 +200,11 @@ export interface EventQuote {
    * exige Clinpays cuando el cobro sale por su RedirectLink.
    */
   requiresGovernmentId?: boolean;
+  /**
+   * La tarjeta se puede cobrar aquí mismo sin guardarla
+   * (`POST /me/payments/card`), en vez de mandar al comprador a Paygate.
+   */
+  cardPaymentEnabled?: boolean;
 }
 
 /**

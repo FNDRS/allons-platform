@@ -47,7 +47,8 @@ export function CardForm({
   saveCard: boolean;
   disabled?: boolean;
   onChange: (patch: Partial<CardDraft>) => void;
-  onSaveCard: (value: boolean) => void;
+  /** Omitted when the card cannot be kept: the toggle is not shown. */
+  onSaveCard?: (value: boolean) => void;
 }) {
   const [cvvFocused, setCvvFocused] = useState(false);
   const digits = digitsOnly(draft.number);
@@ -165,7 +166,9 @@ export function CardForm({
           </label>
         ) : null}
 
-        <SaveToggle checked={saveCard} disabled={disabled} onChange={onSaveCard} />
+        {onSaveCard ? (
+          <SaveToggle checked={saveCard} disabled={disabled} onChange={onSaveCard} />
+        ) : null}
       </form>
 
       <p className="flex items-start gap-2 text-[12px] leading-relaxed text-white/40">

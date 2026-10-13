@@ -14,7 +14,9 @@ import {
   type PaymentMethodList,
 } from "@/lib/api/paymentMethods";
 import {
+  chargeWithCard,
   chargeWithSavedCard,
+  type DirectCardInput,
   type InitiatePaymentInput,
 } from "@/lib/api/payments";
 import {
@@ -46,13 +48,23 @@ const DECLINED_MESSAGE = "Tu banco rechazó la tarjeta. Prueba con otra.";
 export function useCardCheckout({
   userId,
   enabled,
+  directCard = false,
 }: {
   userId: string | null;
   enabled: boolean;
+  /**
+   * The API can charge a typed card without saving it. Used when saving
+   * cards is off (BAC cannot charge saved ones): the card form stays on the
+   * page, with no option to keep the card.
+   */
+  directCard?: boolean;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const saved = usePaymentMethods({ userId, enabled });
+  const direct = directCard && !saved.enrollmentEnabled;
+  const canEnterCard = saved.enrollmentEnabled || direct;
+  const needsIdNumber = saved.needsIdNumber && !direct;
   const threeDs = useThreeDsChallenge();
   const listKey = paymentMethodKeys.list(userId ?? "");
 
@@ -78,18 +90,18 @@ export function useCardCheckout({
   // The list can lose the chosen card under us (removed from the app or
   // another tab): fall back rather than posting an id the API will 404.
   const effectiveChoice: CardChoice = useMemo(() => {
-    if (choice === "new") return saved.enrollmentEnabled ? "new" : "";
+    if (choice === "new") return canEnterCard ? "new" : "";
     if (saved.cards.some((card) => card.id === choice)) return choice;
     const fallback = saved.cards.find((card) => card.isDefault) ?? saved.cards[0];
     if (fallback) return fallback.id;
-    return saved.enrollmentEnabled ? "new" : "";
-  }, [choice, saved.cards, saved.enrollmentEnabled]);
+    return canEnterCard ? "new" : "";
+  }, [choice, saved.cards, canEnterCard]);
 
   const digits = digitsOnly(draft.number);
   const brand = detectBrand(digits);
   const errors = useMemo(
-    () => validateCardDraft(draft, { needsIdNumber: saved.needsIdNumber }),
-    [draft, saved.needsIdNumber],
+    () => validateCardDraft(draft, { needsIdNumber }),
+    [draft, needsIdNumber],
   );
   const draftValid = Object.keys(errors).length === 0;
   const usingNewCard = effectiveChoice === "new";
@@ -110,6 +122,7 @@ export function useCardCheckout({
       (paymentMethodId) => chargeWithSavedCard({ ...input, paymentMethodId }),
       (orderId) =>
         `/pagar/${encodeURIComponent(orderId)}?event=${encodeURIComponent(input.eventId)}`,
+      (card) => chargeWithCard({ ...input, card }),
     );
   }
 
@@ -120,6 +133,8 @@ export function useCardCheckout({
   async function settle(
     charge: (paymentMethodId: string) => Promise<CardChargeResult>,
     hrefFor: (orderId: string) => string,
+    /** Charges the typed card without saving it; needed in direct mode. */
+    chargeDirect?: (card: DirectCardInput) => Promise<CardChargeResult>,
   ) {
     setTouched(true);
     setError(null);
@@ -135,33 +150,47 @@ export function useCardCheckout({
     let enrolledId: string | null = null;
     let paidOrderId: string | null = null;
     try {
-      let paymentMethodId = effectiveChoice;
-      if (usingNewCard) {
+      let result: CardChargeResult;
+      if (usingNewCard && direct) {
         const expiry = parseExpiry(draft.expiry);
         if (!expiry) throw new Error("Fecha inválida");
-        const card = await enrollCard({
+        if (!chargeDirect) throw new Error("Este pago no acepta tarjeta nueva.");
+        result = await chargeDirect({
           cardholderName: draft.name.trim(),
           cardNumber: digits,
           expMonth: expiry.month,
           expYear: expiry.year,
           cvv: draft.cvv,
-          ...(saved.needsIdNumber ? { idNumber: digitsOnly(draft.idNumber) } : {}),
         });
-        enrolledId = card.id;
-        paymentMethodId = card.id;
-        // The card is in the vault now: a retry after a failed charge must
-        // charge it, not vault the same number again.
-        if (saveCard) {
-          setChoice(card.id);
-          queryClient.setQueryData(listKey, (current: PaymentMethodList | undefined) =>
-            current && !current.data.some((row) => row.id === card.id)
-              ? { ...current, data: [...current.data, card], needsIdNumber: false }
-              : current,
-          );
+      } else {
+        let paymentMethodId = effectiveChoice;
+        if (usingNewCard) {
+          const expiry = parseExpiry(draft.expiry);
+          if (!expiry) throw new Error("Fecha inválida");
+          const card = await enrollCard({
+            cardholderName: draft.name.trim(),
+            cardNumber: digits,
+            expMonth: expiry.month,
+            expYear: expiry.year,
+            cvv: draft.cvv,
+            ...(saved.needsIdNumber ? { idNumber: digitsOnly(draft.idNumber) } : {}),
+          });
+          enrolledId = card.id;
+          paymentMethodId = card.id;
+          // The card is in the vault now: a retry after a failed charge must
+          // charge it, not vault the same number again.
+          if (saveCard) {
+            setChoice(card.id);
+            queryClient.setQueryData(listKey, (current: PaymentMethodList | undefined) =>
+              current && !current.data.some((row) => row.id === card.id)
+                ? { ...current, data: [...current.data, card], needsIdNumber: false }
+                : current,
+            );
+          }
         }
-      }
 
-      const result = await charge(paymentMethodId);
+        result = await charge(paymentMethodId);
+      }
       if (result.status === "failed") {
         setError(DECLINED_MESSAGE);
         return;
@@ -227,13 +256,15 @@ export function useCardCheckout({
   }
 
   return {
-    /** False when this deployment has saved cards off: hide the step. */
-    available: saved.available,
+    /** False when there is no card to charge here: hide the step. */
+    available: saved.available || direct,
     loading: saved.loading,
     cards: saved.cards,
-    needsIdNumber: saved.needsIdNumber,
-    /** Whether a new card can be added on this deployment. */
-    enrollmentEnabled: saved.enrollmentEnabled,
+    needsIdNumber,
+    /** Whether a new card can be typed on this deployment. */
+    enrollmentEnabled: canEnterCard,
+    /** Whether the buyer may keep the card. Never in direct mode. */
+    canSaveCard: !direct,
     choice: effectiveChoice,
     setChoice: (next: CardChoice) => {
       setChoice(next);

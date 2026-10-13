@@ -52,6 +52,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
   const checkout = useCardCheckout({
     userId: user?.id ?? null,
     enabled: ready && Boolean(user) && !chargesNothing && Boolean(form.entryType),
+    directCard: form.cardPaymentEnabled,
   });
   const pendingOrder = useActivePaymentOrder(
     eventId,

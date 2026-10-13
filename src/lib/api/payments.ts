@@ -97,6 +97,26 @@ export function initiatePayment(input: InitiatePaymentInput) {
   });
 }
 
+/** The card typed at checkout, charged once and never saved. */
+export interface DirectCardInput {
+  cardholderName: string;
+  cardNumber: string;
+  expMonth: number;
+  expYear: number;
+  cvv: string;
+}
+
+/**
+ * Pays with the card typed at checkout, without saving it. Answers like a
+ * saved-card charge, `pending` with the bank's 3DS window included.
+ */
+export function chargeWithCard(input: InitiatePaymentInput & { card: DirectCardInput }) {
+  return apiFetch<ChargeSavedCardResponse>("/me/payments/card", {
+    method: "POST",
+    body: input,
+  });
+}
+
 /** Pays with a card already in Paygate's vault. Only the card id travels. */
 export function chargeWithSavedCard(input: ChargeSavedCardInput) {
   return apiFetch<ChargeSavedCardResponse>("/me/payments/charge", {
