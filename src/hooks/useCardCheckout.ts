@@ -181,7 +181,7 @@ export function useCardCheckout({
     }
     if (paidOrderId) {
       router.replace(
-        `/pagar/${encodeURIComponent(paidOrderId)}?event=${encodeURIComponent(input.eventId)}`,
+        `/pagar/${encodeURIComponent(paidOrderId)}?event=${encodeURIComponent(input.eventId)}&pago=tarjeta`,
       );
     }
   }
@@ -232,8 +232,8 @@ export function useCardCheckout({
     removeCard,
     /** Card being deleted right now, to disable its row. */
     removingId,
-    /** Order whose bank 3DS window is open, or null. */
-    threeDsOrderId: threeDs.orderId,
+    /** The bank's 3DS window that is open, or null. */
+    threeDsChallenge: threeDs.challenge,
     finishThreeDs: threeDs.finish,
   };
 }

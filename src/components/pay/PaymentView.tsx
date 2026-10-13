@@ -167,9 +167,10 @@ export function PaymentView({ orderId }: { orderId: string }) {
     );
   }
 
-  // waiting | still_pending. Without a Paygate link the order was paid by
-  // card here and only waits on the bank's 3DS answer.
-  const byCard = !link && !estado;
+  // waiting | still_pending. The card checkout sends `pago=tarjeta`: that
+  // order has no Paygate link and only waits on the bank's 3DS answer. It only
+  // changes the copy; the status still comes from the order.
+  const byCard = params.get("pago") === "tarjeta" && !link && !estado;
   return (
     <div className="flex flex-col gap-5">
       {link ? (

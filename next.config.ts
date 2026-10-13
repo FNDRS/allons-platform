@@ -137,7 +137,12 @@ const config: NextConfig = {
           {
             key: "Content-Security-Policy",
             value: contentSecurityPolicy({
-              "script-src": ["'self'", "'unsafe-inline'", "https:"],
+              "script-src": [
+                "'self'",
+                "'unsafe-inline'",
+                "https:",
+                ...(isDev ? ["'unsafe-eval'"] : []),
+              ],
               "style-src": ["'self'", "'unsafe-inline'", "https:"],
               "img-src": ["'self'", "data:", "https:"],
               "font-src": ["'self'", "data:", "https:"],
@@ -151,15 +156,17 @@ const config: NextConfig = {
         ],
       },
       {
-        // Where the bank's window lands when it closes: it opens inside the
-        // frame above and only tells the checkout to look at the order.
+        // Where the bank's window lands when it closes. It loads inside the
+        // sandboxed frame, possibly nested in the bank's own frames (opaque
+        // origins no source can name), and only posts the order id to the
+        // checkout, so any ancestor may frame it. `frame-ancestors` makes
+        // browsers ignore the X-Frame-Options set above.
         source: "/pagar/:orderId/3ds",
         headers: [
           {
             key: "Content-Security-Policy",
-            value: contentSecurityPolicy({ "frame-ancestors": ["'self'"] }),
+            value: contentSecurityPolicy({ "frame-ancestors": ["*"] }),
           },
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
         ],
       },
       {

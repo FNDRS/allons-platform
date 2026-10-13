@@ -1,7 +1,11 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { threeDsStorageKey } from "@/lib/api/payments";
+
+export interface ThreeDsChallengeState {
+  orderId: string;
+  html: string;
+}
 
 /**
  * The bank's 3DS window for one order. `run` shows it and resolves when the
@@ -9,35 +13,21 @@ import { threeDsStorageKey } from "@/lib/api/payments";
  * order itself is then read from the API, never from the window.
  */
 export function useThreeDsChallenge() {
-  const [orderId, setOrderId] = useState<string | null>(null);
+  const [challenge, setChallenge] = useState<ThreeDsChallengeState | null>(null);
   const done = useRef<(() => void) | null>(null);
 
-  const run = useCallback((id: string, html: string) => {
-    try {
-      window.sessionStorage.setItem(threeDsStorageKey(id), html);
-    } catch {
-      /* the frame shows its loading state and the buyer can close it */
-    }
-    setOrderId(id);
+  const run = useCallback((orderId: string, html: string) => {
+    setChallenge({ orderId, html });
     return new Promise<void>((resolve) => {
       done.current = resolve;
     });
   }, []);
 
   const finish = useCallback(() => {
-    setOrderId((current) => {
-      if (current) {
-        try {
-          window.sessionStorage.removeItem(threeDsStorageKey(current));
-        } catch {
-          /* nothing to clear */
-        }
-      }
-      return null;
-    });
+    setChallenge(null);
     done.current?.();
     done.current = null;
   }, []);
 
-  return { orderId, run, finish };
+  return { challenge, run, finish };
 }

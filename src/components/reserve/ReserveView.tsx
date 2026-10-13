@@ -386,7 +386,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
       </div>
 
       <ThreeDsChallenge
-        orderId={checkout.threeDsOrderId}
+        challenge={checkout.threeDsChallenge}
         onDone={checkout.finishThreeDs}
       />
     </div>
