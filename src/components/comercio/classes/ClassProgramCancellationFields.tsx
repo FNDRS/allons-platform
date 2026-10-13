@@ -48,14 +48,17 @@ export function ClassProgramCancellationFields({
       </ClassFormField>
       {policy === "credit" ? (
         <ClassFormField label="Plazo (horas antes de la clase)" hint={windowHint(windowHours)}>
-          <Input
-            inputMode="numeric"
-            placeholder="6"
-            maxLength={3}
-            value={windowHours}
-            onChange={(e) => onChangeWindowHours(e.target.value)}
-            className="sm:max-w-40"
-          />
+          {(id) => (
+            <Input
+              id={id}
+              inputMode="numeric"
+              placeholder="6"
+              maxLength={3}
+              value={windowHours}
+              onChange={(e) => onChangeWindowHours(e.target.value)}
+              className="sm:max-w-40"
+            />
+          )}
         </ClassFormField>
       ) : (
         <p className="text-[12px] leading-5 text-dim">

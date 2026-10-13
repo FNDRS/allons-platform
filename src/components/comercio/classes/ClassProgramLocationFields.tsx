@@ -22,11 +22,14 @@ export function ClassProgramLocationFields(p: Props) {
   return (
     <Card className="flex flex-col gap-4">
       <ClassFormField label="Nombre del lugar (opcional)">
-        <Input
-          placeholder="Ej. Sala principal"
-          value={p.locationName}
-          onChange={(e) => p.setLocationName(e.target.value)}
-        />
+        {(id) => (
+          <Input
+            id={id}
+            placeholder="Ej. Sala principal"
+            value={p.locationName}
+            onChange={(e) => p.setLocationName(e.target.value)}
+          />
+        )}
       </ClassFormField>
       {p.pinned ? (
         <ClassFormField
@@ -41,11 +44,14 @@ export function ClassProgramLocationFields(p: Props) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           <ClassFormField label="Dirección">
-            <Input
-              placeholder="Ej. Col. Palmira, frente al parque"
-              value={p.address}
-              onChange={(e) => p.setAddress(e.target.value)}
-            />
+            {(id) => (
+              <Input
+                id={id}
+                placeholder="Ej. Col. Palmira, frente al parque"
+                value={p.address}
+                onChange={(e) => p.setAddress(e.target.value)}
+              />
+            )}
           </ClassFormField>
           <ClassFormField label="Ciudad" hint="Es lo que ven tus clientes al buscar clases.">
             <Combobox

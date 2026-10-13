@@ -42,7 +42,7 @@ export function ClassScheduleEditorModal({
       {draft ? (
         <div className="flex flex-col gap-4">
           <ClassFormField label="Día">
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Día de la semana">
+            <div className="flex flex-wrap gap-2">
               {WEEKDAY_OPTIONS.map((day) => (
                 <Chip
                   key={day.key}
@@ -56,34 +56,46 @@ export function ClassScheduleEditorModal({
             </div>
           </ClassFormField>
           <ClassFormField label="Hora">
-            <TimePicker
-              value={draft.startTime}
-              onChange={(startTime) => onChange({ startTime })}
-              invalid={Boolean(error) && !draft.startTime}
-            />
+            {(id) => (
+              <TimePicker
+                id={id}
+                value={draft.startTime}
+                onChange={(startTime) => onChange({ startTime })}
+                invalid={Boolean(error) && !draft.startTime}
+              />
+            )}
           </ClassFormField>
           <ClassFormField label="Cupos" hint="Opcional, reemplaza el valor del programa.">
-            <Input
-              inputMode="numeric"
-              placeholder="Sin cambiar"
-              value={draft.capacity}
-              onChange={(e) => onChange({ capacity: digits(e.target.value) })}
-            />
+            {(id) => (
+              <Input
+                id={id}
+                inputMode="numeric"
+                placeholder="Sin cambiar"
+                value={draft.capacity}
+                onChange={(e) => onChange({ capacity: digits(e.target.value) })}
+              />
+            )}
           </ClassFormField>
           <ClassFormField label="Instructor" hint="Opcional, reemplaza el valor del programa.">
-            <Input
-              placeholder="Sin cambiar"
-              value={draft.instructorName}
-              onChange={(e) => onChange({ instructorName: e.target.value })}
-            />
+            {(id) => (
+              <Input
+                id={id}
+                placeholder="Sin cambiar"
+                value={draft.instructorName}
+                onChange={(e) => onChange({ instructorName: e.target.value })}
+              />
+            )}
           </ClassFormField>
           <ClassFormField label="Duración (minutos)" hint="Opcional, reemplaza el valor del programa.">
-            <Input
-              inputMode="numeric"
-              placeholder="Sin cambiar"
-              value={draft.durationMinutes}
-              onChange={(e) => onChange({ durationMinutes: digits(e.target.value) })}
-            />
+            {(id) => (
+              <Input
+                id={id}
+                inputMode="numeric"
+                placeholder="Sin cambiar"
+                value={draft.durationMinutes}
+                onChange={(e) => onChange({ durationMinutes: digits(e.target.value) })}
+              />
+            )}
           </ClassFormField>
           {error ? <p className="text-[13px] text-red-300">{error}</p> : null}
         </div>

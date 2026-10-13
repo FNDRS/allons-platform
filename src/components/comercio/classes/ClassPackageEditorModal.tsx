@@ -45,7 +45,7 @@ export function ClassPackageEditorModal({
       {draft ? (
         <div className="flex flex-col gap-4">
           <ClassFormField label="Tipo" hint={CLASS_PACKAGE_KIND_HINTS[draft.kind]}>
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Tipo de paquete">
+            <div className="flex flex-wrap gap-2">
               {CLASS_PACKAGE_KINDS.map((kind) => (
                 <Chip key={kind} active={draft.kind === kind} onClick={() => onChange({ kind })}>
                   {CLASS_PACKAGE_KIND_LABELS[kind]}
@@ -54,38 +54,50 @@ export function ClassPackageEditorModal({
             </div>
           </ClassFormField>
           <ClassFormField label="Nombre">
-            <Input
-              placeholder="Pack 8 sesiones"
-              value={draft.name}
-              onChange={(e) => onChange({ name: e.target.value })}
-            />
+            {(id) => (
+              <Input
+                id={id}
+                placeholder="Pack 8 sesiones"
+                value={draft.name}
+                onChange={(e) => onChange({ name: e.target.value })}
+              />
+            )}
           </ClassFormField>
           <ClassFormField label="Precio (HNL)" hint="Déjalo vacío o en 0 para un paquete gratis.">
-            <Input
-              inputMode="decimal"
-              placeholder="2000"
-              value={draft.price}
-              onChange={(e) => onChange({ price: e.target.value.replace(/[^0-9.]/g, "") })}
-            />
+            {(id) => (
+              <Input
+                id={id}
+                inputMode="decimal"
+                placeholder="2000"
+                value={draft.price}
+                onChange={(e) => onChange({ price: e.target.value.replace(/[^0-9.]/g, "") })}
+              />
+            )}
           </ClassFormField>
           {draft.kind === "pack" ? (
             <ClassFormField label="Sesiones incluidas">
-              <Input
-                inputMode="numeric"
-                placeholder="8"
-                value={draft.credits}
-                onChange={(e) => onChange({ credits: digits(e.target.value) })}
-              />
+              {(id) => (
+                <Input
+                  id={id}
+                  inputMode="numeric"
+                  placeholder="8"
+                  value={draft.credits}
+                  onChange={(e) => onChange({ credits: digits(e.target.value) })}
+                />
+              )}
             </ClassFormField>
           ) : null}
           {draft.kind !== "drop_in" ? (
             <ClassFormField label={draft.kind === "pack" ? "Vence en (días) · opcional" : "Vence en (días)"}>
-              <Input
-                inputMode="numeric"
-                placeholder="90"
-                value={draft.validityDays}
-                onChange={(e) => onChange({ validityDays: digits(e.target.value) })}
-              />
+              {(id) => (
+                <Input
+                  id={id}
+                  inputMode="numeric"
+                  placeholder="90"
+                  value={draft.validityDays}
+                  onChange={(e) => onChange({ validityDays: digits(e.target.value) })}
+                />
+              )}
             </ClassFormField>
           ) : null}
           {error ? <p className="text-[13px] text-red-300">{error}</p> : null}
