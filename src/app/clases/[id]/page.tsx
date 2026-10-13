@@ -6,6 +6,10 @@ import { ClassProgramView } from "@/components/classes/ClassProgramView";
 import { getPublicClassProgramMeta } from "@/lib/classPrograms.server";
 import { clip, HONDURAS_KEYWORDS, SITE_URL } from "@/lib/seo";
 
+/** Copy used when the class could not be loaded on the server. */
+const GENERIC_TITLE = "Clase en Allons";
+const GENERIC_DESCRIPTION = "Mira los paquetes y reserva tu clase en Allons.";
+
 type Props = { params: Promise<{ id: string }> };
 
 /** One fetch per request, shared by the metadata and the page. */
@@ -13,10 +17,19 @@ const loadProgram = cache(getPublicClassProgramMeta);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const program = await loadProgram(id);
+  const lookup = await loadProgram(id);
   // Metadata resolves before the stream starts, so an unknown or unpublished
   // class still answers with a real 404 status.
-  if (!program) notFound();
+  if (lookup.status === "missing") notFound();
+  // The API did not answer: generic metadata, and the page loads the class itself.
+  if (lookup.status === "unavailable") {
+    return {
+      title: GENERIC_TITLE,
+      description: GENERIC_DESCRIPTION,
+      alternates: { canonical: `/clases/${encodeURIComponent(id)}` },
+    };
+  }
+  const { program } = lookup;
 
   const path = `/clases/${encodeURIComponent(program.id)}`;
   const where = [program.locationName, program.city].filter(Boolean).join(", ");
@@ -55,11 +68,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 /** A recurring class: its packages, and the week's sessions to book. */
 export default async function ClassProgramPage({ params }: Props) {
   const { id } = await params;
-  const program = await loadProgram(id);
-  if (!program) notFound();
+  const lookup = await loadProgram(id);
+  if (lookup.status === "missing") notFound();
   return (
     <AppShell width="detail" bottomTabs={false}>
-      <ClassProgramView programId={program.id} />
+      <ClassProgramView programId={id} />
     </AppShell>
   );
 }

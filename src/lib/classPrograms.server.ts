@@ -20,32 +20,41 @@ function readString(value: unknown): string | null {
 
 /**
  * A published class program, fetched on the server so the page carries real
- * metadata and an unknown id becomes a real 404. `null` on any problem.
+ * metadata and an unknown id becomes a real 404. `missing` only when the API
+ * says so (or the id cannot exist); a timeout or server error is
+ * `unavailable`, so a class that exists is never answered with a 404.
  */
-export async function getPublicClassProgramMeta(
-  id: string,
-): Promise<PublicClassProgramMeta | null> {
-  if (!UUID_RE.test(id)) return null;
+export type ClassProgramLookup =
+  | { status: "found"; program: PublicClassProgramMeta }
+  | { status: "missing" }
+  | { status: "unavailable" };
+
+export async function getPublicClassProgramMeta(id: string): Promise<ClassProgramLookup> {
+  if (!UUID_RE.test(id)) return { status: "missing" };
   try {
     const response = await fetch(
       `${getApiUrl()}/class-programs/${encodeURIComponent(id)}`,
       { next: { revalidate: 300 }, signal: AbortSignal.timeout(TIMEOUT_MS) },
     );
-    if (!response.ok) return null;
+    if (response.status === 404) return { status: "missing" };
+    if (!response.ok) return { status: "unavailable" };
     const raw = (await response.json()) as Record<string, unknown> | null;
     const title = raw ? readString(raw.title) : null;
-    if (!raw || !title) return null;
+    if (!raw || !title) return { status: "unavailable" };
     return {
-      id,
-      title,
-      description: readString(raw.description),
-      discipline: readString(raw.discipline),
-      city: readString(raw.city),
-      locationName: readString(raw.locationName),
-      coverImageUrl: readString(raw.coverImageUrl),
+      status: "found",
+      program: {
+        id,
+        title,
+        description: readString(raw.description),
+        discipline: readString(raw.discipline),
+        city: readString(raw.city),
+        locationName: readString(raw.locationName),
+        coverImageUrl: readString(raw.coverImageUrl),
+      },
     };
   } catch {
-    return null;
+    return { status: "unavailable" };
   }
 }
 
