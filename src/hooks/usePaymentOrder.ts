@@ -1,8 +1,14 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { deliveredIds, getPaymentOrder, paymentKeys } from "@/lib/api/payments";
+import { classProgramKeys, myClassKeys } from "@/lib/api/classPrograms";
+import {
+  deliveredIds,
+  getPaymentOrder,
+  isClassPackageOrder,
+  paymentKeys,
+} from "@/lib/api/payments";
 
 const POLL_MS = 3_000;
 const MAX_POLL_MS = 3 * 60_000;
@@ -23,10 +29,12 @@ export type PayPhase =
  * blocks iframes, so the buyer pays in another tab and this page watches.
  */
 export function usePaymentOrder(orderId: string) {
+  const queryClient = useQueryClient();
   const [pollingSince, setPollingSince] = useState(() => Date.now());
   const [paidSince, setPaidSince] = useState<number | null>(null);
   const [timedOut, setTimedOut] = useState(false);
   const paidRef = useRef<number | null>(null);
+  const refreshedRef = useRef(false);
 
   const query = useQuery({
     queryKey: paymentKeys.order(orderId),
@@ -47,6 +55,7 @@ export function usePaymentOrder(orderId: string) {
   });
 
   const data = query.data;
+  const delivered = data ? deliveredIds(data).length > 0 : false;
 
   useEffect(() => {
     if (data?.status === "paid" && paidRef.current === null) {
@@ -66,6 +75,18 @@ export function usePaymentOrder(orderId: string) {
     return () => clearTimeout(timer);
   }, [data, pollingSince]);
 
+  // New passes change the buyer's balance on the class page; drop the cached one once.
+  useEffect(() => {
+    if (!data || !delivered || refreshedRef.current || !isClassPackageOrder(data)) return;
+    refreshedRef.current = true;
+    void queryClient.invalidateQueries({ queryKey: myClassKeys.passes });
+    if (data.classProgramId) {
+      void queryClient.invalidateQueries({
+        queryKey: classProgramKeys.program(data.classProgramId),
+      });
+    }
+  }, [data, delivered, queryClient]);
+
   const resume = useCallback(() => {
     setTimedOut(false);
     setPollingSince(Date.now());
@@ -77,7 +98,7 @@ export function usePaymentOrder(orderId: string) {
   else if (data) {
     if (data.status === "pending_payment") phase = timedOut ? "still_pending" : "waiting";
     else if (data.status === "paid")
-      phase = deliveredIds(data).length > 0 ? "paid" : "minting";
+      phase = delivered ? "paid" : "minting";
     else phase = "failed";
   }
 
