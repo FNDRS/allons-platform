@@ -7,6 +7,7 @@ import { Hero } from "@/components/app/Hero";
 import { Button } from "@/components/ui/Button";
 import { SectionTitle } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
+import { MyClassesSection } from "@/components/classes/MyClassesSection";
 import { TicketCard } from "./TicketCard";
 
 export function TicketsList() {
@@ -26,6 +27,8 @@ export function TicketsList() {
         guestTitle="Tus tickets"
         body="Muestra el QR o dicta el código en la entrada. También están en la app."
       />
+
+      <MyClassesSection enabled={ready} />
 
       {!ready || isLoading ? (
         <div className="flex flex-col gap-5">
