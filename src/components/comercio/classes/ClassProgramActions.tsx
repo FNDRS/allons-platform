@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Archive, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { Archive, Eye, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { useConfirm } from "@/hooks/useConfirm";
 import { Button, buttonClass } from "@/components/ui/Button";
 import type { ClassProgramStatus, ProviderClassProgram } from "@/lib/api/providerClassPrograms";
@@ -48,6 +48,15 @@ export function ClassProgramActions({
         <Pencil className="size-4" aria-hidden />
         Editar programa
       </Link>
+      {program.status !== "published" ? (
+        <Link
+          href={`/comercio/clases/${encodeURIComponent(program.id)}/vista-previa`}
+          className={buttonClass({ variant: "secondary", size: "sm" })}
+        >
+          <Eye className="size-4" aria-hidden />
+          Vista previa
+        </Link>
+      ) : null}
       {program.status === "archived" ? (
         <Button variant="secondary" size="sm" disabled={busy} onClick={() => onChangeStatus("draft")}>
           <RotateCcw className="size-4" aria-hidden />
