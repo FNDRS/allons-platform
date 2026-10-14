@@ -11,11 +11,14 @@ import { packageDetails } from "./classProgramFormat";
 /** Sellable packages (paquetes) the program offers. */
 export function ClassProgramPackageBuilder({
   packages,
+  catalogPackageCount,
   onAdd,
   onEdit,
   onRemove,
 }: {
   packages: ClassPackageDraft[];
+  /** Active comercio-wide packages that already sell this program. */
+  catalogPackageCount: number;
   onAdd: () => void;
   onEdit: (id: string) => void;
   onRemove: (id: string) => void;
@@ -25,7 +28,11 @@ export function ClassProgramPackageBuilder({
       title="Paquetes"
       intro="Define cómo se venden las sesiones: entrada suelta, paquetes de varias sesiones o un pase ilimitado."
       addLabel="Agregar paquete"
-      emptyHint="Agrega al menos un paquete para poder publicar el programa."
+      emptyHint={
+        catalogPackageCount > 0
+          ? `Este programa ya se vende con ${catalogPackageCount} ${catalogPackageCount === 1 ? "paquete" : "paquetes"} de Paquetes y membresías. Agrega uno aquí solo si es exclusivo de este programa.`
+          : "Agrega un paquete aquí o en Paquetes y membresías para poder publicar el programa."
+      }
       isEmpty={packages.length === 0}
       onAdd={onAdd}
     >

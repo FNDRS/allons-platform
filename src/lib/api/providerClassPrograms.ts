@@ -20,6 +20,10 @@ export interface ClassSessionTemplate {
   durationMinutes: number | null;
   capacity: number | null;
   instructorName: string | null;
+  coachId: string | null;
+  /** `YYYY-MM-DD`, inclusive. The slot only runs inside this range. */
+  startsOn: string | null;
+  endsOn: string | null;
   active: boolean;
 }
 
@@ -52,6 +56,7 @@ export interface ProviderClassProgram {
   description: string | null;
   discipline: string | null;
   instructorName: string | null;
+  coachId: string | null;
   durationMinutes: number;
   capacityPerSession: number;
   locationName: string | null;
@@ -76,6 +81,7 @@ export interface ClassProgramInput {
   title: string;
   description?: string | null;
   instructorName?: string | null;
+  coachId?: string | null;
   durationMinutes: number;
   capacityPerSession: number;
   locationName?: string | null;
@@ -95,6 +101,9 @@ export interface ClassSessionTemplateInput {
   durationMinutes?: number | null;
   capacity?: number | null;
   instructorName?: string | null;
+  coachId?: string | null;
+  startsOn?: string | null;
+  endsOn?: string | null;
 }
 
 export interface ClassPackageInput {
