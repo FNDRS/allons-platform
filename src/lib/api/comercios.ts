@@ -178,8 +178,38 @@ export function listComercioClassPrograms(id: string) {
   );
 }
 
+/** One hit from `GET /providers/search`, matched by name or handle. */
+export interface ComercioSearchResult {
+  id: string;
+  name: string;
+  handle: string | null;
+  logoUrl: string | null;
+  brandLogoColor: string | null;
+  city: string | null;
+  followerCount: number;
+  eventCount: number;
+  classCount: number;
+}
+
+/** The API answers an empty list for terms shorter than this. */
+export const COMERCIO_SEARCH_MIN_LENGTH = 2;
+
+export function searchComercios(term: string) {
+  const params = new URLSearchParams({ q: term, limit: "6" });
+  return apiFetch<ComercioSearchResult[]>(`/providers/search?${params}`, {
+    auth: false,
+  });
+}
+
+/** Public profile path: `/<handle>`, or `/<id>` when it has no handle yet. */
+export function comercioHref(comercio: Pick<ComercioSearchResult, "id" | "handle">) {
+  const slug = comercio.handle?.trim().replace(/^@/, "") || comercio.id;
+  return `/${encodeURIComponent(slug)}`;
+}
+
 export const comercioKeys = {
   profile: (key: string) => ["comercios", key] as const,
+  search: (term: string) => ["comercios", "search", term] as const,
   events: (id: string, scope: ComercioEventScope) =>
     ["comercios", id, "events", scope] as const,
   classPrograms: (id: string) => ["comercios", id, "class-programs"] as const,

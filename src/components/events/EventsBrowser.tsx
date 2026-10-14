@@ -2,14 +2,20 @@
 
 import { Search } from "lucide-react";
 import { useEvents } from "@/hooks/useEvents";
+import { useComercioSearch } from "@/hooks/useComercioSearch";
 import { Hero } from "@/components/app/Hero";
 import { SmoothInput } from "@/components/ui/SmoothInput";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { DiscoverClassesSection } from "@/components/classes/DiscoverClassesSection";
+import { ComercioSearchSection } from "@/components/comercios/ComercioSearchSection";
 import { EventCard } from "./EventCard";
 
 export function EventsBrowser() {
   const { events, search, setSearch, isLoading, error, refetch } = useEvents();
+  const comercioSearch = useComercioSearch(search);
+  // A search that only matched comercios should not also say "no events".
+  const hideEmptyEvents =
+    comercioSearch.loading || comercioSearch.comercios.length > 0;
 
   return (
     <div>
@@ -34,12 +40,14 @@ export function EventsBrowser() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="¿Qué plan buscas?"
-          aria-label="Buscar eventos"
+          aria-label="Buscar eventos, clases o comercios"
           prefix={<Search className="size-4" aria-hidden />}
           wrapperClassName="max-w-xl !bg-[#070708] !border-white/10 focus-within:!bg-[#070708] focus-within:!border-white/20"
           className="[&::-webkit-search-cancel-button]:hidden"
         />
       </Hero>
+
+      <ComercioSearchSection comercios={comercioSearch.comercios} />
 
       {isLoading ? (
         <div className="grid min-w-0 grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2">
@@ -56,14 +64,16 @@ export function EventsBrowser() {
       ) : error ? (
         <ErrorState message={(error as Error).message} onRetry={() => void refetch()} />
       ) : events.length === 0 ? (
-        <EmptyState
-          title="No hay eventos por ahora"
-          body={
-            search
-              ? "Prueba con otra búsqueda."
-              : "Cuando un comercio publique algo lo verás aquí."
-          }
-        />
+        hideEmptyEvents ? null : (
+          <EmptyState
+            title="No hay eventos por ahora"
+            body={
+              search
+                ? "Prueba con otra búsqueda."
+                : "Cuando un comercio publique algo lo verás aquí."
+            }
+          />
+        )
       ) : (
         <div className="grid min-w-0 grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2">
           {events.map((event, index) => (
