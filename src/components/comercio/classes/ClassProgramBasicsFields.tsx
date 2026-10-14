@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/Card";
 import { Input, Textarea } from "@/components/ui/Field";
 import type { useClassProgramForm } from "@/hooks/useClassProgramForm";
+import { ClassCoachSelect } from "./ClassCoachSelect";
 import { ClassFormField } from "./ClassFormField";
 
 type Props = Pick<
@@ -9,15 +10,17 @@ type Props = Pick<
   | "setTitle"
   | "description"
   | "setDescription"
-  | "instructorName"
-  | "setInstructorName"
+  | "coaches"
+  | "coachId"
+  | "setCoachId"
+  | "legacyInstructor"
   | "durationMinutes"
   | "setDurationMinutes"
   | "capacityPerSession"
   | "setCapacityPerSession"
 >;
 
-/** Name, description, default instructor, session length and capacity. */
+/** Name, description, default coach, session length and capacity. */
 export function ClassProgramBasicsFields(p: Props) {
   return (
     <Card className="flex flex-col gap-4">
@@ -43,15 +46,21 @@ export function ClassProgramBasicsFields(p: Props) {
           />
         )}
       </ClassFormField>
-      <ClassFormField label="Instructor (por defecto)">
-        {(id) => (
-          <Input
-            id={id}
-            placeholder="Nombre del instructor"
-            value={p.instructorName}
-            onChange={(e) => p.setInstructorName(e.target.value)}
-          />
-        )}
+      <ClassFormField
+        label="Coach (por defecto)"
+        hint={
+          p.legacyInstructor
+            ? "Ese nombre se escribió a mano antes de los coaches. Elige un coach para reemplazarlo."
+            : "Los coaches se agregan en la pestaña Coaches de Clases."
+        }
+      >
+        <ClassCoachSelect
+          coaches={p.coaches}
+          value={p.coachId}
+          onChange={p.setCoachId}
+          noneLabel={p.legacyInstructor ?? "Sin coach"}
+          aria-label="Coach por defecto"
+        />
       </ClassFormField>
       <div className="grid gap-4 sm:grid-cols-2">
         <ClassFormField label="Duración por sesión (minutos)">

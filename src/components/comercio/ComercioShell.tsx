@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   Smartphone,
   Tag,
+  UserRound,
   Users,
   Wallet,
 } from "lucide-react";
@@ -49,6 +50,12 @@ const NAV: NavItem[] = [
     href: "/comercio/clases",
     label: "Clases",
     Icon: Dumbbell,
+    exact: false,
+  },
+  {
+    href: "/comercio/clientes",
+    label: "Clientes",
+    Icon: UserRound,
     exact: false,
   },
   {

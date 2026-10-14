@@ -29,12 +29,14 @@ export function ClassProgramForm({ program }: { program: ProviderClassProgram | 
       />
       <ClassProgramScheduleBuilder
         schedules={f.schedule.schedules}
+        coaches={f.coaches}
         onAdd={f.schedule.openNew}
         onEdit={f.schedule.openExisting}
         onRemove={f.schedule.remove}
       />
       <ClassProgramPackageBuilder
         packages={f.packages.packages}
+        catalogPackageCount={f.catalogPackageCount}
         onAdd={f.packages.openNew}
         onEdit={f.packages.openExisting}
         onRemove={f.packages.remove}
@@ -51,6 +53,7 @@ export function ClassProgramForm({ program }: { program: ProviderClassProgram | 
       <ClassScheduleEditorModal
         draft={f.schedule.editorDraft}
         error={f.schedule.editorError}
+        coaches={f.coaches}
         onChange={f.schedule.updateEditor}
         onCancel={f.schedule.closeEditor}
         onConfirm={f.schedule.commitEditor}

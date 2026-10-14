@@ -18,6 +18,8 @@ import {
   type ProviderClassProgram,
 } from "@/lib/api/providerClassPrograms";
 import { classProgramErrorMessage } from "@/hooks/useProviderClassPrograms";
+import { catalogCoversProgram, useClassCatalog } from "@/hooks/useClassCatalog";
+import { useClassCoaches } from "@/hooks/useClassCoaches";
 import { useClassPackagesForm } from "./class-program-form/useClassPackagesForm";
 import { useClassSessionTemplatesForm } from "./class-program-form/useClassSessionTemplatesForm";
 
@@ -33,7 +35,13 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
 
   const [title, setTitle] = useState(program?.title ?? "");
   const [description, setDescription] = useState(program?.description ?? "");
-  const [instructorName, setInstructorName] = useState(program?.instructorName ?? "");
+  const [coachId, setCoachId] = useState(program?.coachId ?? "");
+  // Free-text instructor from before coaches existed, kept until a coach is picked.
+  const [legacyInstructor, setLegacyInstructor] = useState(
+    program && !program.coachId ? (program.instructorName ?? null) : null,
+  );
+  const { coaches } = useClassCoaches();
+  const catalog = useClassCatalog();
   const [durationMinutes, setDurationMinutes] = useState(
     program ? String(program.durationMinutes) : "60",
   );
@@ -53,6 +61,9 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
     program?.sessionTemplates.filter((template) => template.active),
   );
   const packages = useClassPackagesForm(program?.packages.filter((item) => item.active));
+  const catalogPackageCount = catalog.items.filter((item) =>
+    catalogCoversProgram(item, program?.id ?? null),
+  ).length;
 
   // A pin set from the app decides the city on the API, so the web keeps it
   // as is instead of offering fields that the pin would silently override.
@@ -69,7 +80,7 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
     !pinned && !address.trim() ? "la dirección" : null,
     !pinned && !city.trim() ? "la ciudad" : null,
     !schedule.hasSchedules ? "un horario" : null,
-    !packages.hasPackages ? "un paquete" : null,
+    !packages.hasPackages && catalogPackageCount === 0 ? "un paquete" : null,
   ].filter((item): item is string => item !== null);
   const canPublish = canSaveDraft && missingForPublish.length === 0;
 
@@ -80,7 +91,10 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
       const fields = {
         title: title.trim(),
         description: description.trim() || null,
-        instructorName: instructorName.trim() || null,
+        coachId: coachId || null,
+        // A coach names the program on the server; without one the old free
+        // text stays, or clears once the comercio picked "Sin coach".
+        ...(coachId ? {} : { instructorName: legacyInstructor }),
         durationMinutes: Number(durationMinutes),
         capacityPerSession: Number(capacityPerSession),
         locationName: locationName.trim() || null,
@@ -158,8 +172,14 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
     setTitle,
     description,
     setDescription,
-    instructorName,
-    setInstructorName,
+    coaches,
+    coachId,
+    legacyInstructor,
+    setCoachId: (value: string) => {
+      setCoachId(value);
+      setLegacyInstructor(null);
+    },
+    catalogPackageCount,
     durationMinutes,
     setDurationMinutes: (value: string) => setDurationMinutes(digitsOnly(value)),
     capacityPerSession,
