@@ -249,6 +249,10 @@ export function useReserveForm(
     event?.ticketMode === "free" || (entryType ? entryType.priceCents === 0 : false);
   const donationCents = Math.max(0, Math.round((Number(donation) || 0) * 100));
   const donationAllowed = Boolean(entryType?.donationEnabled) && !isFree;
+  // One ticket type per order, so its own suggestion is the one to offer.
+  const suggestedDonationCents = donationAllowed
+    ? (entryType?.suggestedDonationCents ?? null)
+    : null;
   const ticketsCents = (entryType?.priceCents ?? 0) * quantity;
   const subtotalCents = ticketsCents + (donationAllowed ? donationCents : 0);
 
@@ -676,6 +680,7 @@ export function useReserveForm(
     donationAllowed,
     donation,
     setDonation,
+    suggestedDonationCents,
     ticketsCents,
     donationCents,
     subtotalCents,
