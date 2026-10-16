@@ -4,22 +4,31 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { Button, buttonClass } from "@/components/ui/Button";
+import { isApiError } from "@/lib/api/client";
+import { redeemAuthInvite } from "@/lib/api/authInvites";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+
+export type InviteCredential =
+  | { kind: "invite"; token: string }
+  | { kind: "otp"; tokenHash: string; type: string };
+
+const DEAD_LINK =
+  "Este enlace ya se usó o fue reemplazado por uno nuevo. Pide al admin de Allons que reenvíe la invitación.";
 
 /**
  * The invite can be finished on the web or in the app.
  *
  * The token is single use, so it's only redeemed on a tap: a mail scanner
- * that prefetches the page must not burn it. Once redeemed there is a
- * session, and /login in update mode asks for the new password.
+ * that prefetches the page must not burn it. Our own invite token is first
+ * traded for a fresh Supabase one, so it doesn't matter how long the mail sat
+ * unread. Once redeemed there is a session, and /login in update mode asks
+ * for the new password.
  */
 export function VerifyInviteActions({
-  tokenHash,
-  type,
+  credential,
   appUrl,
 }: {
-  tokenHash: string;
-  type: string;
+  credential: InviteCredential;
   appUrl: string;
 }) {
   const router = useRouter();
@@ -30,19 +39,22 @@ export function VerifyInviteActions({
     setBusy(true);
     setError(null);
     try {
+      const otp =
+        credential.kind === "invite"
+          ? await redeemAuthInvite(credential.token)
+          : { tokenHash: credential.tokenHash, type: credential.type };
       const { error: err } = await getSupabaseBrowser().auth.verifyOtp({
-        token_hash: tokenHash,
-        type: type as EmailOtpType,
+        token_hash: otp.tokenHash,
+        type: otp.type as EmailOtpType,
       });
       if (err) throw err;
       router.replace("/login?mode=update&next=/comercio");
     } catch (err) {
       const message = (err as Error).message ?? "";
-      setError(
-        /expired|invalid/i.test(message)
-          ? "Este enlace ya expiró o ya se usó. Pide al admin de Allons que reenvíe la invitación."
-          : "No se pudo abrir la invitación. Intenta de nuevo.",
-      );
+      const dead = isApiError(err)
+        ? err.status === 404 || err.status === 410
+        : /expired|invalid/i.test(message);
+      setError(dead ? DEAD_LINK : "No se pudo abrir la invitación. Intenta de nuevo.");
       setBusy(false);
     }
   }
