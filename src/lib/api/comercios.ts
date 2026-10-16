@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import type { EventDonationInfo } from "@/lib/eventDonations";
 import type { EventListItem, EventProvider } from "./events";
 
 /** One review left on a comercio, newest first from the API. */
@@ -29,6 +30,11 @@ export interface ComercioProfile {
   rating: number | null;
   reviewCount: number;
   reviews: ComercioReview[];
+  /**
+   * Accounts and links for direct donations, set in the admin. Null when off;
+   * absent on an API older than the field.
+   */
+  donationInfo?: EventDonationInfo | null;
   createdAt: string | null;
 }
 

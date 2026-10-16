@@ -24,7 +24,8 @@ export function ComercioProfileView({
   appStoreLink: string;
 }) {
   const catalogue = useComercioCatalogue(profile);
-  const donation = donationInfoForComercio(profile.id);
+  // The hardcoded map stays as a fallback until FUNHOCAM's row is backfilled.
+  const donation = profile.donationInfo ?? donationInfoForComercio(profile.id);
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-8">
