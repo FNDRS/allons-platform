@@ -10,7 +10,9 @@ import {
 import { Button } from "@/components/ui/Button";
 import { ListedPrice } from "@/components/ui/ListedPrice";
 import { ErrorState } from "@/components/ui/States";
+import { donationInfoForEvent } from "@/lib/eventDonations";
 import { formatPriceCents } from "@/lib/format";
+import { DonationCard } from "./DonationCard";
 import {
   EventDetailBodySkeleton,
   EventDetailSkeleton,
@@ -36,6 +38,7 @@ export function EventDetailView({
   const { event, reserve, isLoading, isPlaceholderData, error, refetch } =
     useEventDetail(id);
   const partial = Boolean(event) && isPlaceholderData;
+  const donation = donationInfoForEvent(id);
   const types = partial ? [] : (event?.entryTypes ?? []);
   const listed = useBuyerUnitPrices(
     id,
@@ -88,6 +91,7 @@ export function EventDetailView({
           />
           <EventDescription text={event.description} />
           <KitPickupCard info={event.kitPickupInfo} />
+          {donation ? <DonationCard info={donation} /> : null}
           <RefundPolicyNote event={event} />
         </>
       )}

@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import Link from "next/link";
-import { Flag, Handshake, Package, Undo2 } from "lucide-react";
+import { Flag, Handshake, Undo2 } from "lucide-react";
 import { formatEventWhen } from "@/lib/allons-api";
 import { instagramLink } from "@/lib/instagram";
 import { whatsappLink } from "@/lib/whatsapp";
@@ -18,7 +18,7 @@ import {
 import { formatDateTime } from "@/lib/format";
 import { ListedPrice } from "@/components/ui/ListedPrice";
 import { Card, SectionTitle } from "@/components/ui/Card";
-import { CalendarMark, MetaTile, PinMark } from "@/components/ui/MetaTile";
+import { CalendarMark, KitMark, MetaTile, PinMark } from "@/components/ui/MetaTile";
 import { EventCover, EventPosterWash } from "./EventCover";
 
 export function EventHero({ event }: { event: EventDetail }) {
@@ -296,8 +296,8 @@ export function KitPickupCard({ info }: { info: string | null | undefined }) {
   if (!info?.trim()) return null;
   return (
     <Card className="flex gap-4">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-        <Package className="size-4" aria-hidden />
+      <span className="grid size-10 shrink-0 place-items-center rounded-[13px] bg-white/[0.045] text-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/[0.08]">
+        <KitMark />
       </span>
       <div>
         <p className="text-[15px] font-bold tracking-tight">Retiro de kit</p>

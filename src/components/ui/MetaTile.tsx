@@ -85,19 +85,18 @@ export function KitMark() {
   return (
     <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" aria-hidden>
       <path
-        d="M8 7.5 12 5l4 2.5M4.5 9.5 12 13.5l7.5-4M12 13.5V20"
+        d="M12 3.75 19.25 7.9v8.2L12 20.25 4.75 16.1V7.9L12 3.75Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M4.75 7.9 12 12.05l7.25-4.15M12 12.05v8.2M8.4 5.8l7.25 4.15v2.8"
         stroke="currentColor"
         strokeWidth="1.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path
-        d="M4.5 9.5v6.2c0 .6.3 1.1.8 1.4L12 21l6.7-3.9c.5-.3.8-.8.8-1.4V9.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
     </svg>
   );
 }
-
