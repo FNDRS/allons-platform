@@ -267,6 +267,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
         <DonationField
           value={form.donation}
           onChange={form.setDonation}
+          suggestedCents={form.suggestedDonationCents}
           step={4 + (form.hasResourceGroups ? 1 : 0) + idStep}
         />
       ) : null}

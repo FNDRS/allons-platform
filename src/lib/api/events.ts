@@ -53,6 +53,11 @@ export interface EventEntryType {
   saleStartsAt: string | null;
   saleEndsAt: string | null;
   donationEnabled?: boolean;
+  /**
+   * Contribution the organizer suggests, in cents. Offered as a button at
+   * checkout, never prefilled. Null without a suggestion or contributions.
+   */
+  suggestedDonationCents?: number | null;
   soldOut?: boolean;
   remaining: number | null;
   planKind?: string | null;

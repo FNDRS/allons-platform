@@ -420,15 +420,35 @@ function QuestionField({
   );
 }
 
+/** "L 100", or "L 99.50" when there are cents. */
+function formatLempiras(cents: number): string {
+  return `L ${(cents / 100).toLocaleString("es-HN", {
+    minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 export function DonationField({
   value,
   onChange,
+  suggestedCents,
   step = 4,
 }: {
   value: string;
   onChange: (value: string) => void;
+  /**
+   * What the organizer suggests, in cents. Shown as a button that fills the
+   * amount; the field itself starts empty, because a contribution is not
+   * refundable and a prefilled one ends up paid by accident.
+   */
+  suggestedCents?: number | null;
   step?: number;
 }) {
+  const suggestion =
+    suggestedCents != null && suggestedCents > 0 ? suggestedCents : null;
+  const typedCents = Math.round((Number(value) || 0) * 100);
+  const suggestionPicked = suggestion !== null && typedCents === suggestion;
+
   return (
     <section>
       <StepHeading n={step} hint="opcional">
@@ -438,6 +458,26 @@ export function DonationField({
         <p className="text-[14px] leading-6 text-white/50">
           Este evento acepta un aporte extra además de la entrada.
         </p>
+        {suggestion !== null ? (
+          <div className="mt-3">
+            <button
+              type="button"
+              aria-pressed={suggestionPicked}
+              onClick={() => onChange(suggestionPicked ? "" : String(suggestion / 100))}
+              className={`h-11 rounded-[12px] border px-4 text-[15px] font-semibold transition ${
+                suggestionPicked
+                  ? "border-accent bg-accent text-black"
+                  : "border-border bg-surface-2 text-white/85 hover:border-border-strong hover:bg-white/[0.08]"
+              }`}
+            >
+              Aportar {formatLempiras(suggestion)}
+            </button>
+            <p className="mt-2 text-[12px] leading-5 text-white/35">
+              Monto sugerido por el organizador. Puedes escribir otro o dejarlo en
+              blanco.
+            </p>
+          </div>
+        ) : null}
         <div className="mt-3 flex items-center gap-2">
           <span className="text-lg font-bold text-white/40">L</span>
           <Input
