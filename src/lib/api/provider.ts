@@ -104,7 +104,14 @@ export interface ProviderEventDetail extends ProviderEventListItem {
   address: string | null;
   category?: string | null;
   ticketTypes: ProviderTicketType[];
-  questions: Array<{ id: string; label: string; kind: string; required: boolean }>;
+  questions: Array<{
+    id: string;
+    label: string;
+    kind: string;
+    required: boolean;
+    /** Set on questions a campaign hub copied in; those are not the comercio's. */
+    campaignQuestionId?: string | null;
+  }>;
   kitPickupInfo?: string | null;
   refundPolicy?: string;
   refundPartialPct?: number | null;
@@ -334,6 +341,24 @@ export function getHourlySales(id: string, date?: string) {
   );
 }
 
+export interface ProviderEventAnswers {
+  questions: Array<{ id: string; label: string }>;
+  attendees: Array<{
+    ticketId: string;
+    code: string;
+    name: string;
+    createdAt: string;
+    /** Keyed by question id; a question left blank is absent. */
+    answers: Record<string, string>;
+  }>;
+}
+
+export function getProviderEventAnswers(id: string) {
+  return apiFetch<ProviderEventAnswers>(
+    `/provider/events/${encodeURIComponent(id)}/answers`,
+  );
+}
+
 export function getProviderPayments(id: string) {
   return apiFetch<ProviderPayments>(
     `/provider/events/${encodeURIComponent(id)}/payments`,
@@ -494,6 +519,7 @@ export const providerKeys = {
   hourly: (id: string, date?: string) =>
     ["provider", "events", id, "hourly", date ?? "today"] as const,
   payments: (id: string) => ["provider", "events", id, "payments"] as const,
+  answers: (id: string) => ["provider", "events", id, "answers"] as const,
   resources: (id: string) => ["provider", "events", id, "resources"] as const,
   staff: ["provider", "staff"] as const,
   discounts: ["provider", "discounts"] as const,

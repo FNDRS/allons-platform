@@ -16,6 +16,7 @@ import { formatCardDay, formatCardTime, formatHNL, formatNumber } from "@/lib/fo
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { glassCtaClass } from "@/components/ui/cta";
+import { EventAnswersSection } from "./EventAnswersSection";
 import { PaymentsTable } from "./EventTables";
 import { HourlySalesChart } from "./HourlySalesChart";
 import { KpiTile } from "./KpiTile";
@@ -91,6 +92,10 @@ export function EventConfigView({ eventId }: { eventId: string }) {
     );
   }
   const data = event.data;
+  // Only fetch answers when the event asks its own questions.
+  const ownQuestions = (data.questions ?? []).some(
+    (question) => !question.campaignQuestionId,
+  );
   const status = STATUS[data.status] ?? data.status;
   const day = formatCardDay(data.startsAt);
   const time = formatCardTime(data.startsAt);
@@ -259,6 +264,10 @@ export function EventConfigView({ eventId }: { eventId: string }) {
         />
       ) : hourly.isLoading ? (
         <Skeleton className="h-56 rounded-[24px]" />
+      ) : null}
+
+      {ownQuestions ? (
+        <EventAnswersSection eventId={eventId} enabled={ready} />
       ) : null}
 
       {payments.isLoading ? (
