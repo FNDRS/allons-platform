@@ -280,6 +280,7 @@ export function EventConfigView({ eventId }: { eventId: string }) {
       ) : (
         <PaymentsTable
           rows={payments.data?.data ?? []}
+          reservations={payments.data?.reservations ?? []}
           types={data.ticketTypes ?? []}
         />
       )}

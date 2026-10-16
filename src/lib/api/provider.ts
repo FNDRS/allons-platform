@@ -153,11 +153,25 @@ export interface ProviderPaymentRow {
   authCode?: string | null;
 }
 
+/** A free reservation: tickets with no payment order, grouped by when they were minted. */
+export interface ProviderFreeReservation {
+  /** Its first ticket's id; there is no order. */
+  reservationId: string;
+  quantity: number;
+  createdAt: string;
+  entryTypeId: string | null;
+  buyerUserId: string | null;
+  buyerName: string | null;
+  holders: Array<{ name: string }>;
+}
+
 export interface ProviderPayments {
   eventId: string;
   eventTitle: string;
   summary: Record<string, unknown>;
   data: ProviderPaymentRow[];
+  /** Missing on an API that predates free reservations in this list. */
+  reservations?: ProviderFreeReservation[];
 }
 
 export interface ProviderResource {
