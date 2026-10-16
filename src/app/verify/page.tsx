@@ -8,19 +8,30 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-  searchParams: Promise<{ token_hash?: string; type?: string }>;
+  searchParams: Promise<{ invite?: string; token_hash?: string; type?: string }>;
 };
 
-function buildAppDeepLink(tokenHash: string, type: string) {
-  const qs = new URLSearchParams({ token_hash: tokenHash, type });
-  return `allons://verify?${qs.toString()}`;
+function buildAppDeepLink(params: Record<string, string>) {
+  return `allons://verify?${new URLSearchParams(params).toString()}`;
 }
 
 export default async function VerifyInvitePage({ searchParams }: Props) {
   const sp = await searchParams;
+  // `invite` is our own token, which lasts for weeks. `token_hash` is a
+  // Supabase token straight in the mail, from invites sent before that.
+  const invite = sp.invite?.trim() ?? "";
   const tokenHash = sp.token_hash?.trim() ?? "";
   const type = sp.type?.trim() || "invite";
-  const appUrl = tokenHash ? buildAppDeepLink(tokenHash, type) : null;
+  const credential = invite
+    ? ({ kind: "invite", token: invite } as const)
+    : tokenHash
+      ? ({ kind: "otp", tokenHash, type } as const)
+      : null;
+  const appUrl = invite
+    ? buildAppDeepLink({ invite })
+    : tokenHash
+      ? buildAppDeepLink({ token_hash: tokenHash, type })
+      : null;
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-[#131516] px-6 py-12 text-[#fbfbfb]">
@@ -31,8 +42,8 @@ export default async function VerifyInvitePage({ searchParams }: Props) {
           Crea tu contraseña aquí mismo, o ábrela en la app si ya la tienes instalada.
         </p>
 
-        {appUrl ? (
-          <VerifyInviteActions tokenHash={tokenHash} type={type} appUrl={appUrl} />
+        {credential && appUrl ? (
+          <VerifyInviteActions credential={credential} appUrl={appUrl} />
         ) : (
           <p className="mt-8 text-sm text-amber-300/90">
             Enlace incompleto. Abre de nuevo el correo de invitación o pide al
