@@ -289,6 +289,9 @@ export function HolderCard({
   );
 }
 
+/** Up to this many options render as buttons; more go in a dropdown. */
+const CHOICE_CHIPS_MAX = 8;
+
 function QuestionField({
   question,
   value,
@@ -330,6 +333,44 @@ function QuestionField({
       </div>
     );
   }
+  const options = question.options ?? [];
+  // A short list (sizes, yes/maybe/no) reads better as buttons than behind a
+  // dropdown, and keeps the page scrollable: Radix Select locks the scroll
+  // while open, which trapped buyers whose list ran under the total bar.
+  if ((kind === "select" || kind === "radio") && options.length <= CHOICE_CHIPS_MAX) {
+    return (
+      <div>
+        <Label hint={hint}>{question.label}</Label>
+        <div
+          role="radiogroup"
+          aria-label={question.label}
+          aria-invalid={Boolean(error)}
+          className="flex flex-wrap gap-2"
+        >
+          {options.map((option) => {
+            const selected = value === option;
+            return (
+              <button
+                key={option}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => onChange(option)}
+                className={`h-11 min-w-12 rounded-[12px] border px-4 text-[15px] font-semibold transition ${
+                  selected
+                    ? "border-accent bg-accent text-black"
+                    : "border-border bg-surface-2 text-white/85 hover:border-border-strong hover:bg-white/[0.08]"
+                }`}
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
+        <FieldError>{error}</FieldError>
+      </div>
+    );
+  }
   if (kind === "select" || kind === "radio") {
     return (
       <div>
@@ -341,7 +382,7 @@ function QuestionField({
           aria-label={question.label}
           aria-invalid={Boolean(error)}
         >
-          {(question.options ?? []).map((option) => (
+          {options.map((option) => (
             <SelectItem key={option} value={option}>
               {option}
             </SelectItem>
