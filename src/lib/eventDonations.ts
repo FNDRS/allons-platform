@@ -4,9 +4,9 @@
  * id and by comercio id (not handle: a handle can be renamed). The money
  * never goes through us: the page only lists where to send it.
  *
- * Events now carry this from the API (`EventDetail.donationInfo`, set in the
- * admin). The event map below is only the fallback until that data is
- * backfilled; the comercio map has no API source yet.
+ * Events and comercios now carry this from the API (`EventDetail.donationInfo`
+ * and `ComercioProfile.donationInfo`, set in the admin). The maps below are
+ * only the fallback until that data is backfilled.
  */
 export type DonationAccount = {
   bank: string;
