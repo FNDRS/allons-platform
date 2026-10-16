@@ -25,6 +25,8 @@ export type EventDonationInfo = {
   beneficiary: string;
   accounts: DonationAccount[];
   links: DonationLink[];
+  /** Free text under the accounts, e.g. that cash is taken at the venue. */
+  note?: string | null;
 };
 
 const FUNHOCAM: EventDonationInfo = {

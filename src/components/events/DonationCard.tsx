@@ -95,32 +95,40 @@ export function DonationCard({
         </div>
       </div>
 
-      <ul className="flex flex-col divide-y divide-white/[0.06]">
-        {info.accounts.map((account) => (
-          <li key={account.bank} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
-            <p className="text-[13px] font-semibold text-white/80">{account.bank}</p>
-            <div className={`grid gap-2 ${compact ? "" : "sm:grid-cols-2"}`}>
-              {account.hnl ? <AccountNumber label="Lempiras" number={account.hnl} /> : null}
-              {account.usd ? <AccountNumber label="Dólares" number={account.usd} /> : null}
-            </div>
-          </li>
-        ))}
-      </ul>
+      {info.accounts.length > 0 ? (
+        <ul className="flex flex-col divide-y divide-white/[0.06]">
+          {info.accounts.map((account) => (
+            <li key={account.bank} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
+              <p className="text-[13px] font-semibold text-white/80">{account.bank}</p>
+              <div className={`grid gap-2 ${compact ? "" : "sm:grid-cols-2"}`}>
+                {account.hnl ? <AccountNumber label="Lempiras" number={account.hnl} /> : null}
+                {account.usd ? <AccountNumber label="Dólares" number={account.usd} /> : null}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
-      <div className="flex flex-wrap gap-2">
-        {info.links.map((link) => (
-          <a
-            key={link.label}
-            href={link.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.045] px-3 py-1.5 text-[13px] ring-1 ring-white/[0.08] transition hover:bg-white/[0.08]"
-          >
-            <span className="text-white/45">{link.label}</span>
-            <span className="font-semibold text-white/85">{link.value}</span>
-          </a>
-        ))}
-      </div>
+      {info.note ? (
+        <p className="whitespace-pre-line text-[13px] leading-5 text-white/70">{info.note}</p>
+      ) : null}
+
+      {info.links.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {info.links.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.045] px-3 py-1.5 text-[13px] ring-1 ring-white/[0.08] transition hover:bg-white/[0.08]"
+            >
+              <span className="text-white/45">{link.label}</span>
+              <span className="font-semibold text-white/85">{link.value}</span>
+            </a>
+          ))}
+        </div>
+      ) : null}
     </Card>
   );
 }
