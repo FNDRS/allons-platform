@@ -69,8 +69,17 @@ function AccountNumber({ label, number }: { label: string; number: string }) {
   );
 }
 
-/** "¿Quieres aportar más?": the beneficiary's own bank accounts and channels. */
-export function DonationCard({ info }: { info: EventDonationInfo }) {
+/**
+ * "¿Quieres aportar más?": the beneficiary's own bank accounts and channels.
+ * `compact` stacks the lempiras and dollars accounts for a narrow side column.
+ */
+export function DonationCard({
+  info,
+  compact = false,
+}: {
+  info: EventDonationInfo;
+  compact?: boolean;
+}) {
   return (
     <Card className="flex flex-col gap-5">
       <div className="flex gap-4">
@@ -90,7 +99,7 @@ export function DonationCard({ info }: { info: EventDonationInfo }) {
         {info.accounts.map((account) => (
           <li key={account.bank} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
             <p className="text-[13px] font-semibold text-white/80">{account.bank}</p>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className={`grid gap-2 ${compact ? "" : "sm:grid-cols-2"}`}>
               {account.hnl ? <AccountNumber label="Lempiras" number={account.hnl} /> : null}
               {account.usd ? <AccountNumber label="Dólares" number={account.usd} /> : null}
             </div>

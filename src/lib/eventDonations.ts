@@ -1,7 +1,8 @@
 /**
- * Direct donation details shown on an event page, for organizers that take
- * deposits outside Allons. Keyed by event id. The money never goes through
- * us: the page only lists where to send it.
+ * Direct donation details shown on an event page and on the comercio's
+ * profile, for organizers that take deposits outside Allons. Keyed by event
+ * id and by comercio id (not handle: a handle can be renamed). The money
+ * never goes through us: the page only lists where to send it.
  */
 export type DonationAccount = {
   bank: string;
@@ -42,6 +43,14 @@ const BY_EVENT: Record<string, EventDonationInfo> = {
   "a0367900-2a14-4ff0-bb9a-c2afc29e152f": FUNHOCAM,
 };
 
+const BY_COMERCIO: Record<string, EventDonationInfo> = {
+  "d2f084fe-efe1-411d-b08c-d102687f29ee": FUNHOCAM,
+};
+
 export function donationInfoForEvent(eventId: string): EventDonationInfo | null {
   return BY_EVENT[eventId] ?? null;
+}
+
+export function donationInfoForComercio(comercioId: string): EventDonationInfo | null {
+  return BY_COMERCIO[comercioId] ?? null;
 }

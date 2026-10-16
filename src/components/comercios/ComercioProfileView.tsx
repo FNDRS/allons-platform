@@ -2,6 +2,8 @@
 
 import type { ComercioProfile } from "@/lib/api/comercios";
 import { useComercioCatalogue } from "@/hooks/useComercioCatalogue";
+import { donationInfoForComercio } from "@/lib/eventDonations";
+import { DonationCard } from "@/components/events/DonationCard";
 import { ComercioAbout } from "./ComercioAbout";
 import { ComercioAppCard } from "./ComercioAppCard";
 import { ComercioClassProgramsSection } from "./ComercioClassProgramsSection";
@@ -22,6 +24,7 @@ export function ComercioProfileView({
   appStoreLink: string;
 }) {
   const catalogue = useComercioCatalogue(profile);
+  const donation = donationInfoForComercio(profile.id);
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-8">
@@ -44,6 +47,7 @@ export function ComercioProfileView({
 
         <div className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-24">
           <ComercioAbout profile={profile} />
+          {donation ? <DonationCard info={donation} compact /> : null}
           <ComercioAppCard
             name={profile.name}
             appDeepLink={appDeepLink}
