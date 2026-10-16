@@ -1,3 +1,4 @@
+import type { EventDonationInfo } from "@/lib/eventDonations";
 import { apiFetch } from "./client";
 
 export type EventStatus = "published" | "sold_out" | "ended" | string;
@@ -165,6 +166,8 @@ export interface EventDetail extends EventListItem {
   refundPartialPct?: number | null;
   refundDeadlineDays?: number | null;
   kitPickupInfo?: string | null;
+  /** Accounts and links for direct donations, set in the admin. Null when off. */
+  donationInfo?: EventDonationInfo | null;
   /**
    * Who pays the service fee. When the buyer pays it, the public price is
    * the quote total, not `entryTypes[].priceCents`.

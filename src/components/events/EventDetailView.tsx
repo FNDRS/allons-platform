@@ -38,7 +38,8 @@ export function EventDetailView({
   const { event, reserve, isLoading, isPlaceholderData, error, refetch } =
     useEventDetail(id);
   const partial = Boolean(event) && isPlaceholderData;
-  const donation = donationInfoForEvent(id);
+  // The API value wins; the hardcoded map covers events not backfilled yet.
+  const donation = event?.donationInfo ?? donationInfoForEvent(id);
   const types = partial ? [] : (event?.entryTypes ?? []);
   const listed = useBuyerUnitPrices(
     id,
