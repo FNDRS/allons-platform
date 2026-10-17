@@ -10,6 +10,7 @@ export function ClassDraftRow({
   removeLabel,
   onEdit,
   onRemove,
+  canRemove = true,
 }: {
   title: string;
   detail: string;
@@ -19,6 +20,8 @@ export function ClassDraftRow({
   removeLabel: string;
   onEdit: () => void;
   onRemove: () => void;
+  /** False hides the remove button, e.g. for a row that already has sales. */
+  canRemove?: boolean;
 }) {
   return (
     <div className="flex items-center gap-2 rounded-[18px] border border-border bg-surface pr-2 transition hover:border-border-strong">
@@ -45,14 +48,16 @@ export function ClassDraftRow({
       >
         <Pencil className="size-3.5" aria-hidden />
       </button>
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label={removeLabel}
-        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted transition hover:bg-white/10 hover:text-white"
-      >
-        <X className="size-3.5" aria-hidden />
-      </button>
+      {canRemove ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={removeLabel}
+          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted transition hover:bg-white/10 hover:text-white"
+        >
+          <X className="size-3.5" aria-hidden />
+        </button>
+      ) : null}
     </div>
   );
 }
