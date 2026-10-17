@@ -41,9 +41,13 @@ export function ClassProgramPreviewView({ id }: { id: string }) {
           Vista previa: así verán tus clientes esta clase.
           {program.status === "draft"
             ? " Es un borrador, así que solo tu equipo puede verla."
-            : program.status === "archived"
-              ? " Está archivada, así que solo tu equipo puede verla."
-              : null}
+            : program.status === "pending_review"
+              ? " La estamos revisando, así que solo tu equipo puede verla por ahora."
+              : program.status === "rejected"
+                ? " No fue aprobada, así que solo tu equipo puede verla."
+                : program.status === "archived"
+                  ? " Está archivada, así que solo tu equipo puede verla."
+                  : null}
         </p>
       </div>
 

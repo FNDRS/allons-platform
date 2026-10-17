@@ -1,6 +1,16 @@
 import { apiFetch } from "./client";
 
-export type ClassProgramStatus = "draft" | "published" | "archived";
+/**
+ * `pending_review` and `rejected` are set by the API: a program sent with
+ * `published` waits for an Allons admin before it goes public, unless it was
+ * already published, in which case edits keep it public.
+ */
+export type ClassProgramStatus =
+  | "draft"
+  | "pending_review"
+  | "rejected"
+  | "published"
+  | "archived";
 export type ClassPackageKind = "drop_in" | "pack" | "unlimited";
 
 /**
@@ -67,6 +77,11 @@ export interface ProviderClassProgram {
   coverImageUrl: string | null;
   themeColor: string | null;
   status: ClassProgramStatus;
+  /** When it last went to review. Missing on an API that predates review. */
+  submittedForReviewAt?: string | null;
+  reviewedAt?: string | null;
+  /** Why an Allons admin rejected it, while `status` is `rejected`. */
+  reviewRejectReason?: string | null;
   cancellationPolicy: ClassCancellationPolicy;
   /** Hours before the session up to which cancelling still returns the credit. */
   cancellationWindowHours: number;

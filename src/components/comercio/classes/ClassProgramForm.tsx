@@ -42,6 +42,7 @@ export function ClassProgramForm({ program }: { program: ProviderClassProgram | 
         onRemove={f.packages.remove}
       />
       <ClassProgramFormActions
+        isPublished={f.isPublished}
         canSaveDraft={f.canSaveDraft}
         canPublish={f.canPublish}
         missingForPublish={f.missingForPublish}

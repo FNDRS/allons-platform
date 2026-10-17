@@ -3,8 +3,12 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { ClassProgramStatus } from "@/lib/api/providerClassPrograms";
 
-/** Save as draft or publish, plus a way out without saving. */
+/**
+ * Save as draft or send to review, plus a way out without saving. A program
+ * that is already published just saves its changes and stays public.
+ */
 export function ClassProgramFormActions({
+  isPublished,
   canSaveDraft,
   canPublish,
   missingForPublish,
@@ -12,6 +16,7 @@ export function ClassProgramFormActions({
   cancelHref,
   onSave,
 }: {
+  isPublished: boolean;
   canSaveDraft: boolean;
   canPublish: boolean;
   missingForPublish: string[];
@@ -38,7 +43,7 @@ export function ClassProgramFormActions({
           disabled={!canPublish || saving}
           onClick={() => onSave("published")}
         >
-          Publicar programa
+          {isPublished ? "Guardar cambios" : "Enviar a revisión"}
         </Button>
         <Link
           href={cancelHref}
@@ -51,7 +56,8 @@ export function ClassProgramFormActions({
       </div>
       {missingForPublish.length > 0 ? (
         <p className="text-[12px] text-dim">
-          Para publicar falta {missingForPublish.join(", ")}.
+          {isPublished ? "Para guardar" : "Para enviar a revisión"} falta{" "}
+          {missingForPublish.join(", ")}.
         </p>
       ) : null}
     </div>

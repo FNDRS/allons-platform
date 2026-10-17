@@ -40,6 +40,8 @@ export const CLASS_PACKAGE_KIND_HINTS: Record<ClassPackageKind, string> = {
 
 export const CLASS_PROGRAM_STATUS_LABELS: Record<ClassProgramStatus, string> = {
   draft: "Borrador",
+  pending_review: "En revisión",
+  rejected: "Rechazada",
   published: "Publicado",
   archived: "Archivado",
 };
