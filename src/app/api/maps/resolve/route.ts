@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  isGoogleHost,
   isShortGoogleMapsLink,
   parseGoogleMapsLink,
   type MapCoordinates,
@@ -19,24 +18,57 @@ const USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
 
 /**
+ * Every origin this route may fetch, keyed by hostname. The request URL is
+ * always built from one of these constants plus the path, never from the host
+ * the caller sent, so the route cannot be pointed at another server.
+ */
+const ALLOWED_ORIGINS: Readonly<Record<string, string>> = {
+  "maps.app.goo.gl": "https://maps.app.goo.gl",
+  "goo.gl": "https://goo.gl",
+  "g.co": "https://g.co",
+  "google.com": "https://google.com",
+  "www.google.com": "https://www.google.com",
+  "maps.google.com": "https://maps.google.com",
+  "consent.google.com": "https://consent.google.com",
+  "www.google.hn": "https://www.google.hn",
+  "maps.google.hn": "https://maps.google.hn",
+};
+
+/** The same path and query on its allowlisted origin, or null off the list. */
+function toAllowedUrl(raw: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+  if (parsed.username || parsed.password || parsed.port) return null;
+  const origin = ALLOWED_ORIGINS[parsed.hostname.toLowerCase()];
+  if (!origin) return null;
+  return `${origin}${parsed.pathname}${parsed.search}`;
+}
+
+/**
  * Follows a short link hop by hop and stops as soon as one leaves Google, so
  * this route can never be used to fetch an arbitrary URL from the server.
  */
 async function resolveShortLink(url: string): Promise<MapCoordinates | null> {
   let current = url;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
-    if (!isGoogleHost(current)) return null;
     const fromUrl = parseGoogleMapsLink(current);
     if (fromUrl) return fromUrl;
+    const target = toAllowedUrl(current);
+    if (!target) return null;
 
-    const response = await fetch(current, {
+    const response = await fetch(target, {
       redirect: "manual",
       headers: { "User-Agent": USER_AGENT },
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     const location = response.headers.get("location");
     if (response.status >= 300 && response.status < 400 && location) {
-      current = new URL(location, current).toString();
+      current = new URL(location, target).toString();
       continue;
     }
     // Some links land on a consent page with the coordinates only in the HTML.

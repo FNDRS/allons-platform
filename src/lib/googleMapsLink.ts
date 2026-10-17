@@ -65,16 +65,6 @@ export function isShortGoogleMapsLink(raw: string) {
   return host !== null && SHORT_LINK_HOSTS.has(host);
 }
 
-/** Hosts a short link may redirect through on its way to the map. */
-export function isGoogleHost(raw: string) {
-  const host = hostOf(raw);
-  if (!host) return false;
-  return (
-    SHORT_LINK_HOSTS.has(host) ||
-    /(^|\.)google\.[a-z]{2,3}(\.[a-z]{2})?$/.test(host)
-  );
-}
-
 /**
  * Coordinates from an expanded link, a `geo:` URI or a hand typed "lat, lng".
  * A short link gives null: it has to be followed first, on the server.
