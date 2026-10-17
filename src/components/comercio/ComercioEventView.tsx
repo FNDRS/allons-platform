@@ -13,7 +13,7 @@ import {
   providerKeys,
 } from "@/lib/api/provider";
 import { formatCardDay, formatHNL, formatNumber } from "@/lib/format";
-import { ErrorState, Skeleton } from "@/components/ui/States";
+import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { glassCtaClass } from "@/components/ui/cta";
 import { TicketTypeTable } from "./EventTables";
 import { KpiTile } from "./KpiTile";
@@ -96,7 +96,12 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
   const data = event.data;
   const day = formatCardDay(data.startsAt);
   const paymentRows = payments.data?.data ?? [];
-  const typeById = new Map((data.ticketTypes ?? []).map((type) => [type.id, type]));
+  const ticketTypes = data.ticketTypes ?? [];
+  const typeById = new Map(ticketTypes.map((type) => [type.id, type]));
+  // A free registration never creates a payment order, so an all-free event
+  // has nothing to chart or itemize here even when people signed up.
+  const isFree =
+    ticketTypes.length > 0 && ticketTypes.every((type) => type.price === 0);
 
   // A ticket type's list price times quantity versus what the order actually
   // charged (minus any donation, which is not a ticket discount). Any
@@ -186,7 +191,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <KpiTile
-          label="Vendidos"
+          label={isFree ? "Registrados" : "Vendidos"}
           value={
             data.capacity > 0
               ? `${formatNumber(data.ticketsSold)} / ${formatNumber(data.capacity)}`
@@ -198,10 +203,12 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
               : undefined
           }
         />
-        <KpiTile
-          label="Ingresos"
-          value={formatHNL(data.revenue - (data.contributions ?? 0))}
-        />
+        {isFree ? null : (
+          <KpiTile
+            label="Ingresos"
+            value={formatHNL(data.revenue - (data.contributions ?? 0))}
+          />
+        )}
         {discountedCount > 0 ? (
           <KpiTile
             label="Con descuento"
@@ -211,11 +218,32 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
         ) : null}
       </div>
 
-      <TicketTypeTable types={data.ticketTypes ?? []} rows={paymentRows} />
+      <TicketTypeTable types={ticketTypes} rows={paymentRows} />
 
-      <SalesTrendChart points={salesTrend} loading={payments.isLoading} />
+      {isFree ? (
+        <EmptyState
+          title="Evento gratis"
+          body={
+            data.ticketsSold === 1
+              ? "La persona registrada no pagó nada, así que no hay ventas ni transacciones que mostrar. La ves con sus datos en la página del evento."
+              : data.ticketsSold > 1
+                ? `Las ${formatNumber(data.ticketsSold)} personas registradas no pagaron nada, así que no hay ventas ni transacciones que mostrar. Las ves con sus datos en la página del evento.`
+                : "Las entradas son gratis, así que aquí no van a aparecer ventas ni transacciones."
+          }
+          action={
+            <Link
+              href={`/comercio/events/${encodeURIComponent(eventId)}`}
+              className={`inline-flex h-10 items-center px-4 text-[13px] ${glassCtaClass}`}
+            >
+              Ver registros
+            </Link>
+          }
+        />
+      ) : (
+        <SalesTrendChart points={salesTrend} loading={payments.isLoading} />
+      )}
 
-      {payments.isLoading ? (
+      {isFree ? null : payments.isLoading ? (
         <Skeleton className="h-48 rounded-[24px]" />
       ) : payments.error ? (
         <ErrorState
