@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Ticket, Users } from "lucide-react";
-import type { ProviderPaymentRow, ProviderTicketType } from "@/lib/api/provider";
+import type {
+  ProviderFreeReservation,
+  ProviderPaymentRow,
+  ProviderTicketType,
+} from "@/lib/api/provider";
 import { formatCents, formatDateTime, formatHNL, formatNumber } from "@/lib/format";
 import { SectionTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/States";
@@ -107,23 +111,98 @@ const PAYMENT_LABEL: Record<string, string> = {
   refunded: "Reembolsado",
 };
 
+type OrderItem =
+  | { kind: "order"; createdAt: string; row: ProviderPaymentRow }
+  | { kind: "reservation"; createdAt: string; row: ProviderFreeReservation };
+
+/** Orders and free reservations, newest first. */
+function orderItems(
+  rows: ProviderPaymentRow[],
+  reservations: ProviderFreeReservation[],
+): OrderItem[] {
+  const items: OrderItem[] = [
+    ...rows.map((row) => ({ kind: "order" as const, createdAt: row.createdAt, row })),
+    ...reservations.map((row) => ({
+      kind: "reservation" as const,
+      createdAt: row.createdAt,
+      row,
+    })),
+  ];
+  return items.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+}
+
+function OrderCard({
+  createdAt,
+  amount,
+  status,
+  quantity,
+  kind,
+  names,
+  donationCents = 0,
+}: {
+  createdAt: string;
+  amount: string;
+  status: string;
+  quantity: number;
+  kind?: string;
+  names: string[];
+  donationCents?: number;
+}) {
+  return (
+    <article className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[13px] text-white/45">{formatDateTime(createdAt) ?? "—"}</p>
+          <p className="mt-1.5 text-[22px] font-bold leading-none tracking-[-0.03em] tabular-nums sm:text-[26px]">
+            {amount}
+          </p>
+        </div>
+        <p className="shrink-0 text-[13px] text-white/40">{status}</p>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-1.5 text-[13px] text-white/50">
+        <p className="inline-flex items-center gap-1.5">
+          <Ticket className="size-3.5 shrink-0 text-white/35" strokeWidth={1.5} aria-hidden />
+          {quantity} {quantity === 1 ? "ticket" : "tickets"}
+          {kind ? ` · ${kind}` : ""}
+        </p>
+        {names.length > 0 ? (
+          <p className="inline-flex items-start gap-1.5">
+            <Users className="mt-0.5 size-3.5 shrink-0 text-white/35" strokeWidth={1.5} aria-hidden />
+            <span className="min-w-0">{names.join(", ")}</span>
+          </p>
+        ) : null}
+        {donationCents > 0 ? (
+          <p className="tabular-nums">Incluye aporte {formatCents(donationCents)}</p>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
 export function PaymentsTable({
   rows,
+  reservations = [],
   types,
 }: {
   rows: ProviderPaymentRow[];
+  /** Free reservations, which have no payment order. */
+  reservations?: ProviderFreeReservation[];
   types: ProviderTicketType[];
 }) {
   const [collapsed, setCollapsed] = useState(true);
   const typeById = new Map(types.map((type) => [type.id, type]));
+  const items = orderItems(rows, reservations);
 
   return (
     <section>
       <div className="mb-3 flex min-w-0 items-baseline justify-between gap-3">
         <h2 className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted sm:text-[12px] sm:tracking-[0.2em]">
           Pedidos
-          {rows.length > 0 ? (
-            <span className="ml-1.5 text-white/40">{rows.length}</span>
+          {items.length > 0 ? (
+            <span className="ml-1.5 text-white/40">{items.length}</span>
           ) : null}
         </h2>
         <button
@@ -139,63 +218,51 @@ export function PaymentsTable({
           )}
         </button>
       </div>
-      {collapsed ? null : rows.length === 0 ? (
+      {collapsed ? null : items.length === 0 ? (
         <EmptyState
           title="Todavía no hay pedidos"
-          body="Las compras con tarjeta aparecen aquí."
+          body="Las compras y las reservas gratis aparecen aquí."
         />
       ) : (
         <div className="flex flex-col gap-3">
-          {rows.map((row) => {
-            const names = (row.holders ?? [])
-              .map((holder) => holder.name.trim())
-              .filter(Boolean);
-            const type = row.entryTypeId
-              ? typeById.get(row.entryTypeId)
-              : undefined;
-            const kind = type?.name;
-            const donation = row.donationCents ?? 0;
+          {items.map((item) => {
+            if (item.kind === "reservation") {
+              const row = item.row;
+              const holderNames = row.holders.map((holder) => holder.name);
+              return (
+                <OrderCard
+                  key={`reservation-${row.reservationId}`}
+                  createdAt={row.createdAt}
+                  amount="Gratis"
+                  status="Reserva"
+                  quantity={row.quantity}
+                  kind={row.entryTypeId ? typeById.get(row.entryTypeId)?.name : undefined}
+                  names={
+                    holderNames.length > 0
+                      ? holderNames
+                      : row.buyerName
+                        ? [row.buyerName]
+                        : []
+                  }
+                />
+              );
+            }
+            const row = item.row;
+            const type = row.entryTypeId ? typeById.get(row.entryTypeId) : undefined;
             const isCourtesy = row.amountCents === 0 && (type?.price ?? 0) > 0;
             return (
-              <article
+              <OrderCard
                 key={row.orderId}
-                className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[13px] text-white/45">
-                      {formatDateTime(row.createdAt) ?? "—"}
-                    </p>
-                    <p className="mt-1.5 text-[22px] font-bold leading-none tracking-[-0.03em] tabular-nums sm:text-[26px]">
-                      {formatCents(row.amountCents)}
-                    </p>
-                  </div>
-                  <p className="shrink-0 text-[13px] text-white/40">
-                    {isCourtesy
-                      ? "Cortesía"
-                      : PAYMENT_LABEL[row.status] ?? row.status}
-                  </p>
-                </div>
-
-                <div className="mt-4 flex flex-col gap-1.5 text-[13px] text-white/50">
-                  <p className="inline-flex items-center gap-1.5">
-                    <Ticket className="size-3.5 shrink-0 text-white/35" strokeWidth={1.5} aria-hidden />
-                    {row.quantity} {row.quantity === 1 ? "ticket" : "tickets"}
-                    {kind ? ` · ${kind}` : ""}
-                  </p>
-                  {names.length > 0 ? (
-                    <p className="inline-flex items-start gap-1.5">
-                      <Users className="mt-0.5 size-3.5 shrink-0 text-white/35" strokeWidth={1.5} aria-hidden />
-                      <span className="min-w-0">{names.join(", ")}</span>
-                    </p>
-                  ) : null}
-                  {donation > 0 ? (
-                    <p className="tabular-nums">
-                      Incluye aporte {formatCents(donation)}
-                    </p>
-                  ) : null}
-                </div>
-              </article>
+                createdAt={row.createdAt}
+                amount={formatCents(row.amountCents)}
+                status={isCourtesy ? "Cortesía" : PAYMENT_LABEL[row.status] ?? row.status}
+                quantity={row.quantity}
+                kind={type?.name}
+                names={(row.holders ?? [])
+                  .map((holder) => holder.name.trim())
+                  .filter(Boolean)}
+                donationCents={row.donationCents ?? 0}
+              />
             );
           })}
         </div>
