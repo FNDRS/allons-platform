@@ -35,7 +35,17 @@ export interface ComercioProfile {
    * absent on an API older than the field.
    */
   donationInfo?: EventDonationInfo | null;
+  /**
+   * Extra links on the bio (menu, WhatsApp, TikTok...), set in the admin and
+   * shown in this order. Absent on an API older than the field.
+   */
+  bioLinks?: ComercioBioLink[];
   createdAt: string | null;
+}
+
+export interface ComercioBioLink {
+  label: string;
+  url: string;
 }
 
 export interface ClassPackage {
