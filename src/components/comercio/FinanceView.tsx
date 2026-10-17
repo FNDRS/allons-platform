@@ -1,7 +1,7 @@
 "use client";
 
 import { useProviderAccess } from "@/hooks/useProviderAccess";
-import { formatHNL, formatNumber } from "@/lib/format";
+import { formatHNL } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/States";
 import { ComercioEventsListView } from "./ComercioEventsListView";
@@ -63,25 +63,13 @@ export function FinanceView() {
               hint="Incluye la tarifa de Allons y la del procesador de pagos sobre lo efectivamente cobrado."
             />
             <Row label="Neto a liquidar" value={formatHNL(totals.net)} bold />
-            <Row
-              label="Boletos vendidos"
-              value={formatNumber(totals.soldTickets)}
-              muted
-            />
-            {totals.courtesyTickets > 0 ? (
-              <Row
-                label="Tickets de cortesía"
-                value={`× ${formatNumber(totals.courtesyTickets)}`}
-                muted
-              />
-            ) : null}
           </Card>
         </section>
       ) : null}
 
       <section>
         <SectionTitle>Eventos</SectionTitle>
-        <ComercioEventsListView basePath="/comercio/finanzas" />
+        <ComercioEventsListView basePath="/comercio/finanzas" moneyOnly />
       </section>
     </div>
   );
@@ -91,13 +79,11 @@ function Row({
   label,
   value,
   bold = false,
-  muted = false,
   hint,
 }: {
   label: string;
   value: string;
   bold?: boolean;
-  muted?: boolean;
   hint?: string;
 }) {
   return (
@@ -106,7 +92,7 @@ function Row({
         <span className={bold ? "font-bold text-white" : "text-white/70"}>{label}</span>
         <span
           className={`tabular-nums ${
-            bold ? "font-bold text-white" : muted ? "text-white/40" : "text-white/85"
+            bold ? "font-bold text-white" : "text-white/85"
           }`}
         >
           {value}

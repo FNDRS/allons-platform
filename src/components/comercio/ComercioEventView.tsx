@@ -12,7 +12,7 @@ import {
   getProviderPayments,
   providerKeys,
 } from "@/lib/api/provider";
-import { formatCardDay, formatHNL, formatNumber } from "@/lib/format";
+import { formatCardDay, formatHNL } from "@/lib/format";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { glassCtaClass } from "@/components/ui/cta";
 import { TicketTypeTable } from "./EventTables";
@@ -34,7 +34,7 @@ const dayLabelFmt = new Intl.DateTimeFormat("es-HN", {
 
 /**
  * Money only: what this event generated and what's owed to the comercio.
- * Sales/attendee/day-of-event operations (seating, hourly activity, the
+ * No ticket counts or capacity here. Sales/attendee/day-of-event operations (seating, hourly activity, the
  * order list, sharing the event) live on its Eventos page instead, not
  * here, so this stays a page you'd actually hand to an accountant.
  */
@@ -106,9 +106,8 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
   // A ticket type's list price times quantity versus what the order actually
   // charged (minus any donation, which is not a ticket discount). Any
   // positive gap is a code applied at checkout, partial or full.
-  let discountedCount = 0;
   let discountedAmount = 0;
-  const dayTotals = new Map<string, { cents: number; qty: number }>();
+  const dayTotals = new Map<string, number>();
   for (const row of paymentRows) {
     if (row.status !== "paid") continue;
     const type = row.entryTypeId ? typeById.get(row.entryTypeId) : undefined;
@@ -120,26 +119,22 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
       (row.subtotalCents ?? row.amountCents) - (row.donationCents ?? 0);
     const chargedAmount = ticketCents / 100;
     if (listAmount - chargedAmount > 0) {
-      discountedCount += row.quantity;
       discountedAmount += listAmount - chargedAmount;
     }
     const key = dayFmt.format(new Date(row.createdAt));
-    const entry = dayTotals.get(key) ?? { cents: 0, qty: 0 };
-    entry.cents += ticketCents;
-    entry.qty += row.quantity;
-    dayTotals.set(key, entry);
+    dayTotals.set(key, (dayTotals.get(key) ?? 0) + ticketCents);
   }
 
   let running = 0;
   const salesTrend: SalesTrendPoint[] = [...dayTotals.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([day, entry]) => {
-      running += entry.cents;
+    .map(([day, cents]) => {
+      running += cents;
       return {
         day,
         label: dayLabelFmt.format(new Date(`${day}T12:00:00`)),
         cumulativeCents: running,
-        dayQty: entry.qty,
+        dayCents: cents,
       };
     });
 
@@ -189,58 +184,31 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <KpiTile
-          label={isFree ? "Registrados" : "Vendidos"}
-          value={
-            data.capacity > 0
-              ? `${formatNumber(data.ticketsSold)} / ${formatNumber(data.capacity)}`
-              : formatNumber(data.ticketsSold)
-          }
-          hint={
-            data.capacity > 0
-              ? `${Math.round((data.ticketsSold / data.capacity) * 100)}% de la capacidad`
-              : undefined
-          }
-        />
-        {isFree ? null : (
-          <KpiTile
-            label="Ingresos"
-            value={formatHNL(data.revenue - (data.contributions ?? 0))}
-          />
-        )}
-        {discountedCount > 0 ? (
-          <KpiTile
-            label="Con descuento"
-            value={formatNumber(discountedCount)}
-            hint={`${formatHNL(discountedAmount)} menos que el precio de lista`}
-          />
-        ) : null}
-      </div>
-
-      <TicketTypeTable types={ticketTypes} rows={paymentRows} />
-
       {isFree ? (
         <EmptyState
           title="Evento gratis"
-          body={
-            data.ticketsSold === 1
-              ? "La persona registrada no pagó nada, así que no hay ventas ni transacciones que mostrar. La ves con sus datos en la página del evento."
-              : data.ticketsSold > 1
-                ? `Las ${formatNumber(data.ticketsSold)} personas registradas no pagaron nada, así que no hay ventas ni transacciones que mostrar. Las ves con sus datos en la página del evento.`
-                : "Las entradas son gratis, así que aquí no van a aparecer ventas ni transacciones."
-          }
-          action={
-            <Link
-              href={`/comercio/events/${encodeURIComponent(eventId)}`}
-              className={`inline-flex h-10 items-center px-4 text-[13px] ${glassCtaClass}`}
-            >
-              Ver registros
-            </Link>
-          }
+          body="Las entradas son gratis, así que este evento no genera ingresos ni transacciones."
         />
       ) : (
-        <SalesTrendChart points={salesTrend} loading={payments.isLoading} />
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <KpiTile
+              label="Ingresos"
+              value={formatHNL(data.revenue - (data.contributions ?? 0))}
+            />
+            {discountedAmount > 0 ? (
+              <KpiTile
+                label="Descuentos"
+                value={formatHNL(discountedAmount)}
+                hint="Menos que el precio de lista"
+              />
+            ) : null}
+          </div>
+
+          <TicketTypeTable types={ticketTypes} rows={paymentRows} />
+
+          <SalesTrendChart points={salesTrend} loading={payments.isLoading} />
+        </>
       )}
 
       {isFree ? null : payments.isLoading ? (

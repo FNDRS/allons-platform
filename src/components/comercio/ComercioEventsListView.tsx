@@ -25,11 +25,14 @@ const NEW_HREF = "/comercio/events/nueva";
 export function ComercioEventsListView({
   basePath = "/comercio/events",
   showCreate = false,
+  moneyOnly = false,
 }: {
   /** Where a card opens: the event's own config, or its Finanzas detail. */
   basePath?: string;
   /** Offer "Crear evento" (the Eventos page, not Finanzas). */
   showCreate?: boolean;
+  /** Finanzas: cards show money, not tickets sold. */
+  moneyOnly?: boolean;
 }) {
   const { ready } = useProviderAccess();
   const { user } = useAuth();
@@ -101,7 +104,12 @@ export function ComercioEventsListView({
         ) : (
           <div className="grid gap-5 sm:grid-cols-2">
             {sorted.map((event) => (
-              <ProviderEventCard key={event.id} event={event} basePath={basePath} />
+              <ProviderEventCard
+                key={event.id}
+                event={event}
+                basePath={basePath}
+                moneyOnly={moneyOnly}
+              />
             ))}
           </div>
         )}

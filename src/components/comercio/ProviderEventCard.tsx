@@ -28,10 +28,13 @@ import { Progress } from "@/components/ui/Stat";
 export function ProviderEventCard({
   event,
   basePath = "/comercio/events",
+  moneyOnly = false,
 }: {
   event: ProviderEventListItem;
   /** Where this card opens: `/comercio/events` for the event's own config, `/comercio/finanzas` for its sales and money. */
   basePath?: string;
+  /** Finanzas: drop tickets sold and the capacity bar, keep the money. */
+  moneyOnly?: boolean;
 }) {
   const status = eventStatusLabel(event.status);
   const prefetch = usePrefetchProviderEvent();
@@ -105,12 +108,14 @@ export function ProviderEventCard({
               {time}
             </Stat>
           ) : null}
-          <Stat icon={<Ticket className="size-3.5" strokeWidth={1.5} />}>
-            {sold} vendidos
-          </Stat>
+          {moneyOnly ? null : (
+            <Stat icon={<Ticket className="size-3.5" strokeWidth={1.5} />}>
+              {sold} vendidos
+            </Stat>
+          )}
         </div>
 
-        {event.capacity > 0 ? (
+        {!moneyOnly && event.capacity > 0 ? (
           <div className="mt-4">
             <Progress value={event.ticketsSold} max={event.capacity} />
           </div>

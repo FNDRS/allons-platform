@@ -1,7 +1,7 @@
 "use client";
 
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
-import { formatHNL, formatNumber } from "@/lib/format";
+import { formatHNL } from "@/lib/format";
 import { SectionTitle } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/States";
 
@@ -11,7 +11,7 @@ export interface SalesTrendPoint {
   /** "20 sept" for the axis. */
   label: string;
   cumulativeCents: number;
-  dayQty: number;
+  dayCents: number;
 }
 
 function Tip({
@@ -29,8 +29,8 @@ function Tip({
       <p className="mt-0.5 text-[14px] font-semibold tabular-nums">
         {formatHNL(row.cumulativeCents / 100)}
       </p>
-      <p className="text-[12px] text-white/45">
-        +{formatNumber(row.dayQty)} {row.dayQty === 1 ? "boleto ese día" : "boletos ese día"}
+      <p className="text-[12px] tabular-nums text-white/45">
+        +{formatHNL(row.dayCents / 100)} ese día
       </p>
     </div>
   );
@@ -48,12 +48,12 @@ export function SalesTrendChart({
 
   return (
     <section>
-      <SectionTitle>Ventas acumuladas</SectionTitle>
+      <SectionTitle>Ingresos acumulados</SectionTitle>
       {loading ? (
         <Skeleton className="h-[280px]" />
       ) : points.length === 0 ? (
         <div className="flex h-[280px] items-center rounded-[24px] border border-white/[0.08] bg-white/[0.03] px-5">
-          <p className="text-[15px] text-white/50">Todavía no hay ventas registradas.</p>
+          <p className="text-[15px] text-white/50">Todavía no hay ingresos registrados.</p>
         </div>
       ) : (
         <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
