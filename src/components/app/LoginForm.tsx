@@ -160,6 +160,14 @@ export function LoginForm() {
           },
         });
         if (err) throw err;
+        // An existing email comes back as a fake user with no identities and
+        // no email is sent, so telling them to check their inbox would lie.
+        if (data.user && data.user.identities?.length === 0) {
+          setError(
+            "Ya existe una cuenta con este correo. Entra con tu contraseña, con Google o Apple, o recupera tu contraseña.",
+          );
+          return;
+        }
         if (data.session) {
           router.replace(homeFor(data.user, next));
         } else {
