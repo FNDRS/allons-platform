@@ -21,9 +21,9 @@ import { Card, SectionTitle } from "@/components/ui/Card";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { glassCtaClass } from "@/components/ui/cta";
 import { EventAnswersSection } from "./EventAnswersSection";
-import { PaymentsTable } from "./EventTables";
 import { HourlySalesChart } from "./HourlySalesChart";
 import { KpiTile } from "./KpiTile";
+import { OrdersSection } from "./OrdersSection";
 import { ResourceMap } from "./ResourceMap";
 import { EventCollaboratorsSection } from "./EventCollaboratorsSection";
 import { ReviewStatusBanner } from "./ReviewStatusBanner";
@@ -297,7 +297,8 @@ export function EventConfigView({ eventId }: { eventId: string }) {
           onRetry={() => void payments.refetch()}
         />
       ) : (
-        <PaymentsTable
+        <OrdersSection
+          eventTitle={data.title}
           rows={payments.data?.data ?? []}
           reservations={payments.data?.reservations ?? []}
           types={data.ticketTypes ?? []}
