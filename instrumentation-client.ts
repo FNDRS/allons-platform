@@ -8,6 +8,15 @@ if (isSentryConfigured) {
     // buyer names, emails and sales figures.
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 0,
+    // Scripts that in-app browsers (Instagram, Facebook, Snapchat) and wallet
+    // or Firefox extensions inject into every page. None of these names exist
+    // in our code, and the page works fine around them.
+    ignoreErrors: [
+      "window.ethereum",
+      "__firefox__",
+      "SCDynimacBridge",
+      "window.webkit.messageHandlers",
+    ],
   });
 }
 
