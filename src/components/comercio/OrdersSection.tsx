@@ -5,6 +5,10 @@ import { toast } from "sonner";
 import {
   ArrowDownUp,
   Braces,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ClipboardCopy,
   Download,
   FileSpreadsheet,
@@ -30,7 +34,6 @@ import {
   type ExportTable,
 } from "@/lib/export/table";
 import { Card, SectionTitle } from "@/components/ui/Card";
-import { Select, SelectItem } from "@/components/ui/Field";
 import { SmoothInput } from "@/components/ui/SmoothInput";
 import { Chip } from "@/components/ui/Pill";
 import { EmptyState } from "@/components/ui/States";
@@ -267,6 +270,96 @@ function ExportMenu({
   );
 }
 
+/**
+ * Inline dropdown for the filters. Not the shared Radix Select: that one is
+ * modal (locks scroll and every click outside), so when its list landed
+ * off-screen here the whole page looked frozen. This one scrolls inside,
+ * opens upward when there's no room below, and leaves the page alone.
+ */
+function Dropdown({
+  value,
+  options,
+  onChange,
+  label,
+  className = "",
+}: {
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+  label: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [upward, setUpward] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(ref, open, close);
+  const selected = options.find((option) => option.value === value);
+
+  function toggle() {
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      const below = window.innerHeight - rect.bottom;
+      setUpward(below < 280 && rect.top > below);
+    }
+    setOpen((current) => !current);
+  }
+
+  return (
+    <div ref={ref} className={`relative ${className}`}>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={label}
+        onClick={toggle}
+        className={`group flex h-12 w-full items-center justify-between gap-2 rounded-[14px] border px-4 text-left text-[15px] text-white outline-none transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:border-accent/60 ${
+          open ? "border-white/20 bg-white/[0.08]" : "border-border bg-surface-2"
+        }`}
+      >
+        <span className="truncate">{selected?.label ?? label}</span>
+        <ChevronDown
+          className={`size-4 shrink-0 text-dim transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+          aria-hidden
+        />
+      </button>
+      {open ? (
+        <div
+          role="listbox"
+          aria-label={label}
+          className={`absolute left-0 right-0 z-50 max-h-72 min-w-full overflow-y-auto overscroll-contain rounded-[14px] border border-border-strong bg-[#0c0c0e] p-1.5 shadow-[0_16px_48px_rgba(0,0,0,0.55)] ${
+            upward ? "bottom-full mb-1.5" : "top-full mt-1.5"
+          }`}
+        >
+          {options.map((option) => {
+            const active = option.value === value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={active}
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+                className={`relative flex w-full items-center rounded-[10px] py-2.5 pl-8 pr-3 text-left text-[15px] text-white transition-colors hover:bg-white/[0.08] ${
+                  active ? "font-semibold" : ""
+                }`}
+              >
+                {active ? (
+                  <Check className="absolute left-2.5 size-3.5 text-accent" aria-hidden />
+                ) : null}
+                <span className="truncate">{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function StatusBadge({ status }: { status: string }) {
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12px] font-medium text-white/70">
@@ -315,7 +408,7 @@ export function OrdersSection({
   const [status, setStatus] = useState<string>("all");
   const [typeId, setTypeId] = useState<string>("all");
   const [sort, setSort] = useState<SortKey>("newest");
-  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [page, setPage] = useState(0);
 
   const typeById = useMemo(() => new Map(types.map((type) => [type.id, type])), [types]);
   const lines = useMemo(
@@ -384,13 +477,22 @@ export function OrdersSection({
   );
 
   const filtersActive = query.trim() !== "" || status !== "all" || typeId !== "all";
-  const shown = filtered.slice(0, visible);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // A filter can shrink the list under the page you were on.
+  const currentPage = Math.min(page, pageCount - 1);
+  const pageStart = currentPage * PAGE_SIZE;
+  const shown = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+
+  function changeSort(next: SortKey) {
+    setSort(next);
+    setPage(0);
+  }
 
   function resetFilters() {
     setQuery("");
     setStatus("all");
     setTypeId("all");
-    setVisible(PAGE_SIZE);
+    setPage(0);
   }
 
   async function handleExport(format: ExportFormat | "copy") {
@@ -458,7 +560,7 @@ export function OrdersSection({
                 value={query}
                 onChange={(event) => {
                   setQuery(event.target.value);
-                  setVisible(PAGE_SIZE);
+                  setPage(0);
                 }}
                 placeholder="Buscar por nombre o código"
                 aria-label="Buscar pedidos"
@@ -467,35 +569,30 @@ export function OrdersSection({
                 className="[&::-webkit-search-cancel-button]:hidden"
               />
               {typesInUse.length > 1 ? (
-                <Select
+                <Dropdown
                   value={typeId}
-                  onValueChange={(value) => {
+                  onChange={(value) => {
                     setTypeId(value);
-                    setVisible(PAGE_SIZE);
+                    setPage(0);
                   }}
-                  aria-label="Filtrar por tipo de entrada"
+                  label="Filtrar por tipo de entrada"
                   className="sm:w-52"
-                >
-                  <SelectItem value="all">Todas las entradas</SelectItem>
-                  {typesInUse.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
-                </Select>
+                  options={[
+                    { value: "all", label: "Todas las entradas" },
+                    ...typesInUse.map((type) => ({ value: type.id, label: type.name })),
+                  ]}
+                />
               ) : null}
-              <Select
+              <Dropdown
                 value={sort}
-                onValueChange={(value) => setSort(value as SortKey)}
-                aria-label="Ordenar pedidos"
+                onChange={(value) => changeSort(value as SortKey)}
+                label="Ordenar pedidos"
                 className="sm:w-48"
-              >
-                {(Object.keys(SORT_LABEL) as SortKey[]).map((key) => (
-                  <SelectItem key={key} value={key}>
-                    {SORT_LABEL[key]}
-                  </SelectItem>
-                ))}
-              </Select>
+                options={(Object.keys(SORT_LABEL) as SortKey[]).map((key) => ({
+                  value: key,
+                  label: SORT_LABEL[key],
+                }))}
+              />
             </div>
 
             {statusChips.length > 1 ? (
@@ -504,7 +601,7 @@ export function OrdersSection({
                   active={status === "all"}
                   onClick={() => {
                     setStatus("all");
-                    setVisible(PAGE_SIZE);
+                    setPage(0);
                   }}
                 >
                   Todos <span className="ml-1 opacity-60">{lines.length}</span>
@@ -515,7 +612,7 @@ export function OrdersSection({
                     active={status === key}
                     onClick={() => {
                       setStatus(key);
-                      setVisible(PAGE_SIZE);
+                      setPage(0);
                     }}
                   >
                     {statusLabel(key)}{" "}
@@ -587,7 +684,7 @@ export function OrdersSection({
                       <th className="px-4 py-3 font-medium">
                         <button
                           type="button"
-                          onClick={() => setSort(sort === "newest" ? "oldest" : "newest")}
+                          onClick={() => changeSort(sort === "newest" ? "oldest" : "newest")}
                           className="inline-flex items-center gap-1 transition hover:text-white"
                         >
                           Fecha
@@ -602,7 +699,7 @@ export function OrdersSection({
                         <button
                           type="button"
                           onClick={() =>
-                            setSort(sort === "amount_desc" ? "amount_asc" : "amount_desc")
+                            changeSort(sort === "amount_desc" ? "amount_asc" : "amount_desc")
                           }
                           className="inline-flex items-center gap-1 transition hover:text-white"
                         >
@@ -668,17 +765,38 @@ export function OrdersSection({
                 </table>
               </Card>
 
-              {filtered.length > shown.length ? (
-                <button
-                  type="button"
-                  onClick={() => setVisible((current) => current + PAGE_SIZE)}
-                  className={`mx-auto inline-flex h-9 items-center px-4 text-[13px] ${glassCtaClass}`}
+              {pageCount > 1 ? (
+                <nav
+                  aria-label="Páginas de pedidos"
+                  className="flex items-center justify-between gap-3"
                 >
-                  Mostrar {Math.min(PAGE_SIZE, filtered.length - shown.length)} más
-                  <span className="ml-1.5 text-white/40">
-                    de {filtered.length - shown.length}
-                  </span>
-                </button>
+                  <p className="text-[13px] tabular-nums text-white/45">
+                    {pageStart + 1}–{pageStart + shown.length} de {filtered.length}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={currentPage === 0}
+                      onClick={() => setPage(currentPage - 1)}
+                      className={`inline-flex h-9 items-center gap-1 pl-2.5 pr-3.5 text-[13px] disabled:pointer-events-none disabled:opacity-40 ${glassCtaClass}`}
+                    >
+                      <ChevronLeft className="size-4" strokeWidth={1.5} aria-hidden />
+                      Anterior
+                    </button>
+                    <span className="hidden text-[13px] tabular-nums text-white/45 sm:inline">
+                      {currentPage + 1} / {pageCount}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={currentPage >= pageCount - 1}
+                      onClick={() => setPage(currentPage + 1)}
+                      className={`inline-flex h-9 items-center gap-1 pl-3.5 pr-2.5 text-[13px] disabled:pointer-events-none disabled:opacity-40 ${glassCtaClass}`}
+                    >
+                      Siguiente
+                      <ChevronRight className="size-4" strokeWidth={1.5} aria-hidden />
+                    </button>
+                  </div>
+                </nav>
               ) : null}
             </>
           )}
