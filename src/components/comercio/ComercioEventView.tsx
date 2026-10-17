@@ -153,7 +153,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
           <ArrowLeft className="size-4" aria-hidden /> Finanzas
         </Link>
 
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
             <h1 className="break-words text-[24px] font-bold leading-[1.1] tracking-[-0.03em] sm:text-[32px]">
               {data.title}
@@ -166,7 +166,7 @@ export function ComercioEventView({ eventId }: { eventId: string }) {
           {data.access === "collaborator" ? (
             // The settlement names the host's bank account: it is theirs to
             // download. A collaborator still gets every number on this page.
-            <p className="max-w-xs text-[13px] leading-relaxed text-white/50">
+            <p className="text-[13px] leading-relaxed text-white/50 sm:max-w-xs sm:shrink-0">
               Evento colaborativo. {data.host?.name ?? "El organizador"} lo
               organiza y recibe la liquidación.
             </p>
