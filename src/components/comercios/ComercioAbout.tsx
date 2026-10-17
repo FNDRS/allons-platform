@@ -1,4 +1,4 @@
-import { Globe, Mail, MapPin } from "lucide-react";
+import { Globe, Link2, Mail, MapPin } from "lucide-react";
 import type { ComercioProfile } from "@/lib/api/comercios";
 import { instagramLink } from "@/lib/instagram";
 import { InstagramMark } from "@/components/shared/InstagramMark";
@@ -9,8 +9,16 @@ import { MetaTile } from "@/components/ui/MetaTile";
 export function ComercioAbout({ profile }: { profile: ComercioProfile }) {
   const description = profile.description?.trim() || null;
   const instagram = instagramLink(profile.instagramUrl);
+  // The API only stores http(s) URLs; the check keeps an odd row off the page.
+  const bioLinks = (profile.bioLinks ?? []).filter((link) =>
+    /^https?:\/\//i.test(link.url),
+  );
   const hasContact = Boolean(
-    profile.websiteUrl || instagram || profile.email || profile.city,
+    profile.websiteUrl ||
+      instagram ||
+      bioLinks.length ||
+      profile.email ||
+      profile.city,
   );
   if (!description && !hasContact) return null;
 
@@ -36,7 +44,7 @@ export function ComercioAbout({ profile }: { profile: ComercioProfile }) {
                 label="Sitio web"
                 href={profile.websiteUrl}
               >
-                {profile.websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                {displayUrl(profile.websiteUrl)}
               </MetaTile>
             ) : null}
             {instagram ? (
@@ -48,6 +56,16 @@ export function ComercioAbout({ profile }: { profile: ComercioProfile }) {
                 {instagram.label}
               </MetaTile>
             ) : null}
+            {bioLinks.map((link, index) => (
+              <MetaTile
+                key={`${index}-${link.url}`}
+                icon={<Link2 className="size-4" aria-hidden />}
+                label={link.label}
+                href={link.url}
+              >
+                {displayUrl(link.url)}
+              </MetaTile>
+            ))}
             {profile.email ? (
               <MetaTile
                 icon={<Mail className="size-4" aria-hidden />}
@@ -62,4 +80,8 @@ export function ComercioAbout({ profile }: { profile: ComercioProfile }) {
       </Card>
     </section>
   );
+}
+
+function displayUrl(url: string): string {
+  return url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 }
