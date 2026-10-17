@@ -22,3 +22,19 @@ export function isComercioUser(user: User | null | undefined): boolean {
     staffRole === "finance"
   );
 }
+
+/**
+ * Who can create and edit events: the comercio's owner and its admins, the
+ * same roles the API accepts on the event routes. Finance staff only read.
+ */
+export function canManageEvents(user: User | null | undefined): boolean {
+  if (!isComercioUser(user)) return false;
+  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
+  if (meta.role === "provider") return true;
+  return (
+    meta.comercio_role === "admin" ||
+    meta.comercio_role === "comercio" ||
+    meta.staff_role === "admin" ||
+    meta.staff_role === "comercio"
+  );
+}

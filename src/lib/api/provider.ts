@@ -62,13 +62,31 @@ export interface EventCollaborator {
  */
 export type EventAccess = "owner" | "collaborator";
 
+/**
+ * `pending_review` and `rejected` come from Allons' review: an event sent
+ * with `published` waits for an admin unless it was already public.
+ */
+export type ProviderEventStatus =
+  | "draft"
+  | "pending_review"
+  | "rejected"
+  | "published"
+  | "sold_out"
+  | "ended";
+
 export interface ProviderEventListItem {
   id: string;
   title: string;
   startsAt: string | null;
   endsAt: string | null;
   city: string | null;
+  /** A `ProviderEventStatus`, kept as a string for values added later. */
   status: string;
+  /** Missing on an API that predates review. */
+  submittedForReviewAt?: string | null;
+  reviewedAt?: string | null;
+  /** Why an Allons admin rejected it, while `status` is `rejected`. */
+  reviewRejectReason?: string | null;
   eventType: string;
   ticketMode: string;
   capacity: number;
@@ -102,6 +120,11 @@ export interface ProviderEventDetail extends ProviderEventListItem {
   description: string | null;
   venue: string | null;
   address: string | null;
+  /** Set when the spot was pinned on the app's map; the pin decides the city. */
+  latitude?: number | null;
+  longitude?: number | null;
+  /** App images, cover first. */
+  gallery?: Array<{ id: string; url: string; sortOrder: number }>;
   category?: string | null;
   ticketTypes: ProviderTicketType[];
   questions: Array<{
@@ -296,6 +319,100 @@ export interface ProviderProfile {
 
 export function getProviderProfile() {
   return apiFetch<ProviderProfile>("/provider/profile");
+}
+
+/**
+ * Body of POST/PATCH `/provider/events` (CreateEventDto / UpdateEventDto).
+ * Ticket types are not part of it: they have their own endpoints.
+ */
+export interface ProviderEventInput {
+  title: string;
+  description: string | null;
+  /** ISO instant. */
+  startsAt: string | null;
+  endsAt: string | null;
+  city?: string | null;
+  venue: string | null;
+  address?: string | null;
+  coverImageUrl: string | null;
+  /** Image URLs, cover first. Omit to keep the stored gallery. */
+  gallery?: string[];
+  category: string | null;
+  eventType: "single";
+  /** "free" when no ticket is paid, "single_access" otherwise, as the app sends. */
+  ticketMode: "free" | "single_access";
+  /** 0 means no event-wide limit. */
+  capacity: number;
+  refundPolicy: "none" | "partial" | "full";
+  refundPartialPct: number | null;
+  refundDeadlineDays: number | null;
+  minAge: number | null;
+  smokingAllowed: boolean;
+  petFriendly: boolean;
+  parkingAvailable: boolean;
+  /** Empty clears it. */
+  kitPickupInfo: string;
+  /** `published` goes to review unless the event is already public. */
+  status: "draft" | "published";
+}
+
+export function createProviderEvent(body: ProviderEventInput) {
+  return apiFetch<ProviderEventDetail>("/provider/events", {
+    method: "POST",
+    body,
+  });
+}
+
+export function updateProviderEvent(
+  id: string,
+  body: Partial<ProviderEventInput>,
+) {
+  return apiFetch<ProviderEventDetail>(
+    `/provider/events/${encodeURIComponent(id)}`,
+    { method: "PATCH", body },
+  );
+}
+
+export interface ProviderTicketTypeInput {
+  name: string;
+  kind: "general";
+  /** Lempiras. 0 is a free entry. */
+  price: number;
+  /** How many can be sold. */
+  total: number;
+  /** ISO instants. Required by the API when the price is above 0. */
+  saleStartsAt: string | null;
+  saleEndsAt: string | null;
+  sortOrder: number;
+}
+
+/** Returns the event's ticket types after the insert, not the new row. */
+export function createProviderTicketType(
+  eventId: string,
+  body: ProviderTicketTypeInput,
+) {
+  return apiFetch<ProviderTicketType[]>(
+    `/provider/events/${encodeURIComponent(eventId)}/ticket-types`,
+    { method: "POST", body },
+  );
+}
+
+export function updateProviderTicketType(
+  id: string,
+  body: Partial<ProviderTicketTypeInput>,
+) {
+  return apiFetch<{ updated: true }>(
+    `/provider/ticket-types/${encodeURIComponent(id)}`,
+    { method: "PATCH", body },
+  );
+}
+
+/** Soft delete on the API: the row stays, flipped to `active = false`. */
+export function deleteProviderTicketType(id: string) {
+  return apiFetch<{ deleted: true }>(
+    `/provider/ticket-types/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+  );
 }
 
 export function listProviderEvents() {

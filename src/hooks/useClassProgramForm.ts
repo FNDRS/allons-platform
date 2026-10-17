@@ -70,6 +70,8 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
   const pinned = program?.latitude != null && program?.longitude != null;
 
   const isSaving = savingTarget !== null;
+  // Edits to a published program keep it public; anything else goes to review.
+  const isPublished = program?.status === "published";
   const canSaveDraft =
     title.trim().length > 0 &&
     Number(durationMinutes) > 0 &&
@@ -102,7 +104,7 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
         ...(pinned ? {} : { address: address.trim() || null, city: city.trim() || null }),
       };
 
-      let savedId: string;
+      let saved: ProviderClassProgram;
       if (program) {
         // There is no bulk endpoint, so children go one request each, and
         // before the program itself: a failure among them must not leave a
@@ -136,31 +138,34 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
           (result): result is PromiseRejectedResult => result.status === "rejected",
         );
         if (failed) throw failed.reason;
-        await updateProviderClassProgram(program.id, { ...fields, status });
-        savedId = program.id;
+        saved = await updateProviderClassProgram(program.id, { ...fields, status });
       } else {
         // One request, one transaction on the API: nothing is left behind
         // if it fails, and the program is created with its final status.
-        const created = await createProviderClassProgram({
+        saved = await createProviderClassProgram({
           ...fields,
           status,
           sessionTemplates: schedule.toPayloads(),
           packages: packages.toPayloads(),
         });
-        savedId = created.id;
       }
 
       await client.invalidateQueries({ queryKey: providerClassProgramKeys.all });
+      // The API decides the stored status: a first submission waits for
+      // review, an edit to a published program stays published.
       toast.success(
-        program
-          ? "Guardamos los cambios de tu programa."
-          : status === "published"
-            ? "Tu programa se creó y quedó publicado."
-            : "Tu programa se guardó como borrador.",
+        saved.status === "pending_review"
+          ? "Tu programa se envió a revisión. Te avisaremos cuando esté publicado."
+          : saved.status === "draft"
+            ? "Tu programa se guardó como borrador."
+            : "Guardamos los cambios de tu programa.",
       );
-      router.replace(`/comercio/clases/${encodeURIComponent(savedId)}`);
+      router.replace(`/comercio/clases/${encodeURIComponent(saved.id)}`);
     } catch (error) {
-      const prefix = status === "published" ? "No se pudo publicar" : "No se pudo guardar";
+      const prefix =
+        status === "published" && !isPublished
+          ? "No se pudo enviar a revisión"
+          : "No se pudo guardar";
       toast.error(`${prefix}. ${classProgramErrorMessage(error)}`);
       setSavingTarget(null);
     }
@@ -168,6 +173,7 @@ export function useClassProgramForm(program: ProviderClassProgram | null) {
 
   return {
     isEditing: program !== null,
+    isPublished,
     title,
     setTitle,
     description,

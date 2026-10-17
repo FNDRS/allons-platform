@@ -1,8 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { Plus } from "lucide-react";
+import { useAuth } from "@/components/app/AuthProvider";
+import { buttonClass } from "@/components/ui/Button";
 import { SearchPill } from "@/components/ui/Pill";
+import { canManageEvents } from "@/lib/role";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useProviderLive } from "./ProviderLive";
 import { listProviderEvents, providerKeys } from "@/lib/api/provider";
@@ -10,18 +15,31 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { DashboardPrivacy } from "./dashboardPrivacy";
 import { ProviderEventCard } from "./ProviderEventCard";
 
+const NEW_HREF = "/comercio/events/nueva";
+
 /**
- * Every event this comercio has, newest first, with a search box. There is
- * no "crear evento" button here on purpose: for now events are only created
- * and edited from the Allons app.
+ * Every event this comercio has, newest first, with a search box and, for
+ * the members who can manage events, a way to create one. New events go to
+ * Allons' review before they are published.
  */
 export function ComercioEventsListView({
   basePath = "/comercio/events",
+  showCreate = false,
 }: {
   /** Where a card opens: the event's own config, or its Finanzas detail. */
   basePath?: string;
+  /** Offer "Crear evento" (the Eventos page, not Finanzas). */
+  showCreate?: boolean;
 }) {
   const { ready } = useProviderAccess();
+  const { user } = useAuth();
+  const canCreate = showCreate && canManageEvents(user);
+  const createLink = (
+    <Link href={NEW_HREF} className={buttonClass({ size: "sm" })}>
+      <Plus className="size-4" aria-hidden />
+      Crear evento
+    </Link>
+  );
   const { live } = useProviderLive();
   const events = useQuery({
     queryKey: providerKeys.events,
@@ -43,14 +61,17 @@ export function ComercioEventsListView({
     <DashboardPrivacy>
     <div className="flex flex-col gap-6">
       <section>
-        <SearchPill
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Buscar un evento"
-          aria-label="Buscar un evento"
-          className="mb-4"
-          actionLabel="Filtrar"
-        />
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <SearchPill
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Buscar un evento"
+            aria-label="Buscar un evento"
+            className="min-w-0 flex-1"
+            actionLabel="Filtrar"
+          />
+          {canCreate ? createLink : null}
+        </div>
         {events.isLoading ? (
           <div className="grid gap-5 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, index) => (
@@ -71,8 +92,11 @@ export function ComercioEventsListView({
             body={
               needle
                 ? "Prueba con otra palabra del título."
-                : "Crea eventos desde la app de Allons. Aquí verás sus ventas y asistentes."
+                : canCreate
+                  ? "Crea tu primer evento aquí o desde la app de Allons. Lo revisamos antes de publicarlo y aquí verás sus ventas y asistentes."
+                  : "Aquí verás las ventas y asistentes de los eventos de tu comercio."
             }
+            action={!needle && canCreate ? createLink : undefined}
           />
         ) : (
           <div className="grid gap-5 sm:grid-cols-2">

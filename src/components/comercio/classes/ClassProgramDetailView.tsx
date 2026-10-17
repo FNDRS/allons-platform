@@ -3,6 +3,7 @@
 import { useProviderClassProgram } from "@/hooks/useProviderClassProgram";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { ComercioPageHeader } from "@/components/comercio/ComercioPageHeader";
+import { ReviewStatusBanner } from "@/components/comercio/ReviewStatusBanner";
 import { ClassProgramActions } from "./ClassProgramActions";
 import { ClassProgramInfo } from "./ClassProgramInfo";
 import { ClassProgramMetrics } from "./ClassProgramMetrics";
@@ -38,6 +39,12 @@ export function ClassProgramDetailView({ id }: { id: string }) {
           onDelete={p.remove}
         />
       </div>
+      <ReviewStatusBanner
+        kind="clase"
+        status={program.status}
+        rejectReason={program.reviewRejectReason}
+        editHref={`/comercio/clases/${encodeURIComponent(program.id)}/editar`}
+      />
       <ClassProgramMetrics metrics={program.metrics} />
       <ClassProgramInfo program={program} />
       <div className="grid gap-6 lg:grid-cols-2">

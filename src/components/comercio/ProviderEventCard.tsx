@@ -20,16 +20,10 @@ import {
   formatDashboardHNL,
   formatNumber,
 } from "@/lib/format";
+import { eventStatusLabel } from "@/lib/eventStatus";
 import { DashboardFigure } from "./DashboardFigure";
 import { glassCtaClass } from "@/components/ui/cta";
 import { Progress } from "@/components/ui/Stat";
-
-const STATUS: Record<string, string> = {
-  published: "Publicado",
-  draft: "Borrador",
-  sold_out: "Agotado",
-  ended: "Finalizado",
-};
 
 export function ProviderEventCard({
   event,
@@ -39,7 +33,7 @@ export function ProviderEventCard({
   /** Where this card opens: `/comercio/events` for the event's own config, `/comercio/finanzas` for its sales and money. */
   basePath?: string;
 }) {
-  const status = STATUS[event.status] ?? event.status;
+  const status = eventStatusLabel(event.status);
   const prefetch = usePrefetchProviderEvent();
   const warm = () => prefetch(event.id);
   const day = formatCardDay(event.startsAt);
@@ -77,7 +71,17 @@ export function ProviderEventCard({
             <h3 className="line-clamp-2 text-[17px] font-semibold leading-[1.2] tracking-[-0.02em] text-white">
               {event.title}
             </h3>
-            <p className="mt-1 text-[13px] text-white/40">{status}</p>
+            <p
+              className={`mt-1 text-[13px] ${
+                event.status === "rejected"
+                  ? "font-semibold text-red-300"
+                  : event.status === "pending_review"
+                    ? "font-semibold text-white/70"
+                    : "text-white/40"
+              }`}
+            >
+              {status}
+            </p>
             {collaboration ? (
               <p className="mt-1 inline-flex max-w-full items-center gap-1.5 truncate text-[12px] font-semibold text-accent">
                 <Handshake className="size-3.5 shrink-0" strokeWidth={1.7} aria-hidden />

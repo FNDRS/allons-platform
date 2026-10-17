@@ -15,6 +15,8 @@ import {
 
 const STATUS_DONE: Record<ClassProgramStatus, string> = {
   draft: "reactivado",
+  pending_review: "enviado a revisión",
+  rejected: "rechazado",
   published: "publicado",
   archived: "archivado",
 };

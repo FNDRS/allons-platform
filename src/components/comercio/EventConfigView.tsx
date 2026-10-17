@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, Clock } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, Clock, Pencil } from "lucide-react";
+import { useAuth } from "@/components/app/AuthProvider";
+import { buttonClass } from "@/components/ui/Button";
+import { eventStatusLabel, isLiveEventStatus } from "@/lib/eventStatus";
+import { canManageEvents } from "@/lib/role";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useProviderResources } from "@/hooks/useProviderResources";
 import {
@@ -22,14 +26,8 @@ import { HourlySalesChart } from "./HourlySalesChart";
 import { KpiTile } from "./KpiTile";
 import { ResourceMap } from "./ResourceMap";
 import { EventCollaboratorsSection } from "./EventCollaboratorsSection";
+import { ReviewStatusBanner } from "./ReviewStatusBanner";
 import { ShareEventButton } from "./ShareEventButton";
-
-const STATUS: Record<string, string> = {
-  published: "Publicado",
-  draft: "Borrador",
-  sold_out: "Agotado",
-  ended: "Finalizado",
-};
 
 const REFUND_POLICY: Record<string, string> = {
   none: "Sin reembolsos",
@@ -56,6 +54,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
  */
 export function EventConfigView({ eventId }: { eventId: string }) {
   const { ready } = useProviderAccess();
+  const { user } = useAuth();
   const [hourlyDate, setHourlyDate] = useState<string | undefined>(undefined);
   const event = useQuery({
     queryKey: providerKeys.event(eventId),
@@ -96,7 +95,10 @@ export function EventConfigView({ eventId }: { eventId: string }) {
   const ownQuestions = (data.questions ?? []).some(
     (question) => !question.campaignQuestionId,
   );
-  const status = STATUS[data.status] ?? data.status;
+  const status = eventStatusLabel(data.status);
+  // Only the hosting comercio edits; a collaborator reads the same page.
+  const canEdit = data.access === "owner" && canManageEvents(user);
+  const editHref = `/comercio/events/${encodeURIComponent(eventId)}/editar`;
   const day = formatCardDay(data.startsAt);
   const time = formatCardTime(data.startsAt);
   const place = [data.venue, data.city].filter(Boolean).join(", ");
@@ -147,16 +149,33 @@ export function EventConfigView({ eventId }: { eventId: string }) {
             </div>
           </div>
           <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
-            <ShareEventButton eventId={eventId} title={data.title} />
-            <Link
-              href={`/eventos/${encodeURIComponent(eventId)}`}
-              className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-1.5 px-4 text-[13px] sm:w-auto ${glassCtaClass}`}
-            >
-              Ver página pública
-              <ArrowUpRight className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
-            </Link>
+            {canEdit ? (
+              <Link href={editHref} className={buttonClass({ size: "sm", className: "w-full sm:w-auto" })}>
+                <Pencil className="size-4" aria-hidden />
+                Editar evento
+              </Link>
+            ) : null}
+            {/* Not public until approved: no share link or public page yet. */}
+            {isLiveEventStatus(data.status) ? (
+              <>
+                <ShareEventButton eventId={eventId} title={data.title} />
+                <Link
+                  href={`/eventos/${encodeURIComponent(eventId)}`}
+                  className={`inline-flex h-10 w-full shrink-0 items-center justify-center gap-1.5 px-4 text-[13px] sm:w-auto ${glassCtaClass}`}
+                >
+                  Ver página pública
+                  <ArrowUpRight className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
+                </Link>
+              </>
+            ) : null}
           </div>
         </div>
+        <ReviewStatusBanner
+          kind="evento"
+          status={data.status}
+          rejectReason={data.reviewRejectReason}
+          editHref={canEdit ? editHref : null}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
