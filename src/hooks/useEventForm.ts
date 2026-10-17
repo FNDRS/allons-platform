@@ -19,7 +19,9 @@ import { EVENT_CATEGORIES, EVENT_OTHER_CATEGORY } from "@/lib/eventCategories";
 import { isLiveEventStatus } from "@/lib/eventStatus";
 import { todayHN } from "@/lib/dateKeys";
 import { hnToIso, isoToHn } from "./event-form/time";
+import { useEventDonationInfo } from "./event-form/useEventDonationInfo";
 import { useEventPin } from "./event-form/useEventPin";
+import { useEventQuestions } from "./event-form/useEventQuestions";
 import { useEventTicketsForm } from "./event-form/useEventTicketsForm";
 
 export type EventSaveTarget = "draft" | "published";
@@ -109,10 +111,12 @@ export function useEventForm(event: ProviderEventDetail | null) {
   const [smokingAllowed, setSmokingAllowed] = useState(Boolean(event?.smokingAllowed));
   const [petFriendly, setPetFriendly] = useState(Boolean(event?.petFriendly));
   const [parkingAvailable, setParkingAvailable] = useState(Boolean(event?.parkingAvailable));
+  const [kitPickupEnabled, setKitPickupEnabled] = useState(Boolean(event?.kitPickupInfo?.trim()));
   const [kitPickupInfo, setKitPickupInfo] = useState(event?.kitPickupInfo ?? "");
+  const questions = useEventQuestions(event);
+  const donation = useEventDonationInfo(event?.donationInfo);
 
   const [savingTarget, setSavingTarget] = useState<EventSaveTarget | null>(null);
-  const tickets = useEventTicketsForm(event?.ticketTypes ?? []);
 
   // With a pin the API works the city out from it, so the typed address and
   // city become optional.
@@ -121,6 +125,7 @@ export function useEventForm(event: ProviderEventDetail | null) {
 
   const startsAt = hnToIso(startDate, startTime);
   const endsAt = hnToIso(endDate || startDate, endTime);
+  const tickets = useEventTicketsForm(event?.ticketTypes ?? [], startsAt);
   const today = todayHN();
   // Dates already set on an existing event stay pickable even once past.
   const minDate = start.date && start.date < today ? start.date : today;
@@ -147,6 +152,8 @@ export function useEventForm(event: ProviderEventDetail | null) {
     !pinned && !city.trim() ? "la ciudad" : null,
     !tickets.hasTickets ? "una entrada" : null,
     ...(startDate ? tickets.windowProblems(startDate, startsAt) : []),
+    ...questions.problems,
+    ...donation.problems,
   ].filter((item): item is string => item !== null);
 
   // A draft can be incomplete, but a paid entry still needs a date to know
@@ -154,11 +161,15 @@ export function useEventForm(event: ProviderEventDetail | null) {
   const missingForDraft = [
     tickets.hasPaidTickets && !startsAt ? "la fecha y hora de inicio" : null,
     ...(startDate ? tickets.windowProblems(startDate, startsAt) : []),
+    // The API checks these on every save too, draft or not.
+    ...questions.problems,
+    ...donation.problems,
   ].filter((item): item is string => item !== null);
 
   const canSubmit = canSaveDraft && missingForReview.length === 0;
 
-  const buildFields = (): Omit<ProviderEventInput, "status"> => {
+  /** `isNew` is a POST: keys that only carry a change are sent when set. */
+  const buildFields = (isNew: boolean): Omit<ProviderEventInput, "status"> => {
     const paid = tickets.hasPaidTickets;
     const refund: RefundPolicy = paid ? refundPolicy : "none";
     const typedCapacity = Number(capacity);
@@ -184,8 +195,15 @@ export function useEventForm(event: ProviderEventDetail | null) {
       smokingAllowed,
       petFriendly,
       parkingAvailable,
-      kitPickupInfo: kitPickupInfo.trim().slice(0, 2000),
+      // Off clears it, same as the admin's switch.
+      kitPickupInfo: kitPickupEnabled ? kitPickupInfo.trim().slice(0, 2000) : "",
     };
+    // Sent only when they change: the API deletes and recreates the
+    // comercio's questions on every write that includes them.
+    const questionsPayload = questions.payloadFor(isNew);
+    if (questionsPayload !== undefined) fields.questions = questionsPayload;
+    const donationInfo = donation.payload();
+    if (donationInfo !== undefined) fields.donationInfo = donationInfo;
     fields.address = address.trim() || null;
     fields.city = city.trim() || null;
     if (location.changed) {
@@ -236,7 +254,7 @@ export function useEventForm(event: ProviderEventDetail | null) {
     if (target === "published" ? !canSubmit : !canSaveDraft || missingForDraft.length > 0) return;
     setSavingTarget(target);
     try {
-      const fields = buildFields();
+      const fields = buildFields(!savedId);
       let id = savedId;
       let status = savedStatus;
       const knownIds = new Set(tickets.persistedIds);
@@ -245,6 +263,8 @@ export function useEventForm(event: ProviderEventDetail | null) {
         // it is about are saved.
         const updated = await updateProviderEvent(id, fields);
         status = updated.status;
+        questions.markSaved();
+        donation.markSaved();
       } else {
         // Created as a draft and sent to review after its entries exist, so
         // a failure halfway never leaves an event in review without them.
@@ -253,6 +273,8 @@ export function useEventForm(event: ProviderEventDetail | null) {
         status = created.status;
         setSavedId(created.id);
         setSavedStatus(created.status);
+        questions.markSaved();
+        donation.markSaved();
       }
       await syncTickets(id, knownIds);
 
@@ -328,6 +350,8 @@ export function useEventForm(event: ProviderEventDetail | null) {
     setCity,
 
     tickets,
+    /** The event's start as typed, which paid entries stop selling at by default. */
+    eventStartsAt: startsAt,
 
     capacity,
     setCapacity: (value: string) => setCapacity(digitsOnly(value)),
@@ -347,8 +371,13 @@ export function useEventForm(event: ProviderEventDetail | null) {
     setPetFriendly,
     parkingAvailable,
     setParkingAvailable,
+    kitPickupEnabled,
+    setKitPickupEnabled,
     kitPickupInfo,
     setKitPickupInfo,
+
+    questions,
+    donation,
 
     canSaveDraft: canSaveDraft && missingForDraft.length === 0,
     canSubmit,

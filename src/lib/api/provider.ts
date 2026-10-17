@@ -1,4 +1,6 @@
 import { apiFetch, downloadFile } from "./client";
+import type { EventDonationInfo } from "@/lib/eventDonations";
+import type { EventQuestionKind } from "./events";
 
 /** What Allons and the pasarela withhold from each sale, as percentages. */
 export interface ProviderCommission {
@@ -113,7 +115,22 @@ export interface ProviderTicketType {
   sold: number;
   saleStartsAt: string | null;
   saleEndsAt: string | null;
+  /** Buyers can pay more than the price as a contribution. */
   donationEnabled: boolean;
+  /** Contribution offered at checkout, in lempiras. Null without one. */
+  suggestedDonation?: number | null;
+}
+
+/** A registration-form question as the event detail returns it. */
+export interface ProviderEventQuestion {
+  id: string;
+  label: string;
+  kind: string;
+  options?: string[] | null;
+  required: boolean;
+  sortOrder?: number;
+  /** Set on questions a campaign hub copied in; those are not the comercio's. */
+  campaignQuestionId?: string | null;
 }
 
 export interface ProviderEventDetail extends ProviderEventListItem {
@@ -127,15 +144,13 @@ export interface ProviderEventDetail extends ProviderEventListItem {
   gallery?: Array<{ id: string; url: string; sortOrder: number }>;
   category?: string | null;
   ticketTypes: ProviderTicketType[];
-  questions: Array<{
-    id: string;
-    label: string;
-    kind: string;
-    required: boolean;
-    /** Set on questions a campaign hub copied in; those are not the comercio's. */
-    campaignQuestionId?: string | null;
-  }>;
+  /** The comercio's own questions. Older APIs mixed campaign copies in. */
+  questions: ProviderEventQuestion[];
+  /** Questions a campaign hub added; read-only for the comercio. */
+  campaignQuestions?: ProviderEventQuestion[];
   kitPickupInfo?: string | null;
+  /** Where to donate straight to a beneficiary. Missing on older APIs. */
+  donationInfo?: EventDonationInfo | null;
   refundPolicy?: string;
   refundPartialPct?: number | null;
   refundDeadlineDays?: number | null;
@@ -355,8 +370,24 @@ export interface ProviderEventInput {
   parkingAvailable: boolean;
   /** Empty clears it. */
   kitPickupInfo: string;
+  /**
+   * Replaces the comercio's own questions (campaign copies stay). Omit to
+   * keep the stored ones; send it only when they changed.
+   */
+  questions?: ProviderEventQuestionInput[];
+  /** Omit to keep the stored one, null removes it. */
+  donationInfo?: EventDonationInfo | null;
   /** `published` goes to review unless the event is already public. */
   status: "draft" | "published";
+}
+
+export interface ProviderEventQuestionInput {
+  label: string;
+  kind: EventQuestionKind;
+  /** Only on select, radio and checkbox, with 1 to 20 entries. */
+  options?: string[];
+  required: boolean;
+  sortOrder: number;
 }
 
 export function createProviderEvent(body: ProviderEventInput) {
@@ -386,6 +417,10 @@ export interface ProviderTicketTypeInput {
   /** ISO instants. Required by the API when the price is above 0. */
   saleStartsAt: string | null;
   saleEndsAt: string | null;
+  /** Lets the buyer add a contribution. Only applies to paid entries. */
+  donationEnabled: boolean;
+  /** Lempiras offered at checkout; null without a suggestion. */
+  suggestedDonation: number | null;
   sortOrder: number;
 }
 

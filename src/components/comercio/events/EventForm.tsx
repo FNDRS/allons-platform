@@ -5,9 +5,12 @@ import { useEventForm } from "@/hooks/useEventForm";
 import type { ProviderEventDetail } from "@/lib/api/provider";
 import { EventBasicsFields } from "./EventBasicsFields";
 import { EventCoverField } from "./EventCoverField";
+import { EventDonationFields } from "./EventDonationFields";
 import { EventFormActions } from "./EventFormActions";
+import { EventKitPickupField } from "./EventKitPickupField";
 import { EventLocationFields } from "./EventLocationFields";
 import { EventPolicyFields } from "./EventPolicyFields";
+import { EventQuestionsFields } from "./EventQuestionsFields";
 import { EventScheduleFields } from "./EventScheduleFields";
 import { EventTicketEditorModal } from "./EventTicketEditorModal";
 import { EventTicketsBuilder } from "./EventTicketsBuilder";
@@ -41,17 +44,27 @@ export function EventForm({ event }: { event: ProviderEventDetail | null }) {
       <Section title="Cuándo">
         <EventScheduleFields {...f} />
       </Section>
-      <Section title="Dónde">
+      <Section title="Dónde y cómo llegar">
         <EventLocationFields {...f} />
       </Section>
       <EventTicketsBuilder
         tickets={f.tickets.tickets}
+        eventStartsAt={f.eventStartsAt}
         onAdd={f.tickets.openNew}
         onEdit={f.tickets.openExisting}
         onRemove={f.tickets.remove}
       />
       <Section title="Reglas y detalles">
-        <EventPolicyFields {...f} />
+        <div className="flex flex-col gap-4">
+          <EventPolicyFields {...f} />
+          <EventKitPickupField {...f} />
+        </div>
+      </Section>
+      <Section title="Formulario de registro">
+        <EventQuestionsFields q={f.questions} />
+      </Section>
+      <Section title="Donaciones directas">
+        <EventDonationFields d={f.donation} />
       </Section>
       <EventFormActions
         isLive={f.isLive}
@@ -66,6 +79,7 @@ export function EventForm({ event }: { event: ProviderEventDetail | null }) {
 
       <EventTicketEditorModal
         draft={f.tickets.editorDraft}
+        eventStartsAt={f.eventStartsAt}
         error={f.tickets.editorError}
         onChange={f.tickets.updateEditor}
         onCancel={f.tickets.closeEditor}

@@ -1,29 +1,29 @@
 import { Button } from "@/components/ui/Button";
-import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
-import { TimePicker } from "@/components/ui/TimePicker";
 import { ClassFormField } from "@/components/comercio/classes/ClassFormField";
 import { ticketPrice, type EventTicketDraft } from "@/hooks/event-form/useEventTicketsForm";
-import { todayHN } from "@/lib/dateKeys";
+import { EventTicketDonationFields } from "./EventTicketDonationFields";
+import { EventTicketSaleWindowFields } from "./EventTicketSaleWindowFields";
 
 const digits = (value: string) => value.replace(/\D/g, "");
 
-/** Authors one ticket type: name, price, how many, and when it sells. */
+/** Authors one ticket type: name, price, how many, when it sells, donations. */
 export function EventTicketEditorModal({
   draft,
+  eventStartsAt,
   error,
   onChange,
   onCancel,
   onConfirm,
 }: {
   draft: EventTicketDraft | null;
+  eventStartsAt: string | null;
   error: string | null;
   onChange: (patch: Partial<EventTicketDraft>) => void;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const today = todayHN();
   const paid = draft ? ticketPrice(draft) > 0 : false;
   return (
     <Modal
@@ -83,65 +83,18 @@ export function EventTicketEditorModal({
           </div>
           {paid ? (
             <>
-              <p className="text-[13px] leading-5 text-white/50">
-                Venta (opcional). Si la dejas vacía, se vende desde que se publica hasta que
-                empieza el evento. Tiene que terminar a más tardar el día del evento.
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <ClassFormField label="Inicio de venta">
-                  {(id) => (
-                    <DateField
-                      id={id}
-                      value={draft.saleStartDate}
-                      min={draft.saleStartDate && draft.saleStartDate < today ? draft.saleStartDate : today}
-                      onChange={(saleStartDate) => onChange({ saleStartDate })}
-                      placeholder="Desde que se publica"
-                    />
-                  )}
-                </ClassFormField>
-                <ClassFormField label="Hora">
-                  {(id) => (
-                    <TimePicker
-                      id={id}
-                      value={draft.saleStartTime}
-                      onChange={(saleStartTime) => onChange({ saleStartTime })}
-                    />
-                  )}
-                </ClassFormField>
-                <ClassFormField label="Fin de venta">
-                  {(id) => (
-                    <DateField
-                      id={id}
-                      value={draft.saleEndDate}
-                      min={draft.saleStartDate || today}
-                      onChange={(saleEndDate) => onChange({ saleEndDate })}
-                      placeholder="Cuando empieza el evento"
-                    />
-                  )}
-                </ClassFormField>
-                <ClassFormField label="Hora">
-                  {(id) => (
-                    <TimePicker
-                      id={id}
-                      value={draft.saleEndTime}
-                      onChange={(saleEndTime) => onChange({ saleEndTime })}
-                    />
-                  )}
-                </ClassFormField>
-              </div>
-              {draft.saleStartDate || draft.saleEndDate || draft.saleStartTime || draft.saleEndTime ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    onChange({ saleStartDate: "", saleStartTime: "", saleEndDate: "", saleEndTime: "" })
-                  }
-                  className="w-fit text-[13px] font-semibold text-white/60 underline-offset-4 hover:text-white hover:underline"
-                >
-                  Quitar fechas de venta
-                </button>
-              ) : null}
+              <EventTicketSaleWindowFields
+                draft={draft}
+                eventStartsAt={eventStartsAt}
+                onChange={onChange}
+              />
+              <EventTicketDonationFields draft={draft} onChange={onChange} />
             </>
-          ) : null}
+          ) : (
+            <p className="text-[13px] leading-5 text-white/50">
+              Las entradas gratis están disponibles desde que se publica el evento.
+            </p>
+          )}
           {error ? <p className="text-[13px] text-red-300">{error}</p> : null}
         </div>
       ) : null}

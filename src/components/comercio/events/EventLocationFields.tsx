@@ -38,8 +38,8 @@ export function EventLocationFields(p: Props) {
       </ClassFormField>
 
       <ClassFormField
-        label="Ubicación en el mapa"
-        hint="Pega el link de Google Maps (Compartir > Copiar enlace) o las coordenadas. Es el pin que abre la gente para llegar."
+        label="Cómo llegar"
+        hint="El pin que abre la gente en Google Maps para llegar. Pega el link del lugar (Compartir > Copiar enlace) o sus coordenadas."
       >
         {(id) => (
           <div className="flex flex-col gap-2">
