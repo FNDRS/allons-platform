@@ -334,6 +334,9 @@ export interface ProviderEventInput {
   city?: string | null;
   venue: string | null;
   address?: string | null;
+  /** Map pin; both or neither. Omit to keep the stored one, null clears it. */
+  latitude?: number | null;
+  longitude?: number | null;
   coverImageUrl: string | null;
   /** Image URLs, cover first. Omit to keep the stored gallery. */
   gallery?: string[];

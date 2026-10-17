@@ -19,6 +19,7 @@ import { EVENT_CATEGORIES, EVENT_OTHER_CATEGORY } from "@/lib/eventCategories";
 import { isLiveEventStatus } from "@/lib/eventStatus";
 import { todayHN } from "@/lib/dateKeys";
 import { hnToIso, isoToHn } from "./event-form/time";
+import { useEventPin } from "./event-form/useEventPin";
 import { useEventTicketsForm } from "./event-form/useEventTicketsForm";
 
 export type EventSaveTarget = "draft" | "published";
@@ -78,6 +79,17 @@ export function useEventForm(event: ProviderEventDetail | null) {
   const [venue, setVenue] = useState(event?.venue ?? "");
   const [address, setAddress] = useState(event?.address ?? "");
   const [city, setCity] = useState(event?.city ?? "");
+  const location = useEventPin(
+    event?.latitude != null && event?.longitude != null
+      ? { latitude: event.latitude, longitude: event.longitude }
+      : null,
+    // Only fills what is still blank: a typed address beats the geocoder's.
+    (place) => {
+      if (place.address) setAddress((prev) => (prev.trim() ? prev : place.address));
+      const placeCity = place.city;
+      if (placeCity) setCity((prev) => (prev.trim() ? prev : placeCity));
+    },
+  );
 
   const [capacity, setCapacity] = useState(
     event && event.capacity > 0 ? String(event.capacity) : "",
@@ -102,9 +114,9 @@ export function useEventForm(event: ProviderEventDetail | null) {
   const [savingTarget, setSavingTarget] = useState<EventSaveTarget | null>(null);
   const tickets = useEventTicketsForm(event?.ticketTypes ?? []);
 
-  // A pin set from the app decides the city on the API, so the web keeps it
-  // as is instead of offering fields that the pin would silently override.
-  const pinned = event?.latitude != null && event?.longitude != null;
+  // With a pin the API works the city out from it, so the typed address and
+  // city become optional.
+  const pinned = location.pin !== null;
   const isLive = isLiveEventStatus(savedStatus);
 
   const startsAt = hnToIso(startDate, startTime);
@@ -174,9 +186,11 @@ export function useEventForm(event: ProviderEventDetail | null) {
       parkingAvailable,
       kitPickupInfo: kitPickupInfo.trim().slice(0, 2000),
     };
-    if (!pinned) {
-      fields.address = address.trim() || null;
-      fields.city = city.trim() || null;
+    fields.address = address.trim() || null;
+    fields.city = city.trim() || null;
+    if (location.changed) {
+      fields.latitude = location.pin?.latitude ?? null;
+      fields.longitude = location.pin?.longitude ?? null;
     }
     // The app keeps its images in the gallery with the cover first, so a new
     // cover takes the old one's place there and the rest stay in order.
@@ -305,7 +319,7 @@ export function useEventForm(event: ProviderEventDetail | null) {
     endTime,
     setEndTime,
 
-    pinned,
+    location,
     venue,
     setVenue,
     address,
