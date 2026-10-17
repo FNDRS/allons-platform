@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/Card";
-import { Input, Textarea } from "@/components/ui/Field";
+import { Input } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
 import { SwitchRow } from "@/components/ui/SwitchRow";
 import { ClassFormField } from "@/components/comercio/classes/ClassFormField";
@@ -31,8 +31,6 @@ type Props = Pick<
   | "setPetFriendly"
   | "parkingAvailable"
   | "setParkingAvailable"
-  | "kitPickupInfo"
-  | "setKitPickupInfo"
 >;
 
 /** Capacity, refunds, age and the practical details attendees ask about. */
@@ -121,22 +119,6 @@ export function EventPolicyFields(p: Props) {
           <SwitchRow label="Pet friendly" checked={p.petFriendly} onChange={p.setPetFriendly} />
           <SwitchRow label="Con parqueo" checked={p.parkingAvailable} onChange={p.setParkingAvailable} />
         </div>
-      </ClassFormField>
-
-      <ClassFormField
-        label="Entrega de kit (opcional)"
-        hint="Para carreras y eventos con kit: dónde y cuándo se recoge. Déjalo vacío si no aplica."
-      >
-        {(id) => (
-          <Textarea
-            id={id}
-            placeholder="Ej. Viernes de 9:00 a. m. a 5:00 p. m. en la tienda de Multiplaza"
-            value={p.kitPickupInfo}
-            maxLength={2000}
-            rows={3}
-            onChange={(e) => p.setKitPickupInfo(e.target.value)}
-          />
-        )}
       </ClassFormField>
     </Card>
   );

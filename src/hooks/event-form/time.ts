@@ -31,3 +31,12 @@ export function endOfHnDay(date: string): number | null {
   const iso = hnToIso(date, "00:00");
   return iso ? new Date(iso).getTime() + 24 * 60 * 60 * 1000 : null;
 }
+
+/**
+ * Now in Honduras time, rounded down to 5 minutes (the time picker's step),
+ * as the default start of a ticket sale.
+ */
+export function nowHnRounded(): { date: string; time: string } {
+  const step = 5 * 60 * 1000;
+  return isoToHn(new Date(Math.floor(Date.now() / step) * step).toISOString());
+}

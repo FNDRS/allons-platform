@@ -5,6 +5,7 @@ export function ClassDraftRow({
   title,
   detail,
   aside,
+  meta,
   note,
   editLabel,
   removeLabel,
@@ -15,6 +16,8 @@ export function ClassDraftRow({
   title: string;
   detail: string;
   aside?: string;
+  /** A second line that wraps instead of being cut, e.g. a sale window. */
+  meta?: string | null;
   note?: string | null;
   editLabel: string;
   removeLabel: string;
@@ -34,6 +37,7 @@ export function ClassDraftRow({
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[15px] font-semibold tracking-tight">{title}</span>
           <span className="block truncate text-[13px] text-white/50">{detail}</span>
+          {meta ? <span className="block text-[12px] leading-5 text-white/40">{meta}</span> : null}
           {note ? <span className="block text-[12px] font-semibold text-accent">{note}</span> : null}
         </span>
         {aside ? (
