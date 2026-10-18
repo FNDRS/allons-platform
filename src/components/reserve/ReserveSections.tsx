@@ -90,17 +90,20 @@ export function EntryTypePicker({
               ? formatDateTime(type.saleStartsAt)
               : null;
           const subtitle = sessionSubtitle(type);
+          const details = type.description?.trim() || null;
           return (
-            <button
+            <div
               key={type.id}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => onChange(type.id)}
-              className="text-left transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.99]"
+              className="transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.99]"
             >
               <Shell active={active}>
-                <div className="flex items-center justify-between gap-4">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => onChange(type.id)}
+                  className="flex w-full items-center justify-between gap-4 text-left"
+                >
                   <div className="flex min-w-0 items-center gap-3.5">
                     <span
                       className={`flex size-6 shrink-0 items-center justify-center rounded-full border ${
@@ -138,26 +141,28 @@ export function EntryTypePicker({
                       cents={(priceCentsFor ?? ((cents) => cents))(type.priceCents)}
                     />
                   </p>
-                </div>
+                </button>
+                {/* What the entry includes, written by the organizer. Opens
+                    under the card once it's picked. */}
+                {details ? (
+                  <div
+                    aria-hidden={!active}
+                    className={`grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                      active ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <p className="mt-3.5 whitespace-pre-line border-t border-white/10 pl-[38px] pt-3.5 text-[14px] leading-relaxed text-white/70">
+                        {details}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
               </Shell>
-            </button>
+            </div>
           );
         })}
       </div>
-    </section>
-  );
-}
-
-/** What the picked entry includes, written by the organizer. */
-export function EntryTypeDetails({ text, step }: { text: string; step: number }) {
-  return (
-    <section>
-      <StepHeading n={step}>Detalles</StepHeading>
-      <Shell>
-        <p className="whitespace-pre-line py-1 text-[14px] leading-relaxed text-white/70">
-          {text}
-        </p>
-      </Shell>
     </section>
   );
 }
