@@ -21,6 +21,7 @@ import { ReserveBikePicker } from "./ReserveBikePicker";
 import {
   CampaignConsentField,
   DonationField,
+  EntryTypeDetails,
   EntryTypePicker,
   GovernmentIdField,
   HolderCard,
@@ -79,6 +80,9 @@ export function ReserveView({ eventId }: { eventId: string }) {
   // Tampoco mientras cargan las tarjetas, para que no aparezca y desaparezca.
   const showGovernmentId =
     form.needsGovernmentId && !payInApp && !(checkout.loading && !chargesNothing);
+  // A session's description gets its own step right after the picker.
+  const details = form.entryType?.description?.trim() || null;
+  const detailsStep = details ? 1 : 0;
   const idStep = showGovernmentId ? 1 : 0;
   const donationStep = form.donationAllowed ? 1 : 0;
   // El código promocional sólo aplica a lo que se cobra: no tiene sentido en
@@ -202,10 +206,13 @@ export function ReserveView({ eventId }: { eventId: string }) {
         priceCentsFor={listed.priceCentsFor}
       />
 
+      {details ? <EntryTypeDetails text={details} step={2} /> : null}
+
       <QuantityStepper
         value={form.quantity}
         max={form.maxQuantity}
         onChange={form.setQuantity}
+        step={2 + detailsStep}
       />
 
       {form.hasResourceGroups ? (
@@ -213,7 +220,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
           groups={form.resourceGroups}
           selectedByGroup={form.selectedResourceByGroup}
           quantity={form.quantity}
-          step={3}
+          step={3 + detailsStep}
           error={
             form.touched && form.missingGroupName
               ? `Elige tu ${form.missingGroupName.toLowerCase()} antes de continuar.`
@@ -224,7 +231,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
       ) : null}
 
       <section>
-        <StepHeading n={3 + (form.hasResourceGroups ? 1 : 0)}>
+        <StepHeading n={3 + detailsStep + (form.hasResourceGroups ? 1 : 0)}>
           Asistentes
         </StepHeading>
         <div className="flex flex-col gap-3">
@@ -257,7 +264,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
         <GovernmentIdField
           value={form.governmentId}
           onChange={form.setGovernmentId}
-          step={4 + (form.hasResourceGroups ? 1 : 0)}
+          step={4 + detailsStep + (form.hasResourceGroups ? 1 : 0)}
           showError={form.touched && !form.governmentIdValid}
           rejectedMessage={form.governmentIdRejectedMessage}
         />
@@ -268,13 +275,13 @@ export function ReserveView({ eventId }: { eventId: string }) {
           value={form.donation}
           onChange={form.setDonation}
           suggestedCents={form.suggestedDonationCents}
-          step={4 + (form.hasResourceGroups ? 1 : 0) + idStep}
+          step={4 + detailsStep + (form.hasResourceGroups ? 1 : 0) + idStep}
         />
       ) : null}
 
       {!form.isFree ? (
         <PromoCodeField
-          step={4 + (form.hasResourceGroups ? 1 : 0) + idStep + donationStep}
+          step={4 + detailsStep + (form.hasResourceGroups ? 1 : 0) + idStep + donationStep}
           value={form.promoCodeDraft}
           onChange={form.setPromoCodeDraft}
           onApply={form.applyPromoCode}
@@ -289,6 +296,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
         <StepHeading
           n={
             4 +
+            detailsStep +
             (form.hasResourceGroups ? 1 : 0) +
             idStep +
             donationStep +
@@ -313,6 +321,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
         <PaymentMethodStep
           step={
             5 +
+            detailsStep +
             (form.hasResourceGroups ? 1 : 0) +
             idStep +
             donationStep +

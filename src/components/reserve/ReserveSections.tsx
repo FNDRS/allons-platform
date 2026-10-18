@@ -116,18 +116,6 @@ export function EntryTypePicker({
                       {subtitle ? (
                         <p className="mt-0.5 text-[13px] text-white/60">{subtitle}</p>
                       ) : null}
-                      {/* What the session includes. Two lines while browsing,
-                          all of it once picked, so the buyer reads it before
-                          paying. */}
-                      {type.description ? (
-                        <p
-                          className={`mt-1.5 whitespace-pre-line text-[13px] leading-relaxed text-white/50 ${
-                            active ? "" : "line-clamp-2"
-                          }`}
-                        >
-                          {type.description}
-                        </p>
-                      ) : null}
                       {opensAt ? (
                         <p className="mt-0.5 text-[13px] text-white/40">
                           A la venta desde {opensAt}
@@ -158,18 +146,34 @@ export function EntryTypePicker({
   );
 }
 
+/** What the picked entry includes, written by the organizer. */
+export function EntryTypeDetails({ text, step }: { text: string; step: number }) {
+  return (
+    <section>
+      <StepHeading n={step}>Detalles</StepHeading>
+      <Shell>
+        <p className="whitespace-pre-line py-1 text-[14px] leading-relaxed text-white/70">
+          {text}
+        </p>
+      </Shell>
+    </section>
+  );
+}
+
 export function QuantityStepper({
   value,
   max,
   onChange,
+  step = 2,
 }: {
   value: number;
   max: number;
   onChange: (value: number) => void;
+  step?: number;
 }) {
   return (
     <section>
-      <StepHeading n={2}>Cantidad</StepHeading>
+      <StepHeading n={step}>Cantidad</StepHeading>
       <Shell>
         <div className="flex items-center justify-between py-1">
           <p className="text-[14px] text-white/50" aria-live="polite">
