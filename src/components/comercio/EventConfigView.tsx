@@ -18,6 +18,7 @@ import {
 } from "@/lib/api/provider";
 import { formatCardDay, formatCardTime, formatHNL, formatNumber } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
+import { Progress } from "@/components/ui/Stat";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { glassCtaClass } from "@/components/ui/cta";
 import { EventAnswersSection } from "./EventAnswersSection";
@@ -249,10 +250,28 @@ export function EventConfigView({ eventId }: { eventId: string }) {
                     {type.price > 0 ? formatHNL(type.price) : "Gratis"}
                   </p>
                 </div>
-                <p className="mt-1 text-[13px] text-white/50">
-                  {type.total > 0 ? `${type.total} disponibles` : "Sin límite"}
-                  {type.donationEnabled ? " · Admite aporte voluntario" : ""}
-                </p>
+                <div className="mt-3 flex items-baseline justify-between gap-3 text-[13px]">
+                  <p className="tabular-nums text-white/80">
+                    <span className="font-semibold text-white">{formatNumber(type.sold)}</span>
+                    {type.total > 0 ? (
+                      <span className="text-white/40"> / {formatNumber(type.total)}</span>
+                    ) : null}{" "}
+                    {type.price > 0 ? "vendidos" : "registrados"}
+                  </p>
+                  <p className="shrink-0 tabular-nums text-white/45">
+                    {type.total > 0
+                      ? `${formatNumber(Math.max(0, type.total - type.sold))} disponibles`
+                      : "Sin límite"}
+                  </p>
+                </div>
+                {type.total > 0 ? (
+                  <div className="mt-2.5">
+                    <Progress value={type.sold} max={type.total} />
+                  </div>
+                ) : null}
+                {type.donationEnabled ? (
+                  <p className="mt-2.5 text-[12px] text-white/40">Admite aporte voluntario</p>
+                ) : null}
               </article>
             ))}
           </div>
