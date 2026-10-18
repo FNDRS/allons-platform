@@ -76,6 +76,10 @@ export function ClassCheckoutView({
         Al pagar aceptas los{" "}
         <Link href="/terminos" target="_blank" className="underline underline-offset-2 hover:text-white">
           Términos y Condiciones
+        </Link>
+        , la{" "}
+        <Link href="/reembolsos" target="_blank" className="underline underline-offset-2 hover:text-white">
+          Política de Reembolsos
         </Link>{" "}
         y la{" "}
         <Link href="/privacidad" target="_blank" className="underline underline-offset-2 hover:text-white">

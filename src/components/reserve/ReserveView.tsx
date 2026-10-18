@@ -340,12 +340,17 @@ export function ReserveView({ eventId }: { eventId: string }) {
 
       {error ? <ErrorState message={error} /> : null}
 
-      {/* Informed consent before paying: the terms, the privacy notice and the
-          event's own refund rules are linked right where the buyer commits. */}
+      {/* Informed consent before paying: the terms, the refund policy, the
+          privacy notice and the event's own refund rules are linked right where
+          the buyer commits. */}
       <p className="text-center text-[12px] leading-relaxed text-white/45">
         Al {chargesNothing ? "confirmar" : "pagar"} aceptas los{" "}
         <Link href="/terminos" target="_blank" className="underline underline-offset-2 hover:text-white">
           Términos y Condiciones
+        </Link>
+        , la{" "}
+        <Link href="/reembolsos" target="_blank" className="underline underline-offset-2 hover:text-white">
+          Política de Reembolsos
         </Link>{" "}
         y la{" "}
         <Link href="/privacidad" target="_blank" className="underline underline-offset-2 hover:text-white">

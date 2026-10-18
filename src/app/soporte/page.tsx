@@ -62,9 +62,10 @@ export default function SoportePage() {
         <strong>¿Puedo pedir un reembolso?</strong>
       </p>
       <p>
-        Los reembolsos dependen de la política del organizador y de cada evento.
-        Si un evento se cancela o reprograma, contáctanos y te ayudamos a
-        gestionarlo.
+        Las compras confirmadas son definitivas y no se reembolsan por motivos
+        personales. Si el evento se cancela, no se presta o hubo un cobro
+        duplicado, escríbenos y lo gestionamos. Los detalles están en la{" "}
+        <a href="/reembolsos">Política de Reembolsos y Cancelaciones</a>.
       </p>
 
       <p>
