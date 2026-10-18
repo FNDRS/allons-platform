@@ -16,6 +16,11 @@ export interface EventTicketDraft {
   price: string;
   /** How many can be sold, as typed. */
   total: string;
+  /**
+   * Of `total`, how many only a promo code tied to this entry can take, as
+   * typed. Empty leaves it as it is.
+   */
+  codeReserved: string;
   /** Already sold on the server, so the quantity cannot drop below it. */
   sold: number;
   /** When a paid entry starts selling, in Honduras time. */
@@ -61,6 +66,7 @@ function emptyDraft(isFirst: boolean): EventTicketDraft {
     name: isFirst ? "General" : "",
     price: "",
     total: "",
+    codeReserved: "",
     sold: 0,
     saleStartDate: "",
     saleStartTime: "",
@@ -94,6 +100,7 @@ function fromTicketType(item: ProviderTicketType, eventStartsAt: string | null):
     name: item.name,
     price: item.price > 0 ? String(item.price) : "",
     total: item.total > 0 ? String(item.total) : "",
+    codeReserved: item.codeReserved ? String(item.codeReserved) : "",
     sold: item.sold,
     saleStartDate: start.date,
     saleStartTime: start.time,
@@ -227,6 +234,9 @@ export function eventTicketDraftError(
   if (total < draft.sold) {
     return `Ya vendiste ${draft.sold}, así que la cantidad no puede ser menor.`;
   }
+  if (draft.codeReserved && Number(draft.codeReserved) > total) {
+    return "Los lugares para códigos no pueden pasar de la cantidad.";
+  }
   if (price > 0) {
     const startErr = sideError(draft.saleStartDate, draft.saleStartTime, "inicio de venta");
     if (startErr) return startErr;
@@ -337,6 +347,8 @@ export function useEventTicketsForm(
           ? parseSuggestedDonation(draft.suggestedDonation).value
           : null,
         sortOrder,
+        // Only when typed, so an entry nobody touched saves as before.
+        ...(draft.codeReserved !== "" ? { codeReserved: Number(draft.codeReserved) } : {}),
       };
       // A single event never sends the session keys, so it saves as before.
       if (!bundle) return payload;
