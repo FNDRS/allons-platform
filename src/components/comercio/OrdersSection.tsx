@@ -4,22 +4,17 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowDownUp,
-  Braces,
   Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ClipboardCopy,
-  Download,
-  FileSpreadsheet,
-  FileText,
   Search,
-  Sheet,
   Ticket,
   Users,
   X,
 } from "lucide-react";
 import type {
+  ProviderEventAnswers,
   ProviderFreeReservation,
   ProviderPaymentRow,
   ProviderTicketType,
@@ -39,6 +34,7 @@ import { Chip } from "@/components/ui/Pill";
 import { EmptyState } from "@/components/ui/States";
 import { glassCtaClass } from "@/components/ui/cta";
 import { useDismiss } from "@/components/ui/useDismiss";
+import { ExportMenu } from "./ExportMenu";
 
 type OrderStatus =
   | "paid"
@@ -102,15 +98,64 @@ interface OrderLine {
   typeName: string;
   quantity: number;
   attendees: string[];
+  /**
+   * Checkout answers per question id, one entry per ticket, in the same
+   * order as `attendees`. Empty when the event asks nothing.
+   */
+  answers: Record<string, string[]>;
   amountCents: number;
   donationCents: number;
+}
+
+type AnswerAttendee = ProviderEventAnswers["attendees"][number];
+
+/**
+ * Tickets with answers, grouped the way the list groups them: by paid order,
+ * or for a free reservation by the instant its tickets were minted (they
+ * share `created_at`, which is how the API groups reservations too).
+ */
+function groupAnswers(answers: ProviderEventAnswers | undefined) {
+  const groups = new Map<string, AnswerAttendee[]>();
+  for (const attendee of answers?.attendees ?? []) {
+    const key = attendee.orderId ?? `free:${new Date(attendee.createdAt).getTime()}`;
+    const list = groups.get(key);
+    if (list) list.push(attendee);
+    else groups.set(key, [attendee]);
+  }
+  return groups;
+}
+
+/**
+ * Puts each line's ticket holders and their answers side by side. With
+ * answers the names come from those same tickets, so name and shirt size
+ * can't drift apart.
+ */
+function withAnswers(
+  line: OrderLine,
+  group: AnswerAttendee[] | undefined,
+  questions: ProviderEventAnswers["questions"],
+): OrderLine {
+  if (!group || questions.length === 0) return line;
+  return {
+    ...line,
+    attendees: group.map((attendee) => attendee.name),
+    answers: Object.fromEntries(
+      questions.map((question) => [
+        question.id,
+        group.map((attendee) => attendee.answers[question.id] ?? "Sin respuesta"),
+      ]),
+    ),
+  };
 }
 
 function toLines(
   rows: ProviderPaymentRow[],
   reservations: ProviderFreeReservation[],
   typeById: Map<string, ProviderTicketType>,
+  answers: ProviderEventAnswers | undefined,
 ): OrderLine[] {
+  const groups = groupAnswers(answers);
+  const questions = answers?.questions ?? [];
   const orders = rows.map((row): OrderLine => {
     const type = row.entryTypeId ? typeById.get(row.entryTypeId) : undefined;
     const isCourtesy =
@@ -124,10 +169,11 @@ function toLines(
       typeName: type?.name ?? "",
       quantity: row.quantity,
       attendees: (row.holders ?? []).map((holder) => holder.name.trim()).filter(Boolean),
+      answers: {},
       amountCents: row.amountCents,
       donationCents: row.donationCents ?? 0,
     };
-  });
+  }).map((line) => withAnswers(line, groups.get(line.id), questions));
   const free = reservations.map((row): OrderLine => {
     const holders = row.holders.map((holder) => holder.name.trim()).filter(Boolean);
     return {
@@ -139,11 +185,30 @@ function toLines(
       typeName: row.entryTypeId ? typeById.get(row.entryTypeId)?.name ?? "" : "",
       quantity: row.quantity,
       attendees: holders.length > 0 ? holders : row.buyerName ? [row.buyerName] : [],
+      answers: {},
       amountCents: 0,
       donationCents: 0,
     };
-  });
+  }).map((line) =>
+    withAnswers(line, groups.get(`free:${new Date(line.createdAt).getTime()}`), questions),
+  );
   return [...orders, ...free];
+}
+
+/** "Ana (M)" with one question; "Ana (Talla: M · Distancia: 5K)" with more. */
+function attendeeLabels(
+  line: OrderLine,
+  questions: ProviderEventAnswers["questions"],
+): string[] {
+  const asked = questions.filter((question) => line.answers[question.id]);
+  if (asked.length === 0) return line.attendees;
+  return line.attendees.map((name, index) => {
+    const parts = asked.map((question) => {
+      const value = line.answers[question.id][index];
+      return asked.length === 1 ? value : `${question.label}: ${value}`;
+    });
+    return `${name} (${parts.join(" · ")})`;
+  });
 }
 
 function statusLabel(status: string): string {
@@ -175,6 +240,19 @@ function exportDate(iso: string): string {
   return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
 }
 
+/** One column per checkout question, values in the same order as the names. */
+function answerColumns(
+  questions: ProviderEventAnswers["questions"],
+): ExportColumn<OrderLine>[] {
+  return questions.map((question) => ({
+    key: `respuesta_${question.id}`,
+    header: question.label,
+    kind: "text",
+    width: 22,
+    value: (line) => (line.answers[question.id] ?? []).join(", "),
+  }));
+}
+
 const EXPORT_COLUMNS: ExportColumn<OrderLine>[] = [
   { key: "fecha", header: "Fecha", kind: "text", width: 18, value: (line) => exportDate(line.createdAt) },
   { key: "codigo", header: "Código", kind: "text", width: 14, value: (line) => line.code },
@@ -186,89 +264,6 @@ const EXPORT_COLUMNS: ExportColumn<OrderLine>[] = [
   { key: "monto", header: "Monto (HNL)", kind: "money", width: 14, value: (line) => line.amountCents / 100 },
   { key: "idPedido", header: "ID del pedido", kind: "text", width: 38, value: (line) => line.id },
 ];
-
-const EXPORT_OPTIONS: {
-  format: ExportFormat | "copy";
-  label: string;
-  hint: string;
-  icon: typeof FileText;
-}[] = [
-  { format: "pdf", label: "PDF", hint: "Para imprimir o compartir", icon: FileText },
-  { format: "xlsx", label: "Excel", hint: ".xlsx con filtros", icon: FileSpreadsheet },
-  { format: "csv", label: "CSV", hint: "Google Sheets, Numbers", icon: Sheet },
-  { format: "json", label: "JSON", hint: "Para integraciones", icon: Braces },
-  { format: "copy", label: "Copiar tabla", hint: "Pegar en una hoja de cálculo", icon: ClipboardCopy },
-];
-
-function ExportMenu({
-  count,
-  onExport,
-}: {
-  count: number;
-  onExport: (format: ExportFormat | "copy") => Promise<void>;
-}) {
-  const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState<ExportFormat | "copy" | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
-  const close = useCallback(() => setOpen(false), []);
-  useDismiss(ref, open, close);
-
-  async function run(format: ExportFormat | "copy") {
-    setBusy(format);
-    try {
-      await onExport(format);
-      setOpen(false);
-    } catch (error) {
-      toast.error((error as Error).message || "No se pudo exportar.");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        disabled={count === 0}
-        onClick={() => setOpen((current) => !current)}
-        className={`inline-flex h-9 items-center gap-1.5 px-3.5 text-[13px] disabled:opacity-50 ${glassCtaClass}`}
-      >
-        <Download className="size-3.5" strokeWidth={1.5} aria-hidden />
-        Exportar
-      </button>
-      {open ? (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-[260px] overflow-hidden rounded-[16px] border border-border-strong bg-[#0c0c0e] p-1.5 shadow-[0_16px_48px_rgba(0,0,0,0.55)]"
-        >
-          <p className="px-3 pb-1.5 pt-2 text-[11px] text-white/40">
-            {count} {count === 1 ? "pedido" : "pedidos"} con los filtros actuales
-          </p>
-          {EXPORT_OPTIONS.map(({ format, label, hint, icon: Icon }) => (
-            <button
-              key={format}
-              type="button"
-              role="menuitem"
-              disabled={busy !== null}
-              onClick={() => void run(format)}
-              className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors hover:bg-white/[0.08] disabled:opacity-50"
-            >
-              <Icon className="size-4 shrink-0 text-white/50" strokeWidth={1.5} aria-hidden />
-              <span className="min-w-0 flex-1">
-                <span className="block text-[14px] font-semibold text-white">
-                  {busy === format ? "Generando…" : label}
-                </span>
-                <span className="block text-[12px] text-white/40">{hint}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
 /**
  * Inline dropdown for the filters. Not the shared Radix Select: that one is
@@ -397,12 +392,15 @@ export function OrdersSection({
   rows,
   reservations = [],
   types,
+  answers,
 }: {
   eventTitle: string;
   rows: ProviderPaymentRow[];
   /** Free reservations, which have no payment order. */
   reservations?: ProviderFreeReservation[];
   types: ProviderTicketType[];
+  /** Checkout answers per ticket (shirt size and so on), when the event asks any. */
+  answers?: ProviderEventAnswers;
 }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string>("all");
@@ -412,9 +410,10 @@ export function OrdersSection({
 
   const typeById = useMemo(() => new Map(types.map((type) => [type.id, type])), [types]);
   const lines = useMemo(
-    () => toLines(rows, reservations, typeById),
-    [rows, reservations, typeById],
+    () => toLines(rows, reservations, typeById, answers),
+    [rows, reservations, typeById, answers],
   );
+  const questions = useMemo(() => answers?.questions ?? [], [answers]);
 
   const statusCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -438,7 +437,13 @@ export function OrdersSection({
       if (status !== "all" && line.status !== status) return false;
       if (typeId !== "all" && line.typeId !== typeId) return false;
       if (!needle) return true;
-      const haystack = [line.code, line.id, line.typeName, ...line.attendees]
+      const haystack = [
+        line.code,
+        line.id,
+        line.typeName,
+        ...line.attendees,
+        ...Object.values(line.answers).flat(),
+      ]
         .join(" ")
         .normalize("NFD")
         .replace(/[̀-ͯ]/g, "")
@@ -509,10 +514,12 @@ export function OrdersSection({
         `Generado ${exportDate(new Date().toISOString())} (hora de Honduras)`,
       ],
       // The PDF has no room for the full order id; spreadsheets keep it.
-      columns:
-        format === "pdf"
-          ? EXPORT_COLUMNS.filter((column) => column.key !== "idPedido")
-          : EXPORT_COLUMNS,
+      columns: EXPORT_COLUMNS.filter(
+        (column) => format !== "pdf" || column.key !== "idPedido",
+      ).flatMap((column) =>
+        // Answers sit next to the names they belong to.
+        column.key === "asistentes" ? [column, ...answerColumns(questions)] : [column],
+      ),
       rows: filtered,
       totals: {
         fecha: "Total",
@@ -531,7 +538,15 @@ export function OrdersSection({
 
   return (
     <section>
-      <SectionTitle action={<ExportMenu count={filtered.length} onExport={handleExport} />}>
+      <SectionTitle
+        action={
+          <ExportMenu
+            count={filtered.length}
+            caption={`${filtered.length} ${filtered.length === 1 ? "pedido" : "pedidos"} con los filtros actuales`}
+            onExport={handleExport}
+          />
+        }
+      >
         Pedidos
         {lines.length > 0 ? <span className="ml-1.5 text-white/40">{lines.length}</span> : null}
       </SectionTitle>
@@ -663,6 +678,11 @@ export function OrdersSection({
                         {amountText(line)}
                       </p>
                     </div>
+                    {Object.keys(line.answers).length > 0 ? (
+                      <p className="text-[12px] text-white/60">
+                        {attendeeLabels(line, questions).join(", ")}
+                      </p>
+                    ) : null}
                     <div className="flex items-center justify-between gap-3 text-[12px] text-white/50">
                       <span className="inline-flex min-w-0 items-center gap-1.5">
                         <Ticket className="size-3.5 shrink-0 text-white/35" strokeWidth={1.5} aria-hidden />
@@ -723,7 +743,9 @@ export function OrdersSection({
                           {line.attendees.length > 0 ? (
                             <p className="flex items-start gap-1.5 text-white/80">
                               <Users className="mt-0.5 size-3.5 shrink-0 text-white/30" strokeWidth={1.5} aria-hidden />
-                              <span className="min-w-0">{line.attendees.join(", ")}</span>
+                              <span className="min-w-0">
+                                {attendeeLabels(line, questions).join(", ")}
+                              </span>
                             </p>
                           ) : (
                             <span className="text-white/30">Sin nombre</span>

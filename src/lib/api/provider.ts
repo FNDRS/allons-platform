@@ -539,6 +539,10 @@ export interface ProviderEventAnswers {
     code: string;
     name: string;
     createdAt: string;
+    /** The ticket's paid order; null on a free reservation. Missing on an older API. */
+    orderId?: string | null;
+    /** Entry it was issued under, e.g. "Ruta 5K". Missing on an older API. */
+    ticketType?: string | null;
     /** Keyed by question id; a question left blank is absent. */
     answers: Record<string, string>;
   }>;

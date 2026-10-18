@@ -2,11 +2,61 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { getProviderEventAnswers, providerKeys } from "@/lib/api/provider";
+import {
+  getProviderEventAnswers,
+  providerKeys,
+  type ProviderEventAnswers,
+} from "@/lib/api/provider";
+import {
+  exportTable,
+  fileSlug,
+  toTsv,
+  type ExportColumn,
+  type ExportFormat,
+} from "@/lib/export/table";
 import { Card } from "@/components/ui/Card";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { glassCtaClass } from "@/components/ui/cta";
+import { ExportMenu } from "./ExportMenu";
+
+type Attendee = ProviderEventAnswers["attendees"][number];
+
+/** The kit list: one row per ticket, with every answer in its own column. */
+async function exportKits(
+  data: ProviderEventAnswers,
+  eventTitle: string,
+  format: ExportFormat | "copy",
+) {
+  const columns: ExportColumn<Attendee>[] = [
+    { key: "nombre", header: "Nombre", kind: "text", width: 30, value: (a) => a.name },
+    { key: "codigo", header: "Código", kind: "text", width: 14, value: (a) => a.code },
+    { key: "entrada", header: "Entrada", kind: "text", width: 20, value: (a) => a.ticketType ?? "" },
+    ...data.questions.map(
+      (question): ExportColumn<Attendee> => ({
+        key: `respuesta_${question.id}`,
+        header: question.label,
+        kind: "text",
+        width: 22,
+        value: (a) => a.answers[question.id] ?? "Sin respuesta",
+      }),
+    ),
+  ];
+  const rows = [...data.attendees].sort((a, b) => a.name.localeCompare(b.name, "es"));
+  const table = {
+    title: `Kits · ${eventTitle}`,
+    subtitle: [`${rows.length} ${rows.length === 1 ? "asistente" : "asistentes"}`],
+    columns,
+    rows,
+  };
+  if (format === "copy") {
+    await navigator.clipboard.writeText(toTsv(table));
+    toast.success("Tabla copiada. Pégala en Excel o Google Sheets.");
+    return;
+  }
+  await exportTable(table, format, `${fileSlug(eventTitle)}-kits`);
+}
 
 /**
  * What each attendee answered at checkout, e.g. their shirt size for the kit.
@@ -15,9 +65,11 @@ import { glassCtaClass } from "@/components/ui/cta";
  */
 export function EventAnswersSection({
   eventId,
+  eventTitle,
   enabled,
 }: {
   eventId: string;
+  eventTitle: string;
   enabled: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(true);
@@ -68,18 +120,25 @@ export function EventAnswersSection({
           ) : null}
         </h2>
         {attendees.length > 0 ? (
-          <button
-            type="button"
-            onClick={() => setCollapsed((current) => !current)}
-            className={`inline-flex h-8 shrink-0 items-center gap-1.5 px-3 text-[12px] ${glassCtaClass}`}
-          >
-            {collapsed ? "Ver asistentes" : "Ocultar"}
-            {collapsed ? (
-              <ChevronDown className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
-            ) : (
-              <ChevronUp className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
-            )}
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <ExportMenu
+              count={attendees.length}
+              caption={`${attendees.length} ${attendees.length === 1 ? "asistente" : "asistentes"}`}
+              onExport={(format) => exportKits(data, eventTitle, format)}
+            />
+            <button
+              type="button"
+              onClick={() => setCollapsed((current) => !current)}
+              className={`inline-flex h-9 shrink-0 items-center gap-1.5 px-3.5 text-[13px] ${glassCtaClass}`}
+            >
+              {collapsed ? "Ver asistentes" : "Ocultar"}
+              {collapsed ? (
+                <ChevronDown className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
+              ) : (
+                <ChevronUp className="size-3.5 text-white/45" strokeWidth={1.5} aria-hidden />
+              )}
+            </button>
+          </div>
         ) : null}
       </div>
 
@@ -127,6 +186,9 @@ export function EventAnswersSection({
                     </p>
                     <p className="font-mono text-[12px] tracking-[0.06em] text-white/40">
                       {attendee.code}
+                      {attendee.ticketType ? (
+                        <span className="font-sans tracking-normal"> · {attendee.ticketType}</span>
+                      ) : null}
                     </p>
                   </div>
                   <p className="text-[13px] text-white/70 sm:text-right">
