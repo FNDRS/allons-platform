@@ -5,13 +5,14 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useProviderDiscounts } from "@/hooks/useProviderDiscounts";
-import { listProviderEvents, providerKeys } from "@/lib/api/provider";
+import { getProviderEvent, listProviderEvents, providerKeys } from "@/lib/api/provider";
 import { Button } from "@/components/ui/Button";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { FieldError, Input, Label, Select, SelectItem } from "@/components/ui/Field";
 import { Badge, EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 
 const ALL_EVENTS = "";
+const ALL_TICKETS = "";
 
 export function DiscountsView() {
   const { ready } = useProviderAccess();
@@ -26,7 +27,20 @@ export function DiscountsView() {
   const [percent, setPercent] = useState("20");
   const [maxUses, setMaxUses] = useState("100");
   const [eventId, setEventId] = useState(ALL_EVENTS);
+  const [ticketTypeId, setTicketTypeId] = useState(ALL_TICKETS);
   const [error, setError] = useState<string | null>(null);
+  // The picked event's entries, to limit the code to one of them.
+  const eventDetail = useQuery({
+    queryKey: providerKeys.event(eventId),
+    queryFn: () => getProviderEvent(eventId),
+    enabled: ready && Boolean(eventId),
+  });
+  const ticketTypes = eventId ? (eventDetail.data?.ticketTypes ?? []) : [];
+
+  function pickEvent(id: string) {
+    setEventId(id);
+    setTicketTypeId(ALL_TICKETS);
+  }
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -47,6 +61,7 @@ export function DiscountsView() {
         percent: Math.round(percentValue),
         maxUses: Math.round(maxUsesValue),
         eventId: eventId || null,
+        ...(ticketTypeId ? { ticketTypeId } : {}),
       },
       {
         onSuccess: () => {
@@ -54,6 +69,7 @@ export function DiscountsView() {
           setPercent("20");
           setMaxUses("100");
           setEventId(ALL_EVENTS);
+          setTicketTypeId(ALL_TICKETS);
         },
       },
     );
@@ -108,22 +124,47 @@ export function DiscountsView() {
                 />
               </label>
             </div>
-            <div className="block">
-              <Label>Evento</Label>
-              <Select
-                value={eventId}
-                onValueChange={setEventId}
-                placeholder="Todos los eventos"
-                aria-label="Evento"
-              >
-                <SelectItem value={ALL_EVENTS}>Todos los eventos</SelectItem>
-                {(events.data ?? []).map((event) => (
-                  <SelectItem key={event.id} value={event.id}>
-                    {event.title}
-                  </SelectItem>
-                ))}
-              </Select>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="block">
+                <Label>Evento</Label>
+                <Select
+                  value={eventId}
+                  onValueChange={pickEvent}
+                  placeholder="Todos los eventos"
+                  aria-label="Evento"
+                >
+                  <SelectItem value={ALL_EVENTS}>Todos los eventos</SelectItem>
+                  {(events.data ?? []).map((event) => (
+                    <SelectItem key={event.id} value={event.id}>
+                      {event.title}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+              <div className="block">
+                <Label>Entrada</Label>
+                <Select
+                  value={ticketTypeId}
+                  onValueChange={setTicketTypeId}
+                  placeholder={eventId ? "Todas las entradas" : "Elige un evento primero"}
+                  aria-label="Entrada"
+                  disabled={!eventId || ticketTypes.length === 0}
+                >
+                  <SelectItem value={ALL_TICKETS}>Todas las entradas</SelectItem>
+                  {ticketTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id}>
+                      {type.name}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
             </div>
+            {ticketTypeId ? (
+              <p className="text-sm text-white/50">
+                Con una entrada elegida, el código vale por un boleto en cada uso y
+                puede usar los lugares que esa entrada guarda para códigos.
+              </p>
+            ) : null}
             <FieldError>{error}</FieldError>
             <Button type="submit" loading={discounts.create.isPending} className="self-start">
               <Tag className="size-4" /> Crear código
@@ -167,7 +208,8 @@ export function DiscountsView() {
                     </span>
                   </p>
                   <p className="truncate text-sm text-white/50">
-                    {discount.eventTitle ?? "Todos los eventos"} ·{" "}
+                    {discount.eventTitle ?? "Todos los eventos"}
+                    {discount.ticketTypeName ? ` · ${discount.ticketTypeName}` : ""} ·{" "}
                     {discount.uses === 0
                       ? "sin usar"
                       : `usado ${discount.uses} ${discount.uses === 1 ? "vez" : "veces"}`}{" "}

@@ -92,6 +92,20 @@ export function EventTicketEditorModal({
               )}
             </ClassFormField>
           </div>
+          <ClassFormField
+            label="Lugares para códigos"
+            hint="De la cantidad, cuántos solo se compran con un código de esta entrada (por ejemplo cortesías). El público no los ve. 0 es ninguno."
+          >
+            {(id) => (
+              <Input
+                id={id}
+                inputMode="numeric"
+                placeholder="0"
+                value={draft.codeReserved}
+                onChange={(e) => onChange({ codeReserved: digits(e.target.value) })}
+              />
+            )}
+          </ClassFormField>
           {bundle ? <EventTicketSessionFields key={draft.id} draft={draft} onChange={onChange} /> : null}
           {paid ? (
             <>

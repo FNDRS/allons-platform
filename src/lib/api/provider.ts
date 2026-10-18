@@ -119,6 +119,8 @@ export interface ProviderTicketType {
   donationEnabled: boolean;
   /** Contribution offered at checkout, in lempiras. Null without one. */
   suggestedDonation?: number | null;
+  /** Seats of `total` kept for promo codes tied to this entry. */
+  codeReserved?: number;
   /** Session of a bundle event. Null uses the event's value. */
   description?: string | null;
   startsAt?: string | null;
@@ -276,6 +278,9 @@ export interface ProviderDiscount {
   /** Null cuando el código aplica a todos los eventos del comercio. */
   eventId: string | null;
   eventTitle: string | null;
+  /** Entrada a la que se limita el código (un boleto por uso). Null es cualquiera. */
+  ticketTypeId?: string | null;
+  ticketTypeName?: string | null;
   createdAt: string;
 }
 
@@ -285,6 +290,8 @@ export interface ProviderDiscountInput {
   maxUses: number;
   /** Omite o pasa null para que el código aplique a todos los eventos. */
   eventId?: string | null;
+  /** Limita el código a una entrada del evento: un boleto por uso. */
+  ticketTypeId?: string | null;
 }
 
 export function listProviderDiscounts() {
@@ -433,6 +440,8 @@ export interface ProviderTicketTypeInput {
   /** Lempiras offered at checkout; null without a suggestion. */
   suggestedDonation: number | null;
   sortOrder: number;
+  /** Seats of `total` kept for promo codes tied to this entry. */
+  codeReserved?: number;
   /**
    * Session fields, only sent for a bundle event. Null uses the event's
    * value; latitude and longitude go together.
