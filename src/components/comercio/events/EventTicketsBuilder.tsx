@@ -1,8 +1,14 @@
 import { ClassBuilderSection } from "@/components/comercio/classes/ClassBuilderSection";
 import { ClassDraftRow } from "@/components/comercio/classes/ClassDraftRow";
-import { ticketPrice, type EventTicketDraft } from "@/hooks/event-form/useEventTicketsForm";
+import {
+  sessionTimes,
+  ticketPrice,
+  ticketStartsAt,
+  type EventTicketDraft,
+} from "@/hooks/event-form/useEventTicketsForm";
+import { isoToHn } from "@/hooks/event-form/time";
 import { formatHNL } from "@/lib/format";
-import { saleWindowLabel } from "./ticketSaleWindow";
+import { formatSaleMoment, saleWindowLabel } from "./ticketSaleWindow";
 
 function details(draft: EventTicketDraft): string {
   const parts = [`${Number(draft.total) || 0} a la venta`];
@@ -11,16 +17,29 @@ function details(draft: EventTicketDraft): string {
   return parts.join(" · ");
 }
 
+/** A session's own day and place, for a bundle event's list. */
+function sessionLabel(draft: EventTicketDraft): string | null {
+  const start = isoToHn(sessionTimes(draft).startsAt);
+  const parts = [
+    start.date && start.time ? formatSaleMoment(start.date, start.time) : null,
+    draft.venue.trim() || null,
+  ].filter(Boolean);
+  return parts.length ? parts.join(" · ") : null;
+}
+
 /** The event's ticket types (entradas), each opened in a modal to edit. */
 export function EventTicketsBuilder({
   tickets,
   eventStartsAt,
+  bundle = false,
   onAdd,
   onEdit,
   onRemove,
 }: {
   tickets: EventTicketDraft[];
   eventStartsAt: string | null;
+  /** A bundle event: each entry is a session with its own day and place. */
+  bundle?: boolean;
   onAdd: () => void;
   onEdit: (id: string) => void;
   onRemove: (id: string) => void;
@@ -41,8 +60,12 @@ export function EventTicketsBuilder({
           <ClassDraftRow
             key={draft.id}
             title={name}
-            detail={details(draft)}
-            meta={saleWindowLabel(draft, eventStartsAt)}
+            detail={
+              bundle
+                ? [sessionLabel(draft), details(draft)].filter(Boolean).join(" · ")
+                : details(draft)
+            }
+            meta={saleWindowLabel(draft, ticketStartsAt(draft, eventStartsAt, bundle))}
             aside={price > 0 ? formatHNL(price) : "Gratis"}
             editLabel={`Editar ${name}`}
             removeLabel={`Quitar ${name}`}

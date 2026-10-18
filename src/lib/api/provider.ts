@@ -119,6 +119,14 @@ export interface ProviderTicketType {
   donationEnabled: boolean;
   /** Contribution offered at checkout, in lempiras. Null without one. */
   suggestedDonation?: number | null;
+  /** Session of a bundle event. Null uses the event's value. */
+  description?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  venue?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 /** A registration-form question as the event detail returns it. */
@@ -336,6 +344,8 @@ export function getProviderProfile() {
   return apiFetch<ProviderProfile>("/provider/profile");
 }
 
+export type ProviderEventType = "single" | "bundle";
+
 /**
  * Body of POST/PATCH `/provider/events` (CreateEventDto / UpdateEventDto).
  * Ticket types are not part of it: they have their own endpoints.
@@ -356,7 +366,8 @@ export interface ProviderEventInput {
   /** Image URLs, cover first. Omit to keep the stored gallery. */
   gallery?: string[];
   category: string | null;
-  eventType: "single";
+  /** "bundle" sells sessions: each ticket type has its own date and place. */
+  eventType: ProviderEventType;
   /** "free" when no ticket is paid, "single_access" otherwise, as the app sends. */
   ticketMode: "free" | "single_access";
   /** 0 means no event-wide limit. */
@@ -422,6 +433,17 @@ export interface ProviderTicketTypeInput {
   /** Lempiras offered at checkout; null without a suggestion. */
   suggestedDonation: number | null;
   sortOrder: number;
+  /**
+   * Session fields, only sent for a bundle event. Null uses the event's
+   * value; latitude and longitude go together.
+   */
+  description?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  venue?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 /** Returns the event's ticket types after the insert, not the new row. */

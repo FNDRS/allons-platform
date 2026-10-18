@@ -89,6 +89,8 @@ export function EventDetailView({
             types={event.entryTypes ?? []}
             previewEventId={reserve?.kind === "preview" ? id : undefined}
             priceCentsFor={listed.priceCentsFor}
+            event={event}
+            reservable={reserve?.kind === "open" || reserve?.kind === "preview"}
           />
           <EventDescription text={event.description} />
           <KitPickupCard info={event.kitPickupInfo} />

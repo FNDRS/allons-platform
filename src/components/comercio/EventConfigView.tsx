@@ -15,8 +15,15 @@ import {
   getProviderEvent,
   getProviderPayments,
   providerKeys,
+  type ProviderTicketType,
 } from "@/lib/api/provider";
-import { formatCardDay, formatCardTime, formatHNL, formatNumber } from "@/lib/format";
+import {
+  formatCardDay,
+  formatCardTime,
+  formatDateTime,
+  formatHNL,
+  formatNumber,
+} from "@/lib/format";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Progress } from "@/components/ui/Stat";
 import { ErrorState, Skeleton } from "@/components/ui/States";
@@ -53,6 +60,12 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
  * same event's Finanzas page instead, reached from Finanzas or Dashboard,
  * not from here.
  */
+/** A bundle session's own date and venue, when the ticket type has them. */
+function sessionLine(type: ProviderTicketType): string | null {
+  const parts = [formatDateTime(type.startsAt), type.venue?.trim() || null].filter(Boolean);
+  return parts.length ? parts.join(" · ") : null;
+}
+
 export function EventConfigView({ eventId }: { eventId: string }) {
   const { ready } = useProviderAccess();
   const { user } = useAuth();
@@ -245,8 +258,13 @@ export function EventConfigView({ eventId }: { eventId: string }) {
                 className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-[16px] font-semibold tracking-tight">{type.name}</p>
-                  <p className="text-[15px] font-semibold tabular-nums">
+                  <div className="min-w-0">
+                    <p className="text-[16px] font-semibold tracking-tight">{type.name}</p>
+                    {sessionLine(type) ? (
+                      <p className="mt-0.5 text-[13px] text-white/50">{sessionLine(type)}</p>
+                    ) : null}
+                  </div>
+                  <p className="shrink-0 text-[15px] font-semibold tabular-nums">
                     {type.price > 0 ? formatHNL(type.price) : "Gratis"}
                   </p>
                 </div>

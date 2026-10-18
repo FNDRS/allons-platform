@@ -27,7 +27,7 @@ function matchCity(names: Array<string | undefined>): string | null {
  * Street and city for a pin, to fill in what the comercio left blank. Best
  * effort: when it fails the API still works the city out from the pin.
  */
-async function reverseGeocode(
+export async function reverseGeocode(
   pin: MapCoordinates,
 ): Promise<{ address: string; city: string | null } | null> {
   try {
@@ -73,6 +73,14 @@ async function resolveLink(raw: string): Promise<MapCoordinates | string> {
   }
 }
 
+/** A pin from a pasted link or coordinates, or why it could not be placed. */
+export async function resolveMapPin(raw: string): Promise<MapCoordinates | string> {
+  const result = await resolveLink(raw);
+  if (typeof result === "string") return result;
+  if (!isInsideHonduras(result)) return "Ese punto está fuera de Honduras.";
+  return result;
+}
+
 /**
  * The event's map pin, set by pasting a Google Maps link or coordinates.
  * `onResolved` gets the geocoded street and city so the form can fill the
@@ -96,13 +104,9 @@ export function useEventPin(
     setError(null);
     setResolving(true);
     try {
-      const result = await resolveLink(raw);
+      const result = await resolveMapPin(raw);
       if (typeof result === "string") {
         setError(result);
-        return;
-      }
-      if (!isInsideHonduras(result)) {
-        setError("Ese punto está fuera de Honduras.");
         return;
       }
       setPin(result);

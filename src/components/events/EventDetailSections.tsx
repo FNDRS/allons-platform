@@ -3,13 +3,16 @@
 /* eslint-disable @next/next/no-img-element */
 
 import Link from "next/link";
+import { useState } from "react";
 import { Flag, Handshake, Undo2 } from "lucide-react";
 import { formatEventWhen } from "@/lib/allons-api";
+import { placeLabelOf, placeMapsUrl } from "@/lib/googleMapsLink";
 import { instagramLink } from "@/lib/instagram";
 import { whatsappLink } from "@/lib/whatsapp";
 import { InstagramMark } from "@/components/shared/InstagramMark";
 import { WhatsAppMark } from "@/components/shared/WhatsAppMark";
 import {
+  isBundleEvent,
   isEntryTypeOnSale,
   isEntryTypeUpcoming,
   type EventDetail,
@@ -20,6 +23,7 @@ import { ListedPrice } from "@/components/ui/ListedPrice";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { CalendarMark, KitMark, MetaTile, PinMark } from "@/components/ui/MetaTile";
 import { EventCover, EventPosterWash } from "./EventCover";
+import { EntryTypeSessionModal, sessionSubtitle } from "./EntryTypeSessionModal";
 
 export function EventHero({ event }: { event: EventDetail }) {
   const provider = event.provider;
@@ -158,16 +162,9 @@ function HostMark({ src, name }: { src?: string | null; name: string }) {
 
 export function EventMeta({ event }: { event: EventDetail }) {
   const when = formatEventWhen(event.startsAt);
-  const mapsUrl =
-    event.latitude != null && event.longitude != null
-      ? `https://www.google.com/maps/search/?api=1&query=${event.latitude},${event.longitude}`
-      : event.address || event.venue
-        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([event.venue, event.address, event.city].filter(Boolean).join(", "))}`
-        : null;
+  const mapsUrl = placeMapsUrl(event);
   const place = event.venue ?? event.address ?? event.city;
-  const placeLabel = [place, place !== event.city ? event.city : null]
-    .filter(Boolean)
-    .join(" · ");
+  const placeLabel = placeLabelOf(event);
   const instagram = instagramLink(event.provider?.instagramUrl);
   const whatsapp = whatsappLink(event.provider?.phone);
 
@@ -221,6 +218,8 @@ export function EntryTypesCard({
   types,
   previewEventId,
   priceCentsFor,
+  event,
+  reservable = false,
 }: {
   types: EventEntryType[];
   /**
@@ -233,9 +232,25 @@ export function EntryTypesCard({
    * still loading. Defaults to the list price itself.
    */
   priceCentsFor?: (listCents: number) => number | null;
+  /**
+   * The event, for a bundle: each row is a session and opens its detail.
+   * A single event leaves the rows as they are.
+   */
+  event?: EventDetail;
+  /** Reserving is open or in preview, so a session detail links to it. */
+  reservable?: boolean;
 }) {
+  const [openId, setOpenId] = useState<string | null>(null);
   if (types.length === 0) return null;
   const now = Date.now();
+  const sessions = event && isBundleEvent(event) ? event : null;
+  const priceOf = (cents: number) => (priceCentsFor ?? ((value) => value))(cents);
+  const opened = sessions ? (types.find((type) => type.id === openId) ?? null) : null;
+  const openedReservable =
+    opened != null &&
+    reservable &&
+    !(opened.soldOut || opened.remaining === 0) &&
+    (isEntryTypeOnSale(opened, now) || isEntryTypeUpcoming(opened, now));
   return (
     <section>
       <SectionTitle>Entradas</SectionTitle>
@@ -254,19 +269,33 @@ export function EntryTypesCard({
                 : type.remaining != null
                   ? `${type.remaining} disponibles`
                   : "Disponible";
+          const subtitle = sessions ? sessionSubtitle(type) : null;
           const row = (
             <>
               <div className="min-w-0">
                 <p className="text-[15px] font-bold tracking-tight">{type.name}</p>
+                {subtitle ? (
+                  <p className="mt-0.5 text-[13px] text-white/70">{subtitle}</p>
+                ) : null}
                 <p className="mt-0.5 text-[13px] text-muted">{status}</p>
               </div>
               <p className="shrink-0 text-[17px] font-bold tabular-nums tracking-tight">
-                <ListedPrice
-                  cents={(priceCentsFor ?? ((cents) => cents))(type.priceCents)}
-                />
+                <ListedPrice cents={priceOf(type.priceCents)} />
               </p>
             </>
           );
+          if (sessions) {
+            return (
+              <button
+                key={type.id}
+                type="button"
+                onClick={() => setOpenId(type.id)}
+                className={`flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-white/[0.04] ${soldOut || (!onSale && !previewable) ? "opacity-60" : ""}`}
+              >
+                {row}
+              </button>
+            );
+          }
           if (previewable && previewEventId) {
             return (
               <Link
@@ -288,6 +317,19 @@ export function EntryTypesCard({
           );
         })}
       </Card>
+      {sessions ? (
+        <EntryTypeSessionModal
+          event={sessions}
+          type={opened}
+          priceCents={opened ? priceOf(opened.priceCents) : null}
+          reserveHref={
+            opened && openedReservable
+              ? `/eventos/${encodeURIComponent(sessions.id)}/reservar?entrada=${encodeURIComponent(opened.id)}`
+              : null
+          }
+          onClose={() => setOpenId(null)}
+        />
+      ) : null}
     </section>
   );
 }

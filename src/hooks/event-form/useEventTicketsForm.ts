@@ -33,7 +33,24 @@ export interface EventTicketDraft {
   donationEnabled: boolean;
   /** Suggested contribution in lempiras, as typed. Empty is no suggestion. */
   suggestedDonation: string;
+  /**
+   * Session of a bundle event: its own description, day, times and place.
+   * Blank uses the event's value. A single event never sends them.
+   */
+  description: string;
+  sessionDate: string;
+  sessionStartTime: string;
+  /** Earlier than the start means it ends the next day. */
+  sessionEndTime: string;
+  venue: string;
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
 }
+
+/** Same caps the API puts on a session's text. */
+export const MAX_SESSION_DESCRIPTION = 2000;
+export const MAX_SESSION_PLACE = 300;
 
 let draftSeq = 0;
 const nextDraftId = () => `ticket-draft-${++draftSeq}`;
@@ -52,6 +69,14 @@ function emptyDraft(isFirst: boolean): EventTicketDraft {
     saleEndFollowsEvent: true,
     donationEnabled: false,
     suggestedDonation: "",
+    description: "",
+    sessionDate: "",
+    sessionStartTime: "",
+    sessionEndTime: "",
+    venue: "",
+    address: "",
+    latitude: null,
+    longitude: null,
   };
 }
 
@@ -61,6 +86,9 @@ const sameInstant = (a: string | null, b: string | null) =>
 function fromTicketType(item: ProviderTicketType, eventStartsAt: string | null): EventTicketDraft {
   const start = isoToHn(item.saleStartsAt);
   const end = isoToHn(item.saleEndsAt);
+  const sessionStart = isoToHn(item.startsAt);
+  const sessionEnd = isoToHn(item.endsAt);
+  const hasPin = item.latitude != null && item.longitude != null;
   return {
     id: item.id,
     name: item.name,
@@ -71,9 +99,18 @@ function fromTicketType(item: ProviderTicketType, eventStartsAt: string | null):
     saleStartTime: start.time,
     saleEndDate: end.date,
     saleEndTime: end.time,
-    saleEndFollowsEvent: !item.saleEndsAt || sameInstant(item.saleEndsAt, eventStartsAt),
+    saleEndFollowsEvent:
+      !item.saleEndsAt || sameInstant(item.saleEndsAt, item.startsAt ?? eventStartsAt),
     donationEnabled: item.donationEnabled,
     suggestedDonation: item.suggestedDonation ? String(item.suggestedDonation) : "",
+    description: item.description ?? "",
+    sessionDate: sessionStart.date,
+    sessionStartTime: sessionStart.time,
+    sessionEndTime: sessionEnd.time,
+    venue: item.venue ?? "",
+    address: item.address ?? "",
+    latitude: hasPin ? (item.latitude as number) : null,
+    longitude: hasPin ? (item.longitude as number) : null,
   };
 }
 
@@ -104,6 +141,56 @@ export function parseSuggestedDonation(raw: string): { value: number | null; err
 
 export const ticketPrice = (draft: EventTicketDraft) => Number(draft.price) || 0;
 
+/** The session's start and end as ISO instants, null where not set. */
+export function sessionTimes(draft: EventTicketDraft): {
+  startsAt: string | null;
+  endsAt: string | null;
+} {
+  const startsAt = hnToIso(draft.sessionDate, draft.sessionStartTime);
+  let endsAt = startsAt ? hnToIso(draft.sessionDate, draft.sessionEndTime) : null;
+  // A night session can run past midnight: an earlier end is the next day.
+  if (startsAt && endsAt && endsAt < startsAt) {
+    endsAt = new Date(new Date(endsAt).getTime() + 24 * 60 * 60 * 1000).toISOString();
+  }
+  return { startsAt, endsAt };
+}
+
+/**
+ * When a draft's sale is measured against: its session's start in a bundle,
+ * else the event's. A paid sale must close by the end of that day.
+ */
+export function ticketStartsAt(
+  draft: EventTicketDraft,
+  eventStartsAt: string | null,
+  bundle: boolean,
+): string | null {
+  return (bundle ? sessionTimes(draft).startsAt : null) ?? eventStartsAt;
+}
+
+/** Why a session cannot be saved yet, or null. Mirrors the API rules. */
+function sessionError(draft: EventTicketDraft): string | null {
+  if (draft.description.trim().length > MAX_SESSION_DESCRIPTION) {
+    return "La descripción no puede pasar de 2000 caracteres.";
+  }
+  if (draft.venue.trim().length > MAX_SESSION_PLACE) {
+    return "El nombre del lugar no puede pasar de 300 caracteres.";
+  }
+  if (draft.address.trim().length > MAX_SESSION_PLACE) {
+    return "La dirección no puede pasar de 300 caracteres.";
+  }
+  const anyTime = Boolean(draft.sessionDate || draft.sessionStartTime || draft.sessionEndTime);
+  if (anyTime && (!draft.sessionDate || !draft.sessionStartTime)) {
+    return "Completa la fecha y la hora de inicio de la sesión.";
+  }
+  if (draft.sessionEndTime && draft.sessionEndTime === draft.sessionStartTime) {
+    return "La sesión tiene que terminar después de empezar.";
+  }
+  if ((draft.latitude === null) !== (draft.longitude === null)) {
+    return "La ubicación de la sesión necesita latitud y longitud.";
+  }
+  return null;
+}
+
 /** Both halves of one side of the window, or neither. */
 function sideError(date: string, time: string, label: string): string | null {
   if (Boolean(date) !== Boolean(time)) return `Completa la fecha y la hora de ${label}.`;
@@ -123,9 +210,16 @@ export function saleEnd(
 /** Why a draft cannot be saved yet, or null. Mirrors the API rules. */
 export function eventTicketDraftError(
   draft: EventTicketDraft,
-  eventStartsAt: string | null,
+  eventStart: string | null,
+  bundle = false,
 ): string | null {
   if (!draft.name.trim()) return "Ponle un nombre a la entrada.";
+  if (bundle) {
+    const sessionErr = sessionError(draft);
+    if (sessionErr) return sessionErr;
+  }
+  // A session's sale is measured against its own day.
+  const eventStartsAt = ticketStartsAt(draft, eventStart, bundle);
   const price = Number(draft.price || 0);
   if (!Number.isFinite(price) || price < 0) return "Revisa el precio.";
   const total = Number(draft.total);
@@ -182,10 +276,14 @@ function resolveSaleWindow(
  */
 export function ticketWindowProblem(
   draft: EventTicketDraft,
-  eventDate: string,
-  eventStartsAt: string | null,
+  eventDay: string,
+  eventStart: string | null,
+  bundle = false,
 ): string | null {
   if (ticketPrice(draft) <= 0) return null;
+  const session = bundle ? sessionTimes(draft).startsAt : null;
+  const eventStartsAt = session ?? eventStart;
+  const eventDate = session ? isoToHn(session).date : eventDay;
   const { saleStartsAt, saleEndsAt } = resolveSaleWindow(draft, eventStartsAt);
   const name = draft.name.trim() || "una entrada";
   if (!saleEndsAt) return `la fecha del evento para vender "${name}"`;
@@ -207,6 +305,7 @@ export function ticketWindowProblem(
 export function useEventTicketsForm(
   initial: ProviderTicketType[] = [],
   eventStartsAt: string | null = null,
+  bundle = false,
 ) {
   const [tickets, setTickets] = useState<EventTicketDraft[]>(() =>
     initial.map((item) => fromTicketType(item, eventStartsAt)),
@@ -217,7 +316,9 @@ export function useEventTicketsForm(
     setTickets,
   );
 
-  const editorError = editorDraft ? eventTicketDraftError(editorDraft, eventStartsAt) : null;
+  const editorError = editorDraft
+    ? eventTicketDraftError(editorDraft, eventStartsAt, bundle)
+    : null;
 
   const toPayload =
     (eventStartsAt: string | null) =>
@@ -225,17 +326,29 @@ export function useEventTicketsForm(
       // Contributions only apply to paid entries; checkout refuses them on
       // free ones, so a free entry always sends them off.
       const takesDonations = ticketPrice(draft) > 0 && draft.donationEnabled;
-      return {
+      const payload: ProviderTicketTypeInput = {
         name: draft.name.trim(),
         kind: "general",
         price: ticketPrice(draft),
         total: Number(draft.total),
-        ...resolveSaleWindow(draft, eventStartsAt),
+        ...resolveSaleWindow(draft, ticketStartsAt(draft, eventStartsAt, bundle)),
         donationEnabled: takesDonations,
         suggestedDonation: takesDonations
           ? parseSuggestedDonation(draft.suggestedDonation).value
           : null,
         sortOrder,
+      };
+      // A single event never sends the session keys, so it saves as before.
+      if (!bundle) return payload;
+      const pinned = draft.latitude !== null && draft.longitude !== null;
+      return {
+        ...payload,
+        description: draft.description.trim() || null,
+        ...sessionTimes(draft),
+        venue: draft.venue.trim() || null,
+        address: draft.address.trim() || null,
+        latitude: pinned ? draft.latitude : null,
+        longitude: pinned ? draft.longitude : null,
       };
     };
 
@@ -269,7 +382,7 @@ export function useEventTicketsForm(
       setTickets((current) => current.filter((item) => item.id !== id || item.sold > 0)),
     windowProblems: (eventDate: string, eventStartsAt: string | null) =>
       tickets
-        .map((draft) => ticketWindowProblem(draft, eventDate, eventStartsAt))
+        .map((draft) => ticketWindowProblem(draft, eventDate, eventStartsAt, bundle))
         .filter((problem): problem is string => problem !== null),
     toDiff: (eventStartsAt: string | null) =>
       persistence.diff(tickets, toPayload(eventStartsAt)),

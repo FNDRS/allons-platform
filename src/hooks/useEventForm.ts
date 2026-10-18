@@ -14,6 +14,7 @@ import {
   updateProviderTicketType,
   type ProviderEventDetail,
   type ProviderEventInput,
+  type ProviderEventType,
 } from "@/lib/api/provider";
 import { EVENT_CATEGORIES, EVENT_OTHER_CATEGORY } from "@/lib/eventCategories";
 import { isLiveEventStatus } from "@/lib/eventStatus";
@@ -68,6 +69,9 @@ export function useEventForm(event: ProviderEventDetail | null) {
   const initialCategory = splitCategory(event?.category);
   const [category, setCategory] = useState(initialCategory.category);
   const [customCategory, setCustomCategory] = useState(initialCategory.custom);
+  const [eventType, setEventType] = useState<ProviderEventType>(
+    event?.eventType === "bundle" ? "bundle" : "single",
+  );
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(event?.coverImageUrl ?? null);
   const [coverBusy, setCoverBusy] = useState(false);
 
@@ -125,7 +129,8 @@ export function useEventForm(event: ProviderEventDetail | null) {
 
   const startsAt = hnToIso(startDate, startTime);
   const endsAt = hnToIso(endDate || startDate, endTime);
-  const tickets = useEventTicketsForm(event?.ticketTypes ?? [], startsAt);
+  const bundle = eventType === "bundle";
+  const tickets = useEventTicketsForm(event?.ticketTypes ?? [], startsAt, bundle);
   const today = todayHN();
   // Dates already set on an existing event stay pickable even once past.
   const minDate = start.date && start.date < today ? start.date : today;
@@ -181,7 +186,7 @@ export function useEventForm(event: ProviderEventDetail | null) {
       venue: venue.trim() || null,
       coverImageUrl,
       category: resolvedCategory || null,
-      eventType: "single",
+      eventType,
       ticketMode: paid ? "single_access" : "free",
       // Blank falls back to the entries on sale, the most that can come in.
       capacity: typedCapacity > 0 ? typedCapacity : tickets.capacityFromTickets,
@@ -321,6 +326,9 @@ export function useEventForm(event: ProviderEventDetail | null) {
     setCategory,
     customCategory,
     setCustomCategory,
+    eventType,
+    setEventType,
+    bundle,
 
     coverImageUrl,
     setCoverImageUrl,

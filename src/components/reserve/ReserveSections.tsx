@@ -10,6 +10,7 @@ import {
 } from "@/lib/api/events";
 import { formatCents, formatDateTime } from "@/lib/format";
 import { ListedPrice } from "@/components/ui/ListedPrice";
+import { sessionSubtitle } from "@/components/events/EntryTypeSessionModal";
 import type { HolderDraft } from "@/hooks/useReserveForm";
 import { FieldError, Input, Label, Select, SelectItem, Textarea } from "@/components/ui/Field";
 import { StatusPill } from "@/components/ui/Pill";
@@ -86,6 +87,7 @@ export function EntryTypePicker({
             !isEntryTypeOnSale(type) && type.saleStartsAt
               ? formatDateTime(type.saleStartsAt)
               : null;
+          const subtitle = sessionSubtitle(type);
           return (
             <button
               key={type.id}
@@ -111,6 +113,9 @@ export function EntryTypePicker({
                     </span>
                     <div className="min-w-0">
                       <p className="font-semibold tracking-tight">{type.name}</p>
+                      {subtitle ? (
+                        <p className="mt-0.5 text-[13px] text-white/60">{subtitle}</p>
+                      ) : null}
                       {opensAt ? (
                         <p className="mt-0.5 text-[13px] text-white/40">
                           A la venta desde {opensAt}

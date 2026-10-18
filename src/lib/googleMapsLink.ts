@@ -105,3 +105,31 @@ export function googleMapsUrl({ latitude, longitude }: MapCoordinates) {
 export function formatCoordinate(value: number) {
   return String(Number(value.toFixed(6)));
 }
+
+export type MapPlace = {
+  latitude?: number | null;
+  longitude?: number | null;
+  venue?: string | null;
+  address?: string | null;
+  city?: string | null;
+};
+
+/** Maps link for a place: the pin when there is one, else a search by its name. */
+export function placeMapsUrl(place: MapPlace): string | null {
+  if (place.latitude != null && place.longitude != null) {
+    return googleMapsUrl({ latitude: place.latitude, longitude: place.longitude });
+  }
+  if (place.address || place.venue) {
+    const query = [place.venue, place.address, place.city].filter(Boolean).join(", ");
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  }
+  return null;
+}
+
+/** "Venue · City", the way the Dónde tile prints a place. */
+export function placeLabelOf(place: MapPlace): string {
+  const name = place.venue ?? place.address ?? place.city;
+  return [name, name !== place.city ? place.city : null]
+    .filter(Boolean)
+    .join(" · ");
+}

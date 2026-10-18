@@ -50,6 +50,7 @@ export function EventForm({ event }: { event: ProviderEventDetail | null }) {
       <EventTicketsBuilder
         tickets={f.tickets.tickets}
         eventStartsAt={f.eventStartsAt}
+        bundle={f.bundle}
         onAdd={f.tickets.openNew}
         onEdit={f.tickets.openExisting}
         onRemove={f.tickets.remove}
@@ -80,6 +81,7 @@ export function EventForm({ event }: { event: ProviderEventDetail | null }) {
       <EventTicketEditorModal
         draft={f.tickets.editorDraft}
         eventStartsAt={f.eventStartsAt}
+        bundle={f.bundle}
         error={f.tickets.editorError}
         onChange={f.tickets.updateEditor}
         onCancel={f.tickets.closeEditor}

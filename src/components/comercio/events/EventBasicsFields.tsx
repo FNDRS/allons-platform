@@ -1,11 +1,18 @@
 import { Card } from "@/components/ui/Card";
 import { Combobox } from "@/components/ui/Combobox";
 import { Input, Textarea } from "@/components/ui/Field";
+import { Segmented } from "@/components/ui/Segmented";
 import { ClassFormField } from "@/components/comercio/classes/ClassFormField";
 import type { useEventForm } from "@/hooks/useEventForm";
+import type { ProviderEventType } from "@/lib/api/provider";
 import { EVENT_CATEGORIES, EVENT_OTHER_CATEGORY } from "@/lib/eventCategories";
 
 const CATEGORY_OPTIONS = EVENT_CATEGORIES.map((name) => ({ value: name, label: name }));
+
+const EVENT_TYPE_OPTIONS: { value: ProviderEventType; label: string }[] = [
+  { value: "single", label: "Evento único" },
+  { value: "bundle", label: "Evento con sesiones" },
+];
 
 type Props = Pick<
   ReturnType<typeof useEventForm>,
@@ -17,9 +24,11 @@ type Props = Pick<
   | "setCategory"
   | "customCategory"
   | "setCustomCategory"
+  | "eventType"
+  | "setEventType"
 >;
 
-/** Name, description and category. */
+/** Name, description, category and whether it is one event or several sessions. */
 export function EventBasicsFields(p: Props) {
   return (
     <Card className="flex flex-col gap-4">
@@ -68,6 +77,21 @@ export function EventBasicsFields(p: Props) {
           )}
         </ClassFormField>
       ) : null}
+      <ClassFormField
+        label="Tipo de evento"
+        hint={
+          p.eventType === "bundle"
+            ? "Cada entrada es una sesión con su propia fecha, hora y lugar. La fecha y el lugar del evento son los generales."
+            : "Una sola fecha y un solo lugar para todas las entradas."
+        }
+      >
+        <Segmented
+          label="Tipo de evento"
+          value={p.eventType}
+          options={EVENT_TYPE_OPTIONS}
+          onChange={p.setEventType}
+        />
+      </ClassFormField>
     </Card>
   );
 }

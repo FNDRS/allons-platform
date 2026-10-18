@@ -2,16 +2,25 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { ClassFormField } from "@/components/comercio/classes/ClassFormField";
-import { ticketPrice, type EventTicketDraft } from "@/hooks/event-form/useEventTicketsForm";
+import {
+  ticketPrice,
+  ticketStartsAt,
+  type EventTicketDraft,
+} from "@/hooks/event-form/useEventTicketsForm";
 import { EventTicketDonationFields } from "./EventTicketDonationFields";
 import { EventTicketSaleWindowFields } from "./EventTicketSaleWindowFields";
+import { EventTicketSessionFields } from "./EventTicketSessionFields";
 
 const digits = (value: string) => value.replace(/\D/g, "");
 
-/** Authors one ticket type: name, price, how many, when it sells, donations. */
+/**
+ * Authors one ticket type: name, price, how many, when it sells, donations.
+ * In a bundle event it is also a session, with its own date and place.
+ */
 export function EventTicketEditorModal({
   draft,
   eventStartsAt,
+  bundle = false,
   error,
   onChange,
   onCancel,
@@ -19,6 +28,8 @@ export function EventTicketEditorModal({
 }: {
   draft: EventTicketDraft | null;
   eventStartsAt: string | null;
+  /** A bundle event: the editor also takes the session's fields. */
+  bundle?: boolean;
   error: string | null;
   onChange: (patch: Partial<EventTicketDraft>) => void;
   onCancel: () => void;
@@ -81,11 +92,12 @@ export function EventTicketEditorModal({
               )}
             </ClassFormField>
           </div>
+          {bundle ? <EventTicketSessionFields key={draft.id} draft={draft} onChange={onChange} /> : null}
           {paid ? (
             <>
               <EventTicketSaleWindowFields
                 draft={draft}
-                eventStartsAt={eventStartsAt}
+                eventStartsAt={ticketStartsAt(draft, eventStartsAt, bundle)}
                 onChange={onChange}
               />
               <EventTicketDonationFields draft={draft} onChange={onChange} />

@@ -61,6 +61,25 @@ export interface EventEntryType {
   soldOut?: boolean;
   remaining: number | null;
   planKind?: string | null;
+  /**
+   * Session fields of a bundle event. Null means the session uses the
+   * event's own value. A single event leaves them all null.
+   */
+  description?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  venue?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+/** A bundle event sells sessions, each one a ticket type with its own date and place. */
+export function isBundleEvent(event: Pick<EventDetail, "eventType" | "entryTypes">) {
+  return (
+    event.eventType === "bundle" ||
+    (event.entryTypes ?? []).some((type) => Boolean(type.startsAt || type.venue))
+  );
 }
 
 export type EventQuestionKind =
