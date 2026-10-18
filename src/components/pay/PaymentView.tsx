@@ -14,6 +14,7 @@ import { formatCents } from "@/lib/format";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorState, Skeleton } from "@/components/ui/States";
+import { AnotherSessionCard } from "./AnotherSessionCard";
 import { PaygateModal } from "./PaygateModal";
 
 /**
@@ -128,6 +129,9 @@ export function PaymentView({ orderId }: { orderId: string }) {
         <Link href={outcome.secondary.href} className="mt-4 text-[13px] text-white/40 transition hover:text-white">
           {outcome.secondary.label}
         </Link>
+        {order.eventId && !forClass ? (
+          <AnotherSessionCard eventId={order.eventId} ticketId={order.ticketIds[0] ?? null} />
+        ) : null}
       </div>
     );
   }

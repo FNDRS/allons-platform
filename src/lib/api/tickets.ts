@@ -23,6 +23,8 @@ export interface TicketListItem {
   holderEmail?: string | null;
   /** Nombre de la entrada comprada, no el del evento. */
   ticketTypeName?: string | null;
+  /** Entrada comprada; null en un ticket viejo o de clase. */
+  ticketTypeId?: string | null;
   tab: "eventos" | "clases";
   eventId?: string | null;
   event?: TicketEventInfo | null;

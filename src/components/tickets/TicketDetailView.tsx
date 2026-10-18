@@ -7,6 +7,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { formatEventWhen } from "@/lib/allons-api";
 import { getMyTicket, ticketKeys } from "@/lib/api/tickets";
 import { ErrorState, Skeleton } from "@/components/ui/States";
+import { AnotherSessionCard } from "@/components/pay/AnotherSessionCard";
 import { TicketCode } from "./TicketCode";
 import { TicketMeta } from "./TicketMeta";
 import { TicketQr } from "./TicketQr";
@@ -91,6 +92,12 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
       <p className="text-center text-[13px] leading-relaxed text-white/32">
         Este ticket también está en la app de Allons con la misma cuenta.
       </p>
+
+      {isNew && ticket.eventId ? (
+        <div className="flex justify-center">
+          <AnotherSessionCard eventId={ticket.eventId} ticketId={ticket.id} />
+        </div>
+      ) : null}
     </div>
   );
 }
