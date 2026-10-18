@@ -92,13 +92,15 @@ const NAV: NavItem[] = [
   { href: "/comercio/staff", label: "Personal", Icon: Users, exact: true },
 ];
 
-const TABS = [
-  { href: "/comercio", label: "Dashboard", Icon: LayoutDashboard },
-  { href: "/comercio/actividades", label: "Actividad", Icon: Activity },
-  { href: "/comercio/finanzas", label: "Finanzas", Icon: Wallet },
-  { href: "/comercio/descuentos", label: "Descuentos", Icon: Tag },
-  { href: "/comercio/staff", label: "Personal", Icon: Users },
+/** The phone bar keeps the four sections used most; the rest go under "Más". */
+const TAB_HREFS = [
+  "/comercio",
+  "/comercio/events",
+  "/comercio/descuentos",
+  "/comercio/finanzas",
 ];
+const TABS = TAB_HREFS.map((href) => NAV.find((item) => item.href === href)!);
+const MORE = NAV.filter((item) => !TAB_HREFS.includes(item.href));
 
 function isNavActive(pathname: string, href: string, exact: boolean) {
   if (exact) return pathname === href;
@@ -196,11 +198,11 @@ export function ComercioShellInner({
           </div>
         </header>
 
-        <main id="contenido" tabIndex={-1} className="mx-auto w-full min-w-0 max-w-[1200px] flex-1 px-4 pb-24 pt-4 sm:px-6 md:pb-8 lg:px-8">
+        <main id="contenido" tabIndex={-1} className="mx-auto w-full min-w-0 max-w-[1200px] flex-1 px-4 pb-24 pt-4 sm:px-6 lg:px-8 lg:pb-8">
           <PageTransition>{children}</PageTransition>
         </main>
 
-        <BottomTabs tabs={TABS} />
+        <BottomTabs tabs={TABS} more={MORE} hideFrom="lg" />
       </div>
       <AccountSheet open={accountOpen} onClose={() => setAccountOpen(false)} />
     </div>
