@@ -137,6 +137,10 @@ export interface ProviderEventQuestion {
   label: string;
   kind: string;
   options?: string[] | null;
+  /** Most tickets that can pick each option. Options left out have no limit. */
+  optionLimits?: Record<string, number> | null;
+  /** Tickets sold or held in checkout per option, for the limits above. */
+  optionTaken?: Record<string, number> | null;
   required: boolean;
   sortOrder?: number;
   /** Set on questions a campaign hub copied in; those are not the comercio's. */
@@ -400,10 +404,14 @@ export interface ProviderEventInput {
 }
 
 export interface ProviderEventQuestionInput {
+  /** The stored question this edits, so its answers stay. Omit for a new one. */
+  id?: string;
   label: string;
   kind: EventQuestionKind;
   /** Only on select, radio and checkbox, with 1 to 20 entries. */
   options?: string[];
+  /** Only on select and radio. Omit to keep the stored ones, null clears them. */
+  optionLimits?: Record<string, number> | null;
   required: boolean;
   sortOrder: number;
 }

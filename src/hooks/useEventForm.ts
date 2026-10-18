@@ -203,8 +203,8 @@ export function useEventForm(event: ProviderEventDetail | null) {
       // Off clears it, same as the admin's switch.
       kitPickupInfo: kitPickupEnabled ? kitPickupInfo.trim().slice(0, 2000) : "",
     };
-    // Sent only when they change: the API deletes and recreates the
-    // comercio's questions on every write that includes them.
+    // Sent only when they change. Each stored question goes back with its id
+    // so the API edits it in place and keeps its answers.
     const questionsPayload = questions.payloadFor(isNew);
     if (questionsPayload !== undefined) fields.questions = questionsPayload;
     const donationInfo = donation.payload();
@@ -268,7 +268,7 @@ export function useEventForm(event: ProviderEventDetail | null) {
         // it is about are saved.
         const updated = await updateProviderEvent(id, fields);
         status = updated.status;
-        questions.markSaved();
+        questions.markSaved(updated);
         donation.markSaved();
       } else {
         // Created as a draft and sent to review after its entries exist, so
@@ -278,7 +278,7 @@ export function useEventForm(event: ProviderEventDetail | null) {
         status = created.status;
         setSavedId(created.id);
         setSavedStatus(created.status);
-        questions.markSaved();
+        questions.markSaved(created);
         donation.markSaved();
       }
       await syncTickets(id, knownIds);

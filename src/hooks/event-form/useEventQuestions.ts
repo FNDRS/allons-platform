@@ -11,18 +11,30 @@ import {
   MAX_EVENT_QUESTIONS,
   MAX_QUESTION_OPTIONS,
   isEventQuestionKind,
+  parseOptionLimit,
   parseQuestionOptions,
   questionNeedsOptions,
+  questionTakesLimits,
 } from "@/lib/eventQuestions";
 
-/** A question being authored. `key` is local; the API recreates the rows. */
+/**
+ * A question being authored. `key` is local; `id` is the stored row, sent
+ * back so the API edits it in place and the answers it holds stay.
+ */
 export interface EventQuestionDraft {
   key: string;
+  id?: string;
   label: string;
   kind: EventQuestionKind;
   /** Comma separated, as typed, so a comma can be written mid-option. */
   optionsText: string;
   required: boolean;
+  /** Each option has its own stock. Only select and radio. */
+  limited: boolean;
+  /** Limit per option, as typed. Empty means no limit for that option. */
+  limitsText: Record<string, string>;
+  /** Tickets sold or held per option, as the server last reported. */
+  taken: Record<string, number>;
 }
 
 let questionSeq = 0;
@@ -32,20 +44,37 @@ const bySortOrder = (a: ProviderEventQuestion, b: ProviderEventQuestion) =>
   (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
 
 function fromQuestion(question: ProviderEventQuestion): EventQuestionDraft {
+  const limits = Object.entries(question.optionLimits ?? {});
   return {
     key: nextKey(),
+    id: question.id,
     label: question.label,
     kind: isEventQuestionKind(question.kind) ? question.kind : "text",
     optionsText: (question.options ?? []).join(", "),
     required: question.required,
+    limited: limits.length > 0,
+    limitsText: Object.fromEntries(limits.map(([option, limit]) => [option, String(limit)])),
+    taken: question.optionTaken ?? {},
   };
+}
+
+/** The limits to send, only for options still on the list. Null when none. */
+function limitsPayload(draft: EventQuestionDraft): Record<string, number> | null {
+  if (!draft.limited) return null;
+  const entries = parseQuestionOptions(draft.optionsText).flatMap((option) => {
+    const limit = parseOptionLimit(draft.limitsText[option] ?? "");
+    return typeof limit === "number" ? [[option, limit] as const] : [];
+  });
+  return entries.length > 0 ? Object.fromEntries(entries) : null;
 }
 
 function toPayload(drafts: EventQuestionDraft[]): ProviderEventQuestionInput[] {
   return drafts.map((draft, sortOrder) => ({
+    ...(draft.id ? { id: draft.id } : {}),
     label: draft.label.trim(),
     kind: draft.kind,
     ...(questionNeedsOptions(draft.kind) ? { options: parseQuestionOptions(draft.optionsText) } : {}),
+    ...(questionTakesLimits(draft.kind) ? { optionLimits: limitsPayload(draft) } : {}),
     required: draft.required,
     sortOrder,
   }));
@@ -87,6 +116,12 @@ export function useEventQuestions(event: ProviderEventDetail | null) {
             out.push(`dejar como máximo ${MAX_QUESTION_OPTIONS} opciones en la pregunta ${n}`);
           }
         }
+        if (questionTakesLimits(draft.kind) && draft.limited) {
+          const bad = parseQuestionOptions(draft.optionsText).some(
+            (option) => parseOptionLimit(draft.limitsText[option] ?? "") === null,
+          );
+          if (bad) out.push(`un límite válido por opción en la pregunta ${n}`);
+        }
         return out;
       })
     : [];
@@ -95,7 +130,19 @@ export function useEventQuestions(event: ProviderEventDetail | null) {
     setQuestions((current) =>
       current.length >= MAX_EVENT_QUESTIONS
         ? current
-        : [...current, { key: nextKey(), label: "", kind: "text", optionsText: "", required: true }],
+        : [
+            ...current,
+            {
+              key: nextKey(),
+              label: "",
+              kind: "text",
+              optionsText: "",
+              required: true,
+              limited: false,
+              limitsText: {},
+              taken: {},
+            },
+          ],
     );
 
   return {
@@ -128,7 +175,33 @@ export function useEventQuestions(event: ProviderEventDetail | null) {
      */
     payloadFor: (isNew: boolean): ProviderEventQuestionInput[] | undefined =>
       isNew ? (payload.length > 0 ? payload : undefined) : changed ? payload : undefined,
-    /** The save reached the server: what it sent is now the stored set. */
-    markSaved: () => setBaseline(serialized),
+    /**
+     * The save reached the server: what it sent is now the stored set. The
+     * saved event, when the response has it, gives new questions their ids
+     * so the next save edits them instead of making them again.
+     */
+    markSaved: (saved?: Pick<ProviderEventDetail, "questions"> | null) => {
+      const stored = (saved?.questions ?? [])
+        .filter((q) => !q.campaignQuestionId)
+        .sort(bySortOrder);
+      if (!enabled || stored.length !== questions.length) {
+        setBaseline(serialized);
+        return;
+      }
+      // `questions` is what this save sent. Edits typed while it ran keep
+      // their text and only pick up the ids.
+      const sent = questions.map((draft, index) => ({
+        ...draft,
+        id: stored[index].id,
+        taken: stored[index].optionTaken ?? draft.taken,
+      }));
+      setQuestions((current) =>
+        current.map((draft) => {
+          const match = sent.find((q) => q.key === draft.key);
+          return match ? { ...draft, id: match.id, taken: match.taken } : draft;
+        }),
+      );
+      setBaseline(JSON.stringify(toPayload(sent)));
+    },
   };
 }

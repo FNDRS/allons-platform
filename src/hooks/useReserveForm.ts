@@ -18,6 +18,7 @@ import {
   resourceGroupsForTicketType,
   isEntryTypeOnSale,
   isEntryTypeUpcoming,
+  isSoldOutOption,
   type EventEntryType,
   type EventQuestion,
 } from "@/lib/api/events";
@@ -102,15 +103,19 @@ export function answersToList(
     .filter((answer) => answer.answer.length > 0);
 }
 
-/** Missing required answers for one holder, by question id. */
+/**
+ * Answers that block the purchase for one holder, by question id: required
+ * ones left empty, and any pick whose option ran out since it was chosen.
+ */
 export function missingAnswers(
   questions: EventQuestion[],
   answers: Record<string, string>,
 ): string[] {
   return questions
-    .filter((question) => question.required)
     .filter((question) => {
       const value = (answers[question.id] ?? "").trim();
+      if (value && isSoldOutOption(question, value)) return true;
+      if (!question.required) return false;
       // The app treats a required yes/no as "must be yes" (a consent box).
       if (question.kind === "boolean" || question.kind === "checkbox") {
         return value !== "Sí";
