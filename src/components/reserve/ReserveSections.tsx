@@ -116,6 +116,18 @@ export function EntryTypePicker({
                       {subtitle ? (
                         <p className="mt-0.5 text-[13px] text-white/60">{subtitle}</p>
                       ) : null}
+                      {/* What the session includes. Two lines while browsing,
+                          all of it once picked, so the buyer reads it before
+                          paying. */}
+                      {type.description ? (
+                        <p
+                          className={`mt-1.5 whitespace-pre-line text-[13px] leading-relaxed text-white/50 ${
+                            active ? "" : "line-clamp-2"
+                          }`}
+                        >
+                          {type.description}
+                        </p>
+                      ) : null}
                       {opensAt ? (
                         <p className="mt-0.5 text-[13px] text-white/40">
                           A la venta desde {opensAt}
