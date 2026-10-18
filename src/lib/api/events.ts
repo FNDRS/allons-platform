@@ -104,8 +104,21 @@ export interface EventQuestion {
   label: string;
   kind: EventQuestionKind | string;
   options?: string[] | null;
+  /** Options with no stock left. Missing on older APIs and on unlimited questions. */
+  soldOutOptions?: string[] | null;
   required: boolean;
   sortOrder: number;
+}
+
+/** The option ran out, so it can no longer be picked. */
+export function isSoldOutOption(question: Pick<EventQuestion, "soldOutOptions">, option: string) {
+  return (question.soldOutOptions ?? []).includes(option);
+}
+
+/** A choice question whose every option ran out. */
+export function allOptionsSoldOut(question: Pick<EventQuestion, "options" | "soldOutOptions">) {
+  const options = question.options ?? [];
+  return options.length > 0 && options.every((option) => isSoldOutOption(question, option));
 }
 
 export interface PublicResource {

@@ -9,7 +9,10 @@ import {
   MAX_QUESTION_LABEL,
   MAX_QUESTION_OPTIONS,
   eventQuestionKindLabel,
+  parseOptionLimit,
+  parseQuestionOptions,
   questionNeedsOptions,
+  questionTakesLimits,
 } from "@/lib/eventQuestions";
 
 /** One question of the registration form: text, kind, options, required. */
@@ -94,12 +97,70 @@ export function EventQuestionCard({
           />
         </div>
       ) : null}
+      {questionTakesLimits(question.kind) ? (
+        <OptionLimits question={question} n={n} onChange={onChange} />
+      ) : null}
       <SwitchRow
         label="Obligatoria"
         hint="No se puede comprar ni reservar sin responderla."
         checked={question.required}
         onChange={(required) => onChange({ required })}
       />
+    </div>
+  );
+}
+
+/** Stock per option, e.g. 40 shirts in S. A sold out option can't be picked. */
+function OptionLimits({
+  question,
+  n,
+  onChange,
+}: {
+  question: EventQuestionDraft;
+  n: number;
+  onChange: (patch: Partial<EventQuestionDraft>) => void;
+}) {
+  const options = parseQuestionOptions(question.optionsText);
+  return (
+    <div className="flex flex-col gap-3">
+      <SwitchRow
+        label="Limitar cupo por opción"
+        hint="Cuando una opción llega a su límite, se muestra agotada."
+        checked={question.limited}
+        onChange={(limited) => onChange({ limited })}
+      />
+      {question.limited && options.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <Label hint="(vacío es sin límite)">Límite por opción</Label>
+          {options.map((option) => {
+            const text = question.limitsText[option] ?? "";
+            const limit = parseOptionLimit(text);
+            const taken = question.taken[option] ?? 0;
+            const soldOut = typeof limit === "number" && taken >= limit;
+            return (
+              <div key={option} className="flex items-center gap-3">
+                <span className="min-w-0 flex-1 truncate text-[14px] font-semibold">{option}</span>
+                <span className={`shrink-0 text-[12px] ${soldOut ? "text-danger" : "text-dim"}`}>
+                  {soldOut ? "Agotada" : `Vendidas ${taken}`}
+                </span>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  placeholder="Sin límite"
+                  value={text}
+                  aria-invalid={limit === null}
+                  aria-label={`Límite de ${option} en la pregunta ${n}`}
+                  onChange={(e) =>
+                    onChange({ limitsText: { ...question.limitsText, [option]: e.target.value } })
+                  }
+                  className="w-28 shrink-0"
+                />
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }

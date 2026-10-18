@@ -36,3 +36,19 @@ export function questionNeedsOptions(kind: string): boolean {
 export function parseQuestionOptions(text: string): string[] {
   return [...new Set(text.split(",").map((option) => option.trim()).filter(Boolean))];
 }
+
+/** Kinds where each option can carry its own stock, like shirt sizes. */
+export function questionTakesLimits(kind: string): boolean {
+  return kind === "select" || kind === "radio";
+}
+
+export const MAX_OPTION_LIMIT = 100000;
+
+/** A typed limit: empty is no limit, null is not a valid number. */
+export function parseOptionLimit(text: string): number | undefined | null {
+  const trimmed = text.trim();
+  if (!trimmed) return undefined;
+  if (!/^\d+$/.test(trimmed)) return null;
+  const value = Number(trimmed);
+  return value <= MAX_OPTION_LIMIT ? value : null;
+}

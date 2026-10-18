@@ -3,7 +3,9 @@
 import { Check, Minus, Plus } from "lucide-react";
 import { useId, useState } from "react";
 import {
+  allOptionsSoldOut,
   isEntryTypeOnSale,
+  isSoldOutOption,
   type EventCampaign,
   type EventEntryType,
   type EventQuestion,
@@ -296,9 +298,7 @@ export function HolderCard({
                 onChange={(value) => onAnswer(question.id, value)}
                 error={
                   showErrors && errors.answers.includes(question.id)
-                    ? question.kind === "boolean"
-                      ? "Necesitamos tu confirmación"
-                      : "Respuesta requerida"
+                    ? answerError(question, holder.answers[question.id] ?? "")
                     : null
                 }
               />
@@ -308,6 +308,14 @@ export function HolderCard({
       </div>
     </Shell>
   );
+}
+
+function answerError(question: EventQuestion, value: string): string {
+  if (value.trim() && isSoldOutOption(question, value.trim())) {
+    return "Esta opción se agotó, elige otra.";
+  }
+  if (allOptionsSoldOut(question)) return "No quedan opciones disponibles.";
+  return question.kind === "boolean" ? "Necesitamos tu confirmación" : "Respuesta requerida";
 }
 
 /** Up to this many options render as buttons; more go in a dropdown. */
@@ -355,6 +363,12 @@ function QuestionField({
     );
   }
   const options = question.options ?? [];
+  // Shown before any submit: the buyer should not fill everything else first
+  // to learn there is nothing left to pick.
+  const noneLeft =
+    (kind === "select" || kind === "radio") && allOptionsSoldOut(question) ? (
+      <p className="mt-2 text-[13px] text-white/50">No quedan opciones disponibles.</p>
+    ) : null;
   // A short list (sizes, yes/maybe/no) reads better as buttons than behind a
   // dropdown, and keeps the page scrollable: Radix Select locks the scroll
   // while open, which trapped buyers whose list ran under the total bar.
@@ -370,24 +384,38 @@ function QuestionField({
         >
           {options.map((option) => {
             const selected = value === option;
+            const soldOut = isSoldOutOption(question, option);
             return (
               <button
                 key={option}
                 type="button"
                 role="radio"
                 aria-checked={selected}
-                onClick={() => onChange(option)}
-                className={`h-11 min-w-12 rounded-[12px] border px-4 text-[15px] font-semibold transition ${
-                  selected
-                    ? "border-accent bg-accent text-black"
-                    : "border-border bg-surface-2 text-white/85 hover:border-border-strong hover:bg-white/[0.08]"
+                aria-disabled={soldOut}
+                disabled={soldOut && !selected}
+                aria-label={soldOut ? `${option}, agotada` : undefined}
+                onClick={() => (soldOut ? onChange("") : onChange(option))}
+                className={`flex h-11 min-w-12 items-center gap-2 rounded-[12px] border px-4 text-[15px] font-semibold transition ${
+                  soldOut
+                    ? selected
+                      ? "border-danger/60 bg-surface-2 text-white/40"
+                      : "cursor-not-allowed border-border bg-surface-2 text-white/30"
+                    : selected
+                      ? "border-accent bg-accent text-black"
+                      : "border-border bg-surface-2 text-white/85 hover:border-border-strong hover:bg-white/[0.08]"
                 }`}
               >
-                {option}
+                <span className={soldOut ? "line-through" : undefined}>{option}</span>
+                {soldOut ? (
+                  <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-white/40">
+                    Agotada
+                  </span>
+                ) : null}
               </button>
             );
           })}
         </div>
+        {noneLeft}
         <FieldError>{error}</FieldError>
       </div>
     );
@@ -403,12 +431,16 @@ function QuestionField({
           aria-label={question.label}
           aria-invalid={Boolean(error)}
         >
-          {options.map((option) => (
-            <SelectItem key={option} value={option}>
-              {option}
-            </SelectItem>
-          ))}
+          {options.map((option) => {
+            const soldOut = isSoldOutOption(question, option);
+            return (
+              <SelectItem key={option} value={option} disabled={soldOut}>
+                {soldOut ? `${option} (agotada)` : option}
+              </SelectItem>
+            );
+          })}
         </Select>
+        {noneLeft}
         <FieldError>{error}</FieldError>
       </div>
     );
