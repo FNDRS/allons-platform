@@ -13,6 +13,7 @@ import { useProviderResources } from "@/hooks/useProviderResources";
 import {
   getHourlySales,
   getProviderEvent,
+  getProviderEventAnswers,
   getProviderPayments,
   providerKeys,
   type ProviderTicketType,
@@ -86,6 +87,15 @@ export function EventConfigView({ eventId }: { eventId: string }) {
     enabled: ready,
   });
   const seats = useProviderResources(eventId, ready);
+  // Only fetch answers when the event asks its own questions.
+  const ownQuestions = (event.data?.questions ?? []).some(
+    (question) => !question.campaignQuestionId,
+  );
+  const answers = useQuery({
+    queryKey: providerKeys.answers(eventId),
+    queryFn: () => getProviderEventAnswers(eventId),
+    enabled: ready && ownQuestions,
+  });
 
   if (event.isLoading) {
     return (
@@ -105,10 +115,6 @@ export function EventConfigView({ eventId }: { eventId: string }) {
     );
   }
   const data = event.data;
-  // Only fetch answers when the event asks its own questions.
-  const ownQuestions = (data.questions ?? []).some(
-    (question) => !question.campaignQuestionId,
-  );
   const status = eventStatusLabel(data.status);
   // Only the hosting comercio edits; a collaborator reads the same page.
   const canEdit = data.access === "owner" && canManageEvents(user);
@@ -323,7 +329,7 @@ export function EventConfigView({ eventId }: { eventId: string }) {
       ) : null}
 
       {ownQuestions ? (
-        <EventAnswersSection eventId={eventId} enabled={ready} />
+        <EventAnswersSection eventId={eventId} eventTitle={data.title} enabled={ready} />
       ) : null}
 
       {payments.isLoading ? (
@@ -339,6 +345,7 @@ export function EventConfigView({ eventId }: { eventId: string }) {
           rows={payments.data?.data ?? []}
           reservations={payments.data?.reservations ?? []}
           types={data.ticketTypes ?? []}
+          answers={answers.data}
         />
       )}
     </div>
