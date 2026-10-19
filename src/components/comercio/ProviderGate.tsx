@@ -1,15 +1,33 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Store } from "lucide-react";
+import { useAuth } from "@/components/app/AuthProvider";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
+import { isScannerOnlyUser, SCANNER_PATH } from "@/lib/role";
 import { Button } from "@/components/ui/Button";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 
-/** Renders children only for comercio members; explains otherwise. */
+/**
+ * Renders children only for comercio members; explains otherwise. Door
+ * staff get the scanner page and nothing else: any other comercio URL
+ * sends them there.
+ */
 export function ProviderGate({ children }: { children: React.ReactNode }) {
   const { loading, forbidden, error, refetch } = useProviderAccess();
-  if (loading) {
+  const { user } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+  const scanner = !loading && isScannerOnlyUser(user);
+  const onScanner = pathname === SCANNER_PATH;
+  useEffect(() => {
+    if (scanner && !onScanner) router.replace(SCANNER_PATH);
+  }, [scanner, onScanner, router]);
+
+  if (scanner && onScanner) return <>{children}</>;
+  if (loading || scanner) {
     return (
       <div className="app-canvas flex min-h-dvh flex-col gap-4 px-6 py-16 text-white">
         <Skeleton className="h-10 w-1/2" />

@@ -7,7 +7,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Menu } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { AllonsLogo } from "@/components/AllonsLogo";
-import { isComercioUser } from "@/lib/role";
+import { isComercioUser, isScannerOnlyUser, SCANNER_PATH } from "@/lib/role";
 import { Modal } from "@/components/ui/Modal";
 import { AccountButton, AccountSheet } from "./AccountSheet";
 import { useAuth } from "./AuthProvider";
@@ -30,6 +30,10 @@ const GUEST_HREFS = new Set(["/eventos", "/soporte"]);
  */
 export function customerLinksFor(user: User | null) {
   if (!user) return APP_LINKS.filter((link) => GUEST_HREFS.has(link.href));
+  // Door staff get the scanner between Eventos and Mis tickets.
+  if (isScannerOnlyUser(user)) {
+    return [APP_LINKS[0], { href: SCANNER_PATH, label: "Escanear" }, APP_LINKS[1]];
+  }
   const comercio = isComercioUser(user);
   return APP_LINKS.filter((link) => {
     if (link.href === "/soporte") return false;
@@ -54,6 +58,7 @@ const COMERCIO_BRANCHES = [
   "/comercio/clientes",
   "/comercio/colaboraciones",
   "/comercio/campanas",
+  "/comercio/escanear",
 ];
 
 export function isComercioNavActive(pathname: string, href: string): boolean {
