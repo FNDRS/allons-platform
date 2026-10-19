@@ -70,7 +70,7 @@ function AccountNumber({ label, number }: { label: string; number: string }) {
 }
 
 /**
- * "¿Quieres aportar más?": the beneficiary's own bank accounts and channels.
+ * "Haz una donación extra": the beneficiary's own bank accounts and channels.
  * `compact` stacks the lempiras and dollars accounts for a narrow side column.
  */
 export function DonationCard({
@@ -87,10 +87,13 @@ export function DonationCard({
           <HeartMark />
         </span>
         <div>
-          <p className="text-[15px] font-bold tracking-tight">¿Quieres aportar más?</p>
+          <p className="text-[15px] font-bold tracking-tight">Haz una donación extra</p>
           <p className="mt-1 text-sm leading-6 text-white/70">
-            Puedes donar directo a {info.beneficiary} con un depósito o una transferencia a
-            cualquiera de estas cuentas. Toca un número para copiarlo.
+            Estas cuentas son solo para donar directo a {info.beneficiary}, con un depósito o
+            una transferencia. Toca un número para copiarlo.
+          </p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-white">
+            No son para comprar tu entrada ni tu kit. Eso se paga aquí en Allons.
           </p>
         </div>
       </div>
