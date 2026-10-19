@@ -22,6 +22,7 @@ import {
   type EventEntryType,
   type EventQuestion,
 } from "@/lib/api/events";
+import { PAYMENTS_OUTAGE, PAYMENTS_OUTAGE_MESSAGE } from "@/lib/paymentsOutage";
 import {
   initiatePayment,
   paymentKeys,
@@ -535,6 +536,10 @@ export function useReserveForm(
     setTouched(true);
     setError(null);
     if (!event || !entryType) return null;
+    if (!isFree && PAYMENTS_OUTAGE) {
+      setError(PAYMENTS_OUTAGE_MESSAGE);
+      return null;
+    }
     if (holders.length !== quantity) {
       setError("Espera un momento y vuelve a intentar.");
       return null;

@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { PAYMENTS_OUTAGE, paymentsOutageError } from "@/lib/paymentsOutage";
 import { apiFetch, isApiError } from "./client";
 import type { AnswerInput } from "./tickets";
 
@@ -92,6 +93,7 @@ export interface ChargeSavedCardResponse {
 }
 
 export function initiatePayment(input: InitiatePaymentInput) {
+  if (PAYMENTS_OUTAGE) return Promise.reject(paymentsOutageError());
   return apiFetch<InitiatePaymentResponse>("/me/payments/initiate", {
     method: "POST",
     body: input,
@@ -112,6 +114,7 @@ export interface DirectCardInput {
  * saved-card charge, `pending` with the bank's 3DS window included.
  */
 export function chargeWithCard(input: InitiatePaymentInput & { card: DirectCardInput }) {
+  if (PAYMENTS_OUTAGE) return Promise.reject(paymentsOutageError());
   return apiFetch<ChargeSavedCardResponse>("/me/payments/card", {
     method: "POST",
     body: input,
@@ -120,6 +123,7 @@ export function chargeWithCard(input: InitiatePaymentInput & { card: DirectCardI
 
 /** Pays with a card already in Paygate's vault. Only the card id travels. */
 export function chargeWithSavedCard(input: ChargeSavedCardInput) {
+  if (PAYMENTS_OUTAGE) return Promise.reject(paymentsOutageError());
   return apiFetch<ChargeSavedCardResponse>("/me/payments/charge", {
     method: "POST",
     body: input,

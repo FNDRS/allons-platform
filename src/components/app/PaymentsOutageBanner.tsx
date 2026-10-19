@@ -1,10 +1,5 @@
 import { CircleAlert } from "lucide-react";
-
-/**
- * Clinpays (the card gateway) is not resolving, so charges fail or end up
- * unconfirmed. Flip this to false once it is back.
- */
-const PAYMENTS_OUTAGE = true;
+import { PAYMENTS_OUTAGE } from "@/lib/paymentsOutage";
 
 /** Site-wide notice while the payment gateway is down. */
 export function PaymentsOutageBanner() {
@@ -20,8 +15,8 @@ export function PaymentsOutageBanner() {
           <span className="font-semibold text-white">
             Estamos teniendo problemas con la plataforma de pagos.
           </span>{" "}
-          Los pagos con tarjeta pueden fallar por ahora. Si ya intentaste pagar,
-          revisa tus boletos antes de volver a intentar.
+          Pausamos los pagos mientras se resuelve. Si ya intentaste pagar, revisa
+          tus boletos antes de volver a intentar.
         </span>
       </p>
     </div>

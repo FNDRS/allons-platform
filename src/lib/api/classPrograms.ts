@@ -1,3 +1,4 @@
+import { PAYMENTS_OUTAGE, paymentsOutageError } from "@/lib/paymentsOutage";
 import { apiFetch, isApiError } from "./client";
 
 export type ClassPackageKind = "drop_in" | "pack" | "unlimited";
@@ -231,6 +232,7 @@ export function listMyUpcomingClassReservations() {
 
 /** Hosted Paygate checkout for a paid package. */
 export function startClassPackagePayment(packageId: string) {
+  if (PAYMENTS_OUTAGE) return Promise.reject(paymentsOutageError());
   return apiFetch<ClassPackagePaymentResult>(
     `/me/class-packages/${encodeURIComponent(packageId)}/payment`,
     { method: "POST" },
@@ -239,6 +241,7 @@ export function startClassPackagePayment(packageId: string) {
 
 /** Charges a card already in Paygate's vault. Only the card id travels. */
 export function chargeClassPackage(packageId: string, paymentMethodId: string) {
+  if (PAYMENTS_OUTAGE) return Promise.reject(paymentsOutageError());
   return apiFetch<ClassPackageChargeResult>(
     `/me/class-packages/${encodeURIComponent(packageId)}/charge`,
     { method: "POST", body: { paymentMethodId } },
