@@ -24,10 +24,10 @@ import {
 } from "@/lib/api/events";
 import {
   initiatePayment,
-  PENDING_ORDER_EXISTS_CODE,
   paymentKeys,
   paymentLinkStorageKey,
   payOrderHref,
+  rememberPendingOrder,
   type InitiatePaymentInput,
 } from "@/lib/api/payments";
 import { reserveFreeTickets, type AnswerInput } from "@/lib/api/tickets";
@@ -631,10 +631,11 @@ export function useReserveForm(
       });
       router.replace(payOrderHref(order.orderId, event.id, order.paymentLink));
     } catch (err) {
-      // Su propio pago anterior sigue abierto: el aviso para retomarlo se
-      // vuelve a pedir por si ese pago empezó en otra pestaña.
-      if (isApiError(err) && err.code === PENDING_ORDER_EXISTS_CODE) {
-        void queryClient.invalidateQueries({ queryKey: paymentKeys.active(eventId) });
+      // Su propio pago con tarjeta sigue esperando al banco: lo explica el
+      // aviso junto al botón de pagar, con el tiempo que falta.
+      if (rememberPendingOrder(queryClient, eventId, err)) {
+        setSubmitting(false);
+        return;
       }
       // La pasarela cambió de canal sin que la cotización lo dijera: se
       // muestra el campo y el siguiente intento ya lo lleva.

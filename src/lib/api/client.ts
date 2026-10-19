@@ -26,12 +26,20 @@ export function usesLocalApi(): boolean {
 export class ApiError extends Error {
   status: number;
   code: string | null;
+  /** The rest of the error body, for a code that carries more than a message. */
+  details: Record<string, unknown> | null;
 
-  constructor(message: string, status: number, code: string | null = null) {
+  constructor(
+    message: string,
+    status: number,
+    code: string | null = null,
+    details: Record<string, unknown> | null = null,
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
+    this.details = details;
   }
 }
 
@@ -52,6 +60,15 @@ const FRIENDLY_BY_STATUS: Record<number, string> = {
   404: "No encontramos lo que buscabas.",
   429: "Demasiadas solicitudes. Espera un momento e intenta de nuevo.",
 };
+
+/** The error body's fields, unwrapped when Nest nested them under `message`. */
+function detailsFromBody(body: unknown): Record<string, unknown> | null {
+  if (!body || typeof body !== "object") return null;
+  const inner = (body as { message?: unknown }).message;
+  return inner && typeof inner === "object" && !Array.isArray(inner)
+    ? (inner as Record<string, unknown>)
+    : (body as Record<string, unknown>);
+}
 
 function messageFromBody(
   body: unknown,
@@ -150,6 +167,7 @@ export async function apiFetch<T>(
         : message,
       response.status,
       code,
+      detailsFromBody(parsed),
     );
   }
   return parsed as T;

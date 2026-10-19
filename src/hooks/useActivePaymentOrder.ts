@@ -32,7 +32,9 @@ export function useActivePaymentOrder(eventId: string, enabled: boolean) {
     return () => window.clearTimeout(timer);
   }, [expiresAt, refetch]);
 
-  if (!order?.paymentLink) return null;
+  // A card charge has no link and is still shown: the buyer has to know why
+  // a new checkout is refused. A link order without one cannot be resumed.
+  if (!order || (order.channel !== "card" && !order.paymentLink)) return null;
   if (expiresAt && new Date(expiresAt).getTime() <= Date.now()) return null;
   return order;
 }
