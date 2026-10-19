@@ -8,7 +8,7 @@ import { useActivePaymentOrder } from "@/hooks/useActivePaymentOrder";
 import { useCardCheckout } from "@/hooks/useCardCheckout";
 import { useBuyerUnitPrices } from "@/hooks/useBuyerUnitPrices";
 import { useReserveForm } from "@/hooks/useReserveForm";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useAuth } from "@/components/app/AuthProvider";
 import { formatEventWhen } from "@/lib/allons-api";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
@@ -17,6 +17,7 @@ import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
 import { ThreeDsChallenge } from "@/components/pay/ThreeDsChallenge";
 import { HoldCountdown } from "./HoldCountdown";
 import { PendingOrderNotice } from "./PendingOrderNotice";
+import { ReserveAccountStep } from "./ReserveAccountStep";
 import { ReserveBikePicker } from "./ReserveBikePicker";
 import {
   CampaignConsentField,
@@ -40,11 +41,11 @@ export function ReserveView({ eventId }: { eventId: string }) {
     form.availableTypes,
     form.event?.feeMode,
   );
-  // A preview is only for looking. Guests can open it; a real purchase still
-  // asks for an account.
-  const { ready, user } = useRequireAuth({
-    enabled: !form.isLoading && !form.preview && !form.loadError,
-  });
+  // Guests fill the whole form here. The account is one more step on this
+  // page (email code or Google), not a detour through /login.
+  const { user, loading: authLoading } = useAuth();
+  const ready = !authLoading;
+  const needsAccount = !user && !form.preview;
   // A promo code can cover the ticket in full; nothing is charged, so the
   // card step is as pointless there as it is on a genuinely free entry.
   const chargesNothing = form.isFree || form.effectivelyFree;
@@ -89,6 +90,12 @@ export function ReserveView({ eventId }: { eventId: string }) {
 
   function onPay() {
     if (form.preview) return;
+    if (needsAccount) {
+      document
+        .getElementById("reserve-account")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     if (!payInApp) {
       void form.submit();
     } else {
@@ -310,7 +317,20 @@ export function ReserveView({ eventId }: { eventId: string }) {
         />
       </section>
 
-      {!chargesNothing ? (
+      {needsAccount ? (
+        <ReserveAccountStep
+          step={
+            5 +
+            (form.hasResourceGroups ? 1 : 0) +
+            idStep +
+            donationStep +
+            promoStep
+          }
+          suggestedEmail={form.holders[0]?.email ?? ""}
+          suggestedName={form.holders[0]?.name ?? ""}
+          onLeave={form.saveDraft}
+        />
+      ) : !chargesNothing ? (
         <PaymentMethodStep
           step={
             5 +
@@ -376,7 +396,9 @@ export function ReserveView({ eventId }: { eventId: string }) {
           >
             {form.preview
               ? "Reservar"
-              : chargesNothing
+              : needsAccount
+                ? "Continuar"
+                : chargesNothing
                 ? "Confirmar"
                 : payInApp
                   ? `Pagar ${formatCents(form.totalCents)}`
