@@ -16,6 +16,7 @@ import {
 import {
   chargeWithCard,
   chargeWithSavedCard,
+  rememberPendingOrder,
   type DirectCardInput,
   type InitiatePaymentInput,
 } from "@/lib/api/payments";
@@ -123,6 +124,7 @@ export function useCardCheckout({
       (orderId) =>
         `/pagar/${encodeURIComponent(orderId)}?event=${encodeURIComponent(input.eventId)}`,
       (card) => chargeWithCard({ ...input, card }),
+      input.eventId,
     );
   }
 
@@ -135,6 +137,8 @@ export function useCardCheckout({
     hrefFor: (orderId: string) => string,
     /** Charges the typed card without saving it; needed in direct mode. */
     chargeDirect?: (card: DirectCardInput) => Promise<CardChargeResult>,
+    /** The event, so a refusal over an open checkout shows its notice instead. */
+    eventId?: string,
   ) {
     setTouched(true);
     setError(null);
@@ -202,7 +206,9 @@ export function useCardCheckout({
       }
       paidOrderId = result.orderId;
     } catch (err) {
-      setError(messageFor(err));
+      if (!eventId || !rememberPendingOrder(queryClient, eventId, err)) {
+        setError(messageFor(err));
+      }
     } finally {
       // The buyer did not ask to keep the card: drop it from the vault
       // whether the charge went through or not, before leaving the page.

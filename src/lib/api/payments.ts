@@ -1,3 +1,4 @@
+import type { QueryClient } from "@tanstack/react-query";
 import { apiFetch, isApiError } from "./client";
 import type { AnswerInput } from "./tickets";
 
@@ -128,11 +129,52 @@ export function chargeWithSavedCard(input: ChargeSavedCardInput) {
 /** The API refused a new checkout because the buyer's own one is still open. */
 export const PENDING_ORDER_EXISTS_CODE = "pending_order_exists";
 
+/**
+ * How an open checkout is paid. A `card` charge waits on the bank's 3DS
+ * answer and cannot be resumed; a `link` is a payment form still open.
+ */
+export type PendingOrderChannel = "card" | "link";
+
 export interface ActivePaymentOrder {
   orderId: string;
   /** Empty when the API could not read the link back from Paygate. */
   paymentLink: string;
   expiresAt: string | null;
+  /** Missing on an API that predates it; an empty link then means unknown. */
+  channel?: PendingOrderChannel;
+}
+
+/**
+ * Records the open checkout a refused order named, so the reserve page shows
+ * the notice for it. True only when that notice is now sure to show, so the
+ * caller can drop the error; otherwise the API's message still has to.
+ */
+export function rememberPendingOrder(
+  queryClient: QueryClient,
+  eventId: string,
+  err: unknown,
+): boolean {
+  if (!isApiError(err) || err.code !== PENDING_ORDER_EXISTS_CODE) return false;
+  const details = err.details ?? {};
+  const orderId = typeof details.orderId === "string" ? details.orderId : null;
+  const expiresAt = typeof details.expiresAt === "string" ? details.expiresAt : null;
+  const lapsed = expiresAt !== null && new Date(expiresAt).getTime() <= Date.now();
+  if (details.channel === "card" && orderId && !lapsed) {
+    // A card charge has no link to read back: the refusal says all the
+    // notice needs.
+    queryClient.setQueryData<ActivePaymentOrder>(paymentKeys.active(eventId), {
+      orderId,
+      paymentLink: "",
+      expiresAt,
+      channel: "card",
+    });
+    return true;
+  }
+  // A link order is asked again so the notice gets the link to resume, which
+  // also covers a checkout started in another tab. The lookup may still come
+  // back empty (a lapsed order the sweep has not closed), so the error stays.
+  void queryClient.invalidateQueries({ queryKey: paymentKeys.active(eventId) });
+  return false;
 }
 
 /** The buyer's open checkout on this event, or null when there is none. */

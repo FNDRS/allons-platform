@@ -330,6 +330,12 @@ export function ReserveView({ eventId }: { eventId: string }) {
         showError={form.touched}
       />
 
+      {/* Again by the pay button: a refused order shows this instead of an
+          error, and the one at the top is out of sight by now. */}
+      {pendingOrder ? (
+        <PendingOrderNotice order={pendingOrder} eventId={eventId} />
+      ) : null}
+
       {error ? <ErrorState message={error} /> : null}
 
       {/* Informed consent before paying: the terms, the refund policy, the
