@@ -4,9 +4,16 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, Building2, CalendarDays, Car, Clock, PawPrint, User, Users } from "lucide-react";
+import { cheapestListedCents, useBuyerUnitPrices } from "@/hooks/useBuyerUnitPrices";
 import { usePrefetchEvent } from "@/hooks/usePrefetchEvent";
-import { eventCategoryName, type EventListItem } from "@/lib/api/events";
+import {
+  eventCategoryName,
+  eventKeys,
+  getEvent,
+  type EventListItem,
+} from "@/lib/api/events";
 import {
   formatCardDay,
   formatCardPrice,
@@ -29,23 +36,13 @@ const LEGACY_HOVER_VIDEO_BY_HANDLE: Record<string, string> = {
   kinetix: "/providers/kinetix-hover.mp4",
 };
 
-/**
- * Kinetix Sky Ride & Flow, 26 sept 5:15 a. m. The card shows that session,
- * so the price is the L 850 class, not the cheaper Flow later the same day.
- */
-const CARD_PRICE_CENTS: Record<string, number> = {
-  "cd4c2bb2-95c9-4486-93ca-ee7de45e2af9": 85000,
-};
-
 /** Event card: 16:9 cover, category, facts, description and Reservar. */
 export function EventCard({ event }: { event: EventListItem }) {
   const prefetchEvent = usePrefetchEvent();
   const warm = () => prefetchEvent(event.id);
   const soldOut = event.status === "sold_out";
   const provider = event.provider;
-  const price = soldOut
-    ? "Agotado"
-    : formatCardPrice(CARD_PRICE_CENTS[event.id] ?? event.minPriceCents);
+  const price = useCardPrice(event, soldOut);
   const address = placeLine(event.venue, event.address, event.city);
   const day = formatCardDay(event.startsAt);
   const time = formatCardTime(event.startsAt);
@@ -134,7 +131,12 @@ export function EventCard({ event }: { event: EventListItem }) {
                 soldOut ? "text-white/45" : "text-white"
               }`}
             >
-              {price}
+              {price ?? (
+                <span
+                  aria-hidden
+                  className="inline-block h-[1.15em] w-20 shimmer rounded-md align-middle"
+                />
+              )}
             </p>
             {soldOut ? null : (
               <span
@@ -153,6 +155,33 @@ export function EventCard({ event }: { event: EventListItem }) {
       </article>
     </Link>
   );
+}
+
+/**
+ * "Desde" the cheapest ticket, at what the buyer pays. The list only carries
+ * the first session's list price, so this reads the detail (the same cache
+ * entry the hover prefetch and the event page use) and quotes each price.
+ * Null while that is loading.
+ */
+function useCardPrice(event: EventListItem, soldOut: boolean): string | null {
+  const detail = useQuery({
+    queryKey: eventKeys.detail(event.id),
+    queryFn: () => getEvent(event.id),
+    enabled: !soldOut,
+    staleTime: 30_000,
+  });
+  const types = detail.data?.entryTypes ?? [];
+  const listed = useBuyerUnitPrices(event.id, types, detail.data?.feeMode);
+
+  if (soldOut) return "Agotado";
+  if (detail.isError) return formatCardPrice(event.minPriceCents);
+  if (!detail.data) return null;
+  if (types.length === 0) return formatCardPrice(event.minPriceCents);
+  const cheapest = cheapestListedCents(types, listed.priceCentsFor);
+  if (cheapest == null) return null;
+  const varies = new Set(types.map((type) => type.priceCents)).size > 1;
+  const amount = formatCardPrice(cheapest);
+  return varies && cheapest > 0 ? `Desde ${amount}` : amount;
 }
 
 function Stat({ icon, children }: { icon: ReactNode; children: ReactNode }) {
