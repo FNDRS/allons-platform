@@ -7,11 +7,13 @@ import {
   Compass,
   Ellipsis,
   HelpCircle,
+  ScanLine,
   Store,
   Ticket,
   type LucideIcon,
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { isScannerOnlyUser, SCANNER_PATH } from "@/lib/role";
 import { isActivePath, isComercioNavActive, customerLinksFor } from "./AppNav";
 import { useAuth } from "./AuthProvider";
 import { useStairsCovering } from "./StairsCover";
@@ -23,6 +25,13 @@ const TABS: BottomTab[] = [
   { href: "/tickets", label: "Tickets", Icon: Ticket },
   { href: "/comercio", label: "Comercio", Icon: Store },
   { href: "/soporte", label: "Soporte", Icon: HelpCircle },
+];
+
+/** Door staff: the scanner sits in the middle, where the thumb lands. */
+export const SCANNER_TABS: BottomTab[] = [
+  { href: "/eventos", label: "Eventos", Icon: Compass },
+  { href: SCANNER_PATH, label: "Escanear", Icon: ScanLine },
+  { href: "/tickets", label: "Tickets", Icon: Ticket },
 ];
 
 const tabClass = (active: boolean) =>
@@ -66,7 +75,9 @@ export function BottomTabs({
   const visible =
     tabs !== TABS
       ? tabs
-      : TABS.filter((tab) =>
+      : !loading && isScannerOnlyUser(user)
+        ? SCANNER_TABS
+        : TABS.filter((tab) =>
           (loading ? customerLinksFor(null) : customerLinksFor(user)).some(
             (link) => link.href === tab.href,
           ),

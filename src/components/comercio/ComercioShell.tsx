@@ -11,6 +11,7 @@ import {
   Flag,
   Handshake,
   LayoutDashboard,
+  ScanLine,
   Smartphone,
   Tag,
   UserRound,
@@ -21,11 +22,11 @@ import { AllonsLogo } from "@/components/AllonsLogo";
 import { NewBadge } from "@/components/ui/NewBadge";
 import { useComercioPublicPage } from "@/hooks/useComercioPublicPage";
 import { useProviderRealtime } from "@/hooks/useProviderRealtime";
-import { isComercioUser } from "@/lib/role";
+import { isComercioUser, isScannerOnlyUser, SCANNER_PATH } from "@/lib/role";
 import { useAuth } from "@/components/app/AuthProvider";
 import { ProviderLiveProvider } from "./ProviderLive";
 import { AccountButton, AccountSheet } from "@/components/app/AccountSheet";
-import { BottomTabs } from "@/components/app/BottomTabs";
+import { BottomTabs, SCANNER_TABS } from "@/components/app/BottomTabs";
 import { isComercioNavActive } from "@/components/app/AppNav";
 import { PageTransition } from "@/components/app/PageTransition";
 
@@ -90,7 +91,17 @@ const NAV: NavItem[] = [
     isNew: true,
   },
   { href: "/comercio/staff", label: "Personal", Icon: Users, exact: true },
+  {
+    href: SCANNER_PATH,
+    label: "Escanear",
+    Icon: ScanLine,
+    exact: true,
+    isNew: true,
+  },
 ];
+
+/** Door staff only have the scanner, so the sidebar shows just that. */
+const SCANNER_NAV = NAV.filter((item) => item.href === SCANNER_PATH);
 
 /** The phone bar keeps the four sections used most; the rest go under "Más". */
 const TAB_HREFS = [
@@ -120,6 +131,9 @@ export function ComercioShellInner({
   const pathname = usePathname();
   const [accountOpen, setAccountOpen] = useState(false);
   const publicPage = useComercioPublicPage();
+  const { user } = useAuth();
+  const scannerOnly = isScannerOnlyUser(user);
+  const nav = scannerOnly ? SCANNER_NAV : NAV;
 
   return (
     <div className="app-canvas min-h-dvh text-white lg:flex">
@@ -131,7 +145,7 @@ export function ComercioShellInner({
           Comercios
         </p>
         <nav className="mt-2 flex flex-col gap-1" aria-label="Comercio">
-          {NAV.map(({ href, label, Icon, exact, isNew }) => {
+          {nav.map(({ href, label, Icon, exact, isNew }) => {
             const active = isNavActive(pathname, href, exact);
             return (
               <Link
@@ -159,10 +173,12 @@ export function ComercioShellInner({
             <ArrowUpRight className="size-[18px]" aria-hidden />
             Ver como cliente
           </Link>
-          <p className="flex items-start gap-3 rounded-[14px] border border-border bg-surface px-3 py-3 text-[12px] leading-relaxed text-dim">
-            <Smartphone className="mt-0.5 size-4 shrink-0" aria-hidden />
-            Crea y edita eventos desde la app de Allons. Aquí sigues sus ventas.
-          </p>
+          {scannerOnly ? null : (
+            <p className="flex items-start gap-3 rounded-[14px] border border-border bg-surface px-3 py-3 text-[12px] leading-relaxed text-dim">
+              <Smartphone className="mt-0.5 size-4 shrink-0" aria-hidden />
+              Crea y edita eventos desde la app de Allons. Aquí sigues sus ventas.
+            </p>
+          )}
         </div>
       </aside>
 
@@ -202,7 +218,11 @@ export function ComercioShellInner({
           <PageTransition>{children}</PageTransition>
         </main>
 
-        <BottomTabs tabs={TABS} more={MORE} hideFrom="lg" />
+        {scannerOnly ? (
+          <BottomTabs tabs={SCANNER_TABS} hideFrom="lg" />
+        ) : (
+          <BottomTabs tabs={TABS} more={MORE} hideFrom="lg" />
+        )}
       </div>
       <AccountSheet open={accountOpen} onClose={() => setAccountOpen(false)} />
     </div>

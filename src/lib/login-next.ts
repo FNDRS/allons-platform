@@ -1,4 +1,4 @@
-import { isComercioUser } from "@/lib/role";
+import { isComercioUser, isScannerOnlyUser, SCANNER_PATH } from "@/lib/role";
 
 export const LOGIN_NEXT_KEY = "allons.login.next";
 const NEXT_TTL_MS = 60 * 60 * 1000;
@@ -65,11 +65,15 @@ export function safeLoginNext(raw: string | null): string {
   }
 }
 
-/** A comercio lands on its panel unless it was already going to /comercio. */
+/**
+ * A comercio lands on its panel unless it was already going to /comercio.
+ * Door staff land on the scanner, the only page they have.
+ */
 export function homeFor(
   user: Parameters<typeof isComercioUser>[0],
   next: string,
 ): string {
   if (isComercioUser(user) && !next.startsWith("/comercio")) return "/comercio";
+  if (isScannerOnlyUser(user)) return SCANNER_PATH;
   return next;
 }

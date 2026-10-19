@@ -24,6 +24,20 @@ export function isComercioUser(user: User | null | undefined): boolean {
 }
 
 /**
+ * Door staff invited only to scan tickets. They have no panel of their own,
+ * just the scanner page, which the API opens to `staff_scanner` members.
+ */
+export function isScannerOnlyUser(user: User | null | undefined): boolean {
+  if (!user || isComercioUser(user)) return false;
+  const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+  if (meta.comercio_member_active === false) return false;
+  return meta.role === "staff" && meta.staff_role === "scanner";
+}
+
+/** The comercio page that scans tickets at the door. */
+export const SCANNER_PATH = "/comercio/escanear";
+
+/**
  * Who can create and edit events: the comercio's owner and its admins, the
  * same roles the API accepts on the event routes. Finance staff only read.
  */
