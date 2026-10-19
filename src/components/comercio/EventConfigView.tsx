@@ -32,6 +32,7 @@ import { glassCtaClass } from "@/components/ui/cta";
 import { EventAnswersSection } from "./EventAnswersSection";
 import { HourlySalesChart } from "./HourlySalesChart";
 import { KpiTile } from "./KpiTile";
+import { OptionStockSection } from "./OptionStockSection";
 import { OrdersSection } from "./OrdersSection";
 import { ResourceMap } from "./ResourceMap";
 import { EventCollaboratorsSection } from "./EventCollaboratorsSection";
@@ -301,6 +302,8 @@ export function EventConfigView({ eventId }: { eventId: string }) {
           </div>
         )}
       </section>
+
+      <OptionStockSection questions={data.questions ?? []} />
 
       {seats.isLoading ? (
         <Skeleton className="h-64 rounded-[24px]" />
