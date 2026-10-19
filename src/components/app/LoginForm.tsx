@@ -379,7 +379,7 @@ export function LoginForm() {
   );
 }
 
-function GoogleMark() {
+export function GoogleMark() {
   return (
     <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
       <path
