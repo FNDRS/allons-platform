@@ -3,9 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Pencil } from "lucide-react";
-import { toast } from "sonner";
-import { useCampaignDemo } from "@/hooks/useCampaignDemo";
-import { DEMO_QUESTIONS } from "@/lib/campaignDemo";
 import { useCampaignEventAttendees } from "@/hooks/useCampaignEventAttendees";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useHubCampaignPanel } from "@/hooks/useHubCampaignPanel";
@@ -16,7 +13,6 @@ import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { ComercioPageHeader } from "@/components/comercio/ComercioPageHeader";
 import { CampaignComercioDetail } from "./CampaignComercioDetail";
-import { CampaignDemoBanner, CampaignDemoButton } from "./CampaignDemoControls";
 import { CampaignEventDetail } from "./CampaignEventDetail";
 import { CampaignEventsList } from "./CampaignEventsList";
 import { CampaignMembersPanel } from "./CampaignMembersPanel";
@@ -36,32 +32,20 @@ export function HubCampaignView({ id }: { id: string }) {
   const { confirm, dialog } = useConfirm();
   const [tab, setTab] = useState<Tab>("summary");
   const campaign = c.campaign.data;
-  const demo = useCampaignDemo(campaign);
   const [openEventId, setOpenEventId] = useState<string | null>(null);
   const [openComercioId, setOpenComercioId] = useState<string | null>(null);
-  const attendees = useCampaignEventAttendees(id, openEventId, !demo.enabled);
+  const attendees = useCampaignEventAttendees(id, openEventId);
 
   if (!campaign) {
     if (c.campaign.isLoading) return <Skeleton className="h-[320px] w-full rounded-[28px]" />;
     return <ErrorState message={c.campaign.error?.message} onRetry={() => void c.campaign.refetch()} />;
   }
 
-  // Demo mode swaps in example data and turns every action into a notice:
-  // nothing in it is real, so nothing in it may reach the API.
-  const demoOnly = () => toast.info("Estás viendo una demo: las acciones están desactivadas.");
-  const report = demo.data?.report ?? c.report.data;
-  const members = demo.data?.members ?? c.members.data;
-  const events = demo.data?.events ?? c.events.data;
+  const report = c.report.data;
+  const members = c.members.data;
+  const events = c.events.data;
   const openEvent = report?.byEvent.find((e) => e.eventId === openEventId) ?? null;
   const openComercio = report?.byComercio.find((x) => x.providerId === openComercioId) ?? null;
-  const eventList = demo.data
-    ? openEventId
-      ? {
-          questions: DEMO_QUESTIONS.map((q) => ({ id: q.id, label: q.label })),
-          attendees: demo.data.attendeesByEvent.get(openEventId) ?? [],
-        }
-      : undefined
-    : attendees.data;
   const openEventDetail = (eventId: string) => {
     setOpenComercioId(null);
     setOpenEventId(eventId);
@@ -80,9 +64,9 @@ export function HubCampaignView({ id }: { id: string }) {
         {openEvent ? (
           <CampaignEventDetail
             event={openEvent}
-            list={eventList}
-            loading={!demo.enabled && attendees.isLoading}
-            error={demo.enabled ? null : (attendees.error as Error | null)}
+            list={attendees.data}
+            loading={attendees.isLoading}
+            error={attendees.error as Error | null}
             onRetry={() => void attendees.refetch()}
           />
         ) : null}
@@ -100,15 +84,12 @@ export function HubCampaignView({ id }: { id: string }) {
         <ComercioPageHeader title={campaign.name} subtitle={formatCampaignRange(campaign.startsAt, campaign.endsAt)} />
         <div className="flex items-center gap-2">
           <StatusPill tone="mute">{CAMPAIGN_STATUS_LABEL[campaign.status]}</StatusPill>
-          <CampaignDemoButton enabled={demo.enabled} onToggle={demo.toggle} />
           <Link href={`/comercio/campanas/${encodeURIComponent(id)}/editar`} className={buttonClass({ variant: "secondary", size: "sm" })}>
             <Pencil className="size-4" aria-hidden />
             Editar
           </Link>
         </div>
       </div>
-
-      {demo.enabled ? <CampaignDemoBanner onExit={demo.toggle} /> : null}
 
       <Segmented label="Sección" tone="gray" value={tab} options={TABS} onChange={setTab} />
 
@@ -117,7 +98,7 @@ export function HubCampaignView({ id }: { id: string }) {
           <CampaignReportPanel
             report={report}
             exporting={c.exportReport.isPending ? (c.exportReport.variables ?? null) : null}
-            onExport={(format) => (demo.enabled ? demoOnly() : c.exportReport.mutate(format))}
+            onExport={(format) => c.exportReport.mutate(format)}
             onOpenEvent={openEventDetail}
             onOpenComercio={setOpenComercioId}
           />
@@ -133,15 +114,10 @@ export function HubCampaignView({ id }: { id: string }) {
           <CampaignMembersPanel
             members={members}
             inviting={c.invite.isPending}
-            onInvite={(handle) =>
-              demo.enabled ? (demoOnly(), Promise.reject()) : c.invite.mutateAsync(handle)
-            }
+onInvite={(handle) => c.invite.mutateAsync(handle)}
             busyMemberId={busyMember}
-            onAnswer={(memberId, approve) =>
-              demo.enabled ? demoOnly() : c.answer.mutate({ memberId, approve })
-            }
+onAnswer={(memberId, approve) => c.answer.mutate({ memberId, approve })}
             onRemove={async (m) => {
-              if (demo.enabled) return demoOnly();
               const ok = await confirm(
                 "Quitar comercio",
                 `${m.provider.name} sale de la campaña con todos sus eventos. Lo que ya pasó queda en el reporte.`,
@@ -174,7 +150,6 @@ export function HubCampaignView({ id }: { id: string }) {
                   variant="ghost"
                   disabled={c.removeEvent.isPending && c.removeEvent.variables === e.id}
                   onClick={async () => {
-                    if (demo.enabled) return demoOnly();
                     const ok = await confirm(
                       "Quitar evento",
                       `"${e.title}" sale de la campaña. Lo que ya pasó queda en el reporte.`,
@@ -195,7 +170,7 @@ export function HubCampaignView({ id }: { id: string }) {
         )
       ) : null}
 
-      <div className={demo.enabled ? "hidden" : "pt-6"}>
+      <div className="pt-6">
         <Button
           variant="danger"
           loading={c.remove.isPending}
