@@ -7,7 +7,15 @@ import { useEffect, useRef, useState } from "react";
 const SPRING = { type: "spring", stiffness: 500, damping: 28, mass: 0.6 } as const;
 const COPIED_MS = 1600;
 
-export function TicketCode({ code, label = "Código de acceso" }: { code: string; label?: string }) {
+export function TicketCode({
+  code,
+  label = "Código de acceso",
+  hint = "Si el QR no lee, dicta este código en la entrada.",
+}: {
+  code: string;
+  label?: string;
+  hint?: string;
+}) {
   const [copied, setCopied] = useState(false);
   const reset = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reduced = useReducedMotion();
@@ -81,7 +89,7 @@ export function TicketCode({ code, label = "Código de acceso" }: { code: string
         </motion.span>
       </motion.button>
       <p className="text-[13px] text-white/38">
-        Si el QR no lee, dicta este código en la entrada.
+        {hint}
       </p>
     </div>
   );

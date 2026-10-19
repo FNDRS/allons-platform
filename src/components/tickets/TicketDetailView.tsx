@@ -14,8 +14,11 @@ import { TicketQr } from "./TicketQr";
 import { TicketResourceCard } from "./TicketResourceCard";
 
 // Carnaval Rosa (FUNHOCAM) hands out kits with the code, so it reads as a delivery code.
-const CODE_LABEL_BY_EVENT: Record<string, string> = {
-  "a0367900-2a14-4ff0-bb9a-c2afc29e152f": "Código de entrega",
+const CODE_COPY_BY_EVENT: Record<string, { label: string; hint: string }> = {
+  "a0367900-2a14-4ff0-bb9a-c2afc29e152f": {
+    label: "Código de entrega",
+    hint: "Si el QR no lee, dicta este código al recoger tu kit.",
+  },
 };
 
 export function TicketDetailView({ ticketId }: { ticketId: string }) {
@@ -101,7 +104,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
       </div>
 
       <TicketQr payload={ticket.qrPayload} />
-      <TicketCode code={ticket.code} label={ticket.eventId ? CODE_LABEL_BY_EVENT[ticket.eventId] : undefined} />
+      <TicketCode code={ticket.code} {...(ticket.eventId ? CODE_COPY_BY_EVENT[ticket.eventId] : undefined)} />
 
       <TicketMeta
         when={when}
