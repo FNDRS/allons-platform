@@ -7,6 +7,8 @@ import { formatCardTime, formatDateTime } from "@/lib/format";
 import { placeLabelOf, placeMapsUrl } from "@/lib/googleMapsLink";
 import { buttonClass } from "@/components/ui/Button";
 import { ListedPrice } from "@/components/ui/ListedPrice";
+import { PaymentsPausedButton } from "@/components/ui/PaymentsPaused";
+import { PAYMENTS_OUTAGE } from "@/lib/paymentsOutage";
 import { CalendarMark, MetaTile, PinMark } from "@/components/ui/MetaTile";
 import { Modal } from "@/components/ui/Modal";
 
@@ -84,7 +86,9 @@ export function EntryTypeSessionModal({
       onClose={onClose}
       title={type.name}
       footer={
-        reserveHref ? (
+        reserveHref && PAYMENTS_OUTAGE && priceCents !== 0 ? (
+          <PaymentsPausedButton className="w-full" />
+        ) : reserveHref ? (
           <Link href={reserveHref} className={buttonClass({ size: "lg", full: true })}>
             Reservar esta entrada
           </Link>

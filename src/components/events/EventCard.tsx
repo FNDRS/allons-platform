@@ -23,6 +23,7 @@ import {
 import { EventCover, EventPosterWash } from "./EventCover";
 import { EventHoverVideo } from "./EventHoverVideo";
 import { glassCtaClass } from "@/components/ui/cta";
+import { PAYMENTS_OUTAGE } from "@/lib/paymentsOutage";
 
 /**
  * Respaldo mientras `hoverVideoUrl` se llena desde el panel.
@@ -138,7 +139,11 @@ export function EventCard({ event }: { event: EventListItem }) {
                 />
               )}
             </p>
-            {soldOut ? null : (
+            {soldOut ? null : PAYMENTS_OUTAGE && event.minPriceCents !== 0 ? (
+              <span className="inline-flex h-11 min-w-0 flex-1 items-center justify-center rounded-full border border-white/10 text-[13px] text-white/45">
+                Pagos pausados
+              </span>
+            ) : (
               <span
                 className={`inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 text-[13px] ${glassCtaClass}`}
               >

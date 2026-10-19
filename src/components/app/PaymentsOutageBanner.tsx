@@ -1,24 +1,32 @@
 import { CircleAlert } from "lucide-react";
 import { PAYMENTS_OUTAGE } from "@/lib/paymentsOutage";
 
-/** Site-wide notice while the payment gateway is down. */
+/**
+ * Site-wide notice while the payment gateway is down. It stays pinned on
+ * scroll, so it is one line tall and sets `--outage-h` for the sticky
+ * headers to sit under it.
+ */
 export function PaymentsOutageBanner() {
   if (!PAYMENTS_OUTAGE) return null;
   return (
-    <div
-      role="status"
-      className="relative z-50 border-b border-amber-400/30 bg-amber-500/15 px-4 pb-2.5 pt-[max(env(safe-area-inset-top),10px)] text-[13px] text-white/85"
-    >
-      <p className="mx-auto flex max-w-[1200px] items-start justify-center gap-2 text-center">
-        <CircleAlert className="mt-0.5 size-4 shrink-0 text-amber-300" aria-hidden />
-        <span>
-          <span className="font-semibold text-white">
-            Estamos teniendo problemas con la plataforma de pagos.
-          </span>{" "}
-          Pausamos los pagos mientras se resuelve. Si ya intentaste pagar, revisa
-          tus boletos antes de volver a intentar.
-        </span>
-      </p>
-    </div>
+    <>
+      <style>{`:root{--outage-h:calc(36px + env(safe-area-inset-top))}`}</style>
+      <div
+        role="status"
+        className="sticky top-0 z-50 flex h-[var(--outage-h)] items-end border-b border-amber-400/30 bg-[#2a1c06] px-4 pt-[env(safe-area-inset-top)] text-[13px] text-white/85"
+      >
+        <p className="mx-auto flex h-9 min-w-0 max-w-[1200px] items-center justify-center gap-2">
+          <CircleAlert className="size-4 shrink-0 text-amber-300" aria-hidden />
+          <span className="truncate">
+            <span className="font-semibold text-white">
+              Estamos teniendo problemas con la plataforma de pagos.
+            </span>
+            <span className="hidden sm:inline">
+              {" "}Pausamos los pagos mientras se resuelve.
+            </span>
+          </span>
+        </p>
+      </div>
+    </>
   );
 }

@@ -11,6 +11,8 @@ import { useReserveForm } from "@/hooks/useReserveForm";
 import { useAuth } from "@/components/app/AuthProvider";
 import { formatEventWhen } from "@/lib/allons-api";
 import { Button, buttonClass } from "@/components/ui/Button";
+import { PaymentsPausedButton } from "@/components/ui/PaymentsPaused";
+import { PAYMENTS_OUTAGE } from "@/lib/paymentsOutage";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { EventCover, EventPosterWash } from "@/components/events/EventCover";
 import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
@@ -387,6 +389,9 @@ export function ReserveView({ eventId }: { eventId: string }) {
               {chargesNothing ? "Gratis" : formatCents(form.totalCents)}
             </p>
           </div>
+          {PAYMENTS_OUTAGE && !chargesNothing && !form.preview ? (
+            <PaymentsPausedButton className="min-w-0 !shrink sm:min-w-[11.5rem] sm:!shrink-0" />
+          ) : (
           <Button
             size="lg"
             loading={form.preview ? false : submitting}
@@ -404,6 +409,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
                   ? `Pagar ${formatCents(form.totalCents)}`
                   : "Ir a pagar"}
           </Button>
+          )}
         </div>
         {form.preview ? (
           <p className="mx-auto mt-2 max-w-2xl text-center text-[11px] text-white/40">

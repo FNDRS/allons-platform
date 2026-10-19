@@ -8,6 +8,8 @@ import {
   useBuyerUnitPrices,
 } from "@/hooks/useBuyerUnitPrices";
 import { Button } from "@/components/ui/Button";
+import { PaymentsPausedButton } from "@/components/ui/PaymentsPaused";
+import { PAYMENTS_OUTAGE } from "@/lib/paymentsOutage";
 import { ListedPrice } from "@/components/ui/ListedPrice";
 import { ErrorState } from "@/components/ui/States";
 import { donationInfoForEvent } from "@/lib/eventDonations";
@@ -123,7 +125,9 @@ export function EventDetailView({
               )}
             </p>
           </div>
-          {partial ? (
+          {PAYMENTS_OUTAGE && (cheapest ?? event.minPriceCents ?? 1) > 0 ? (
+            <PaymentsPausedButton size="md" className="shrink-0 sm:!h-13 sm:!px-6 sm:!text-[15px]" />
+          ) : partial ? (
             <Button size="md" className="shrink-0 sm:!h-13 sm:!px-6 sm:!text-[15px]" loading>
               Reservar
             </Button>

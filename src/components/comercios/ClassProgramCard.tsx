@@ -6,6 +6,7 @@ import { formatHNL } from "@/lib/format";
 import { EventCover, EventPosterWash } from "@/components/events/EventCover";
 import { StatusPill } from "@/components/ui/Pill";
 import { glassCtaClass } from "@/components/ui/cta";
+import { PAYMENTS_OUTAGE } from "@/lib/paymentsOutage";
 
 const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
@@ -58,6 +59,9 @@ export function ClassProgramCard({
 }) {
   const schedule = scheduleLabel(program);
   const price = priceLabel(program);
+  const paymentsPaused =
+    PAYMENTS_OUTAGE &&
+    program.packages.some((pkg) => pkg.active && Number(pkg.price) > 0);
   const place = [program.locationName, program.city].filter(Boolean).join(", ");
 
   return (
@@ -120,6 +124,11 @@ export function ClassProgramCard({
                 {price}
               </p>
             ) : null}
+            {paymentsPaused ? (
+              <span className="inline-flex h-11 min-w-0 flex-1 items-center justify-center rounded-full border border-white/10 text-[13px] text-white/45">
+                Pagos pausados
+              </span>
+            ) : (
             <span
               className={`inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 text-[13px] ${glassCtaClass}`}
             >
@@ -130,6 +139,7 @@ export function ClassProgramCard({
                 aria-hidden
               />
             </span>
+            )}
           </div>
         </div>
       </article>

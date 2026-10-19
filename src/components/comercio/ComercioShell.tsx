@@ -167,7 +167,7 @@ export function ComercioShellInner({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="glass sticky top-0 z-40 border-b border-border pt-[env(safe-area-inset-top)]">
+        <header className="glass sticky top-[var(--outage-h,0px)] z-40 border-b border-border pt-[env(safe-area-inset-top)]">
           <div className="mx-auto flex h-12 w-full max-w-[1200px] items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
             <Link
               href="/eventos"

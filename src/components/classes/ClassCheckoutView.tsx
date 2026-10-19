@@ -7,6 +7,8 @@ import { formatHNL } from "@/lib/format";
 import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
 import { StepHeading } from "@/components/reserve/ReserveSections";
 import { Button, buttonClass } from "@/components/ui/Button";
+import { PaymentsPausedButton } from "@/components/ui/PaymentsPaused";
+import { PAYMENTS_OUTAGE } from "@/lib/paymentsOutage";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { ClassPackageSummary } from "./ClassPackageSummary";
 
@@ -94,6 +96,9 @@ export function ClassCheckoutView({
             <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/40">Total</p>
             <p className="truncate text-[18px] font-bold tracking-tight">{price}</p>
           </div>
+          {PAYMENTS_OUTAGE && state.paid ? (
+            <PaymentsPausedButton className="min-w-0 !shrink sm:min-w-[11.5rem] sm:!shrink-0" />
+          ) : (
           <Button
             size="lg"
             loading={state.submitting}
@@ -102,6 +107,7 @@ export function ClassCheckoutView({
           >
             {state.payInApp ? `Pagar ${price}` : "Ir a pagar"}
           </Button>
+          )}
         </div>
         <p className="mx-auto mt-2 flex max-w-2xl items-center justify-center gap-1.5 text-[11px] text-white/30">
           <Lock className="size-3" strokeWidth={1.75} aria-hidden />
