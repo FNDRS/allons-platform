@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { PaymentsOutageBanner } from "@/components/app/PaymentsOutageBanner";
 import { Providers } from "@/components/app/Providers";
 import { HONDURAS_KEYWORDS, jsonLd, SITE_URL } from "@/lib/seo";
 
@@ -162,6 +163,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <PaymentsOutageBanner />
         <Providers>{children}</Providers>
         <Toaster
           position="top-center"
