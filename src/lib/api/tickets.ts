@@ -41,6 +41,8 @@ export interface TicketDetail extends TicketListItem {
   code: string;
   qrPayload: string;
   kitPickupInfo?: string | null;
+  /** What the attendee answered at checkout, like the shirt size. Missing on older APIs. */
+  answers?: Array<{ label: string; answer: string }>;
   resourceGroups?: TicketResourceSummary[];
   refundPolicy: {
     enabled: boolean;

@@ -6,6 +6,7 @@ import {
   allOptionsSoldOut,
   isEntryTypeOnSale,
   isSoldOutOption,
+  optionLeft,
   type EventCampaign,
   type EventEntryType,
   type EventQuestion,
@@ -390,6 +391,7 @@ function QuestionField({
           {options.map((option) => {
             const selected = value === option;
             const soldOut = isSoldOutOption(question, option);
+            const left = soldOut ? null : optionLeft(question, option);
             return (
               <button
                 key={option}
@@ -398,7 +400,13 @@ function QuestionField({
                 aria-checked={selected}
                 aria-disabled={soldOut}
                 disabled={soldOut && !selected}
-                aria-label={soldOut ? `${option}, agotada` : undefined}
+                aria-label={
+                  soldOut
+                    ? `${option}, agotada`
+                    : left != null
+                      ? `${option}, quedan ${left}`
+                      : undefined
+                }
                 onClick={() => (soldOut ? onChange("") : onChange(option))}
                 className={`flex h-11 min-w-12 items-center gap-2 rounded-[12px] border px-4 text-[15px] font-semibold transition ${
                   soldOut
@@ -414,6 +422,14 @@ function QuestionField({
                 {soldOut ? (
                   <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-white/40">
                     Agotada
+                  </span>
+                ) : left != null ? (
+                  <span
+                    className={`text-[11px] font-medium tracking-tight ${
+                      selected ? "text-black/60" : "text-white/45"
+                    }`}
+                  >
+                    quedan {left}
                   </span>
                 ) : null}
               </button>
@@ -438,9 +454,14 @@ function QuestionField({
         >
           {options.map((option) => {
             const soldOut = isSoldOutOption(question, option);
+            const left = optionLeft(question, option);
             return (
               <SelectItem key={option} value={option} disabled={soldOut}>
-                {soldOut ? `${option} (agotada)` : option}
+                {soldOut
+                  ? `${option} (agotada)`
+                  : left != null
+                    ? `${option} (quedan ${left})`
+                    : option}
               </SelectItem>
             );
           })}

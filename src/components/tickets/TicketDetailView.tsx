@@ -69,6 +69,19 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         {ticket.holderName ? (
           <p className="mt-2 text-[15px] text-white/50">{ticket.holderName}</p>
         ) : null}
+        {ticket.answers?.length ? (
+          <ul className="mt-4 flex flex-wrap justify-center gap-2">
+            {ticket.answers.map((row) => (
+              <li
+                key={row.label}
+                className="rounded-full bg-white/6 px-3.5 py-1.5 text-[13px] tracking-tight ring-1 ring-white/10"
+              >
+                <span className="text-white/50">{row.label}: </span>
+                <span className="font-semibold text-white">{row.answer}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         {(ticket.resourceGroups ?? [])
           .filter((group) => group.assigned)
           .map((group) => (

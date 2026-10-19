@@ -106,6 +106,8 @@ export interface EventQuestion {
   options?: string[] | null;
   /** Options with no stock left. Missing on older APIs and on unlimited questions. */
   soldOutOptions?: string[] | null;
+  /** What each limited option has left. Missing on older APIs and on unlimited questions. */
+  optionsLeft?: Record<string, number> | null;
   required: boolean;
   sortOrder: number;
 }
@@ -113,6 +115,12 @@ export interface EventQuestion {
 /** The option ran out, so it can no longer be picked. */
 export function isSoldOutOption(question: Pick<EventQuestion, "soldOutOptions">, option: string) {
   return (question.soldOutOptions ?? []).includes(option);
+}
+
+/** How many of the option are left, or null when it has no limit. */
+export function optionLeft(question: Pick<EventQuestion, "optionsLeft">, option: string) {
+  const left = question.optionsLeft?.[option];
+  return typeof left === "number" ? left : null;
 }
 
 /** A choice question whose every option ran out. */
