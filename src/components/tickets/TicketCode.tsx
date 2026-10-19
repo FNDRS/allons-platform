@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 const SPRING = { type: "spring", stiffness: 500, damping: 28, mass: 0.6 } as const;
 const COPIED_MS = 1600;
 
-export function TicketCode({ code }: { code: string }) {
+export function TicketCode({ code, label = "Código de acceso" }: { code: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   const reset = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reduced = useReducedMotion();
@@ -32,7 +32,7 @@ export function TicketCode({ code }: { code: string }) {
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <p className="text-[12px] font-semibold uppercase tracking-[0.22em] text-muted">Código de acceso</p>
+      <p className="text-[12px] font-semibold uppercase tracking-[0.22em] text-muted">{label}</p>
       <motion.button
         type="button"
         onClick={() => void copy()}
