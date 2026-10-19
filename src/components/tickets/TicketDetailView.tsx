@@ -70,14 +70,18 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
           <p className="mt-2 text-[15px] text-white/50">{ticket.holderName}</p>
         ) : null}
         {ticket.answers?.length ? (
-          <ul className="mt-4 flex flex-wrap justify-center gap-2">
+          <ul className="mt-5 flex flex-wrap justify-center gap-3">
             {ticket.answers.map((row) => (
               <li
                 key={row.label}
-                className="rounded-full bg-white/6 px-3.5 py-1.5 text-[13px] tracking-tight ring-1 ring-white/10"
+                className="min-w-[160px] rounded-[20px] bg-accent-soft px-6 py-3.5 ring-1 ring-accent/45"
               >
-                <span className="text-white/50">{row.label}: </span>
-                <span className="font-semibold text-white">{row.answer}</span>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">
+                  {row.label}
+                </p>
+                <p className="mt-1 break-words text-[28px] font-bold leading-none tracking-[-0.02em] text-white">
+                  {row.answer}
+                </p>
               </li>
             ))}
           </ul>
