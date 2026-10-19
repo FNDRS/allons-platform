@@ -92,9 +92,18 @@ export function DonationCard({
             Estas cuentas son solo para donar directo a {info.beneficiary}, con un depósito o
             una transferencia. Toca un número para copiarlo.
           </p>
-          <p className="mt-2 text-sm font-semibold leading-6 text-white">
-            No son para comprar tu entrada ni tu kit. Eso se paga aquí en Allons.
-          </p>
+          <div
+            role="note"
+            className="mt-3 rounded-[14px] border border-amber-400/30 bg-amber-400/10 px-3.5 py-3 text-sm leading-6"
+          >
+            <p className="font-bold text-amber-200">
+              Esta donación no equivale al pago del kit. Es aparte.
+            </p>
+            <p className="mt-1 text-amber-100/80">
+              Depositar aquí no te inscribe ni te da entrada. Tu entrada y tu kit se pagan
+              solo aquí en Allons.
+            </p>
+          </div>
         </div>
       </div>
 
