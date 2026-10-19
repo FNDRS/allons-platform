@@ -328,6 +328,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
           }
           suggestedEmail={form.holders[0]?.email ?? ""}
           suggestedName={form.holders[0]?.name ?? ""}
+          onLeave={form.saveDraft}
         />
       ) : !chargesNothing ? (
         <PaymentMethodStep

@@ -87,6 +87,43 @@ function clearStoredHold(eventId: string) {
   }
 }
 
+/**
+ * What a guest typed, kept across the Google sign-in round-trip so they come
+ * back to the form they filled and not an empty one. Same tab only.
+ */
+interface StoredDraft {
+  entryTypeId: string | null;
+  quantity: number;
+  holders: HolderDraft[];
+  donation: string;
+  promoCode: string | null;
+  governmentId: string;
+  at: number;
+}
+
+/** Older than this the draft is from another visit, not the sign-in. */
+const DRAFT_TTL_MS = 60 * 60 * 1000;
+
+function draftStorageKey(eventId: string) {
+  return `allons-reserve-draft:${eventId}`;
+}
+
+/** Reads the draft once: it is removed so a later visit starts clean. */
+function takeStoredDraft(eventId: string): StoredDraft | null {
+  try {
+    const raw = window.sessionStorage.getItem(draftStorageKey(eventId));
+    if (!raw) return null;
+    window.sessionStorage.removeItem(draftStorageKey(eventId));
+    const draft = JSON.parse(raw) as StoredDraft;
+    if (!Array.isArray(draft.holders) || Date.now() - draft.at > DRAFT_TTL_MS) {
+      return null;
+    }
+    return draft;
+  } catch {
+    return null;
+  }
+}
+
 function emptyHolder(): HolderDraft {
   return { name: "", email: "", answers: {} };
 }
@@ -210,6 +247,19 @@ export function useReserveForm(
   useEffect(() => {
     setQuantity((current) => Math.min(current, maxQuantity));
   }, [maxQuantity]);
+
+  // Back from signing in with Google: put back what they had typed.
+  useEffect(() => {
+    const draft = takeStoredDraft(eventId);
+    if (!draft) return;
+    setEntryTypeId(draft.entryTypeId);
+    setQuantity(Math.min(Math.max(1, draft.quantity), MAX_QUANTITY));
+    setHolders(draft.holders.length ? draft.holders : [emptyHolder()]);
+    setDonation(draft.donation);
+    setPromoCode(draft.promoCode);
+    setPromoCodeDraft(draft.promoCode ?? "");
+    setGovernmentIdState(draft.governmentId);
+  }, [eventId]);
 
   // Ticket #1 is the buyer unless they type otherwise.
   useEffect(() => {
@@ -658,6 +708,24 @@ export function useReserveForm(
     }
   }
 
+  /** Keeps what was typed for the trip out to sign in and back. */
+  function saveDraft() {
+    const draft: StoredDraft = {
+      entryTypeId,
+      quantity,
+      holders,
+      donation,
+      promoCode,
+      governmentId,
+      at: Date.now(),
+    };
+    try {
+      window.sessionStorage.setItem(draftStorageKey(eventId), JSON.stringify(draft));
+    } catch {
+      /* private mode: they fill it again */
+    }
+  }
+
   return {
     event,
     // The list-card placeholder has no entry types; it must read as loading
@@ -670,6 +738,7 @@ export function useReserveForm(
     entryType,
     entryTypeId,
     setEntryTypeId,
+    saveDraft,
     quantity,
     setQuantity: (value: number) =>
       setQuantity(Math.min(Math.max(1, value), maxQuantity)),

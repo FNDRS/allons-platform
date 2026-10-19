@@ -28,10 +28,13 @@ export function ReserveAccountStep({
   step,
   suggestedEmail,
   suggestedName,
+  onLeave,
 }: {
   step: number;
   suggestedEmail: string;
   suggestedName: string;
+  /** Called before the page is left for Google, to keep the form. */
+  onLeave: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
@@ -103,6 +106,7 @@ export function ReserveAccountStep({
     setError(null);
     setBusy("google");
     try {
+      onLeave();
       rememberLoginNext(window.location.pathname + window.location.search);
       const { error: err } = await getSupabaseBrowser().auth.signInWithOAuth({
         provider: "google",
