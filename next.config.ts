@@ -133,10 +133,11 @@ const config: NextConfig = {
         ],
       },
       {
-        // The issuer's 3DS window. Its HTML comes from the bank through
-        // Clinpays and loads the bank's own scripts, frames and forms, so this
-        // page is open to any https origin. It holds no card data, and only
-        // the checkout on this site may frame it.
+        // The issuer's 3DS page. The checkout writes the bank's HTML over
+        // this document, which then loads the bank's own scripts, frames and
+        // forms and posts to the bank, so it is open to any https origin. It
+        // holds no card data. In dev the simulated bank runs on localhost
+        // over http, so that is let through there only.
         source: "/pagar/:orderId/verificar",
         headers: [
           {
@@ -146,27 +147,25 @@ const config: NextConfig = {
                 "'self'",
                 "'unsafe-inline'",
                 "https:",
-                ...(isDev ? ["'unsafe-eval'"] : []),
+                ...(isDev ? ["'unsafe-eval'", "http://localhost:*"] : []),
               ],
               "style-src": ["'self'", "'unsafe-inline'", "https:"],
               "img-src": ["'self'", "data:", "https:"],
               "font-src": ["'self'", "data:", "https:"],
-              "connect-src": ["'self'", "https:"],
-              "frame-src": ["'self'", "https:"],
               // Developing against the simulated gateway, the "bank" page
-              // posts to the local API over plain http.
+              // lives on the local API over plain http and posts back to it.
+              "connect-src": ["'self'", "https:", ...(isDev ? ["http://localhost:*", "http://127.0.0.1:*"] : [])],
+              "frame-src": ["'self'", "https:", ...(isDev ? ["http://localhost:*", "http://127.0.0.1:*"] : [])],
               "form-action": ["'self'", "https:", ...(isDev ? ["http://localhost:*", "http://127.0.0.1:*"] : [])],
-              "frame-ancestors": ["'self'"],
+              "frame-ancestors": ["'none'"],
             }),
           },
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
         ],
       },
       {
-        // Where the bank's window lands when it closes. It loads inside the
-        // sandboxed frame, possibly nested in the bank's own frames (opaque
-        // origins no source can name), and only posts the order id to the
-        // checkout, so any ancestor may frame it. `frame-ancestors` makes
+        // Where the bank sends the buyer back. It only moves on to the order
+        // page. A bank that loads it inside a frame of its own gets to, so
+        // the top window can still be sent on. `frame-ancestors` makes
         // browsers ignore the X-Frame-Options set above.
         source: "/pagar/:orderId/3ds",
         headers: [
