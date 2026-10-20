@@ -267,6 +267,12 @@ export function useReserveForm(
    * page behaves like a full checkout: the account step opens on Reservar.
    */
   const [guestUnavailable, setGuestUnavailable] = useState(false);
+  /**
+   * The buyer changed something on this page. What the leave guard arms on:
+   * a form that was only looked at is not worth a confirmation.
+   */
+  const [interacted, setInteracted] = useState(false);
+  const touch = () => setInteracted(true);
   // Set once the stored draft (or its absence) has been read, so the
   // periodic write below never saves the empty initial state over it.
   const restored = useRef(false);
@@ -1060,35 +1066,56 @@ export function useReserveForm(
     isGuest,
     entryType,
     entryTypeId,
-    setEntryTypeId,
+    setEntryTypeId: (id: string) => {
+      touch();
+      setEntryTypeId(id);
+    },
     saveDraft,
     quantity,
-    setQuantity: (value: number) =>
-      setQuantity(Math.min(Math.max(1, value), maxQuantity)),
+    setQuantity: (value: number) => {
+      touch();
+      setQuantity(Math.min(Math.max(1, value), maxQuantity));
+    },
     maxQuantity,
     buyer,
     setBuyer: (patch: Partial<BuyerDraft>) => {
+      touch();
       buyerEdited.current = true;
       setBuyer((current) => ({ ...current, ...patch }));
     },
     buyerErrors,
     buyerQuestions,
     buyerAnswers,
-    setBuyerAnswer,
+    setBuyerAnswer: (questionId: string, value: string) => {
+      touch();
+      setBuyerAnswer(questionId, value);
+    },
     firstIsBuyer,
-    setFirstIsBuyer,
+    setFirstIsBuyer: (value: boolean) => {
+      touch();
+      setFirstIsBuyer(value);
+    },
     holders: effectiveHolders,
     holderErrors,
     duplicateEmail,
     touched,
-    updateHolder,
-    setAnswer,
+    updateHolder: (index: number, patch: Partial<HolderDraft>) => {
+      touch();
+      updateHolder(index, patch);
+    },
+    setAnswer: (index: number, questionId: string, value: string) => {
+      touch();
+      setAnswer(index, questionId, value);
+    },
     questions: attendeeQuestions,
     isFree,
     effectivelyFree,
     donationAllowed,
     donation,
-    setDonation,
+    setDonation: (value: string) => {
+      touch();
+      setDonation(value);
+    },
     suggestedDonationCents,
     ticketsCents,
     donationCents,
@@ -1097,7 +1124,10 @@ export function useReserveForm(
     totalCents,
     discount,
     promoCodeDraft,
-    setPromoCodeDraft,
+    setPromoCodeDraft: (value: string) => {
+      touch();
+      setPromoCodeDraft(value);
+    },
     promoApplying,
     promoError,
     applyPromoCode,
@@ -1109,7 +1139,10 @@ export function useReserveForm(
       setAcceptedCampaignKey(value ? campaignKey : null),
     resourceGroups,
     selectedResourceByGroup: resources.selected,
-    onToggleResource: resources.toggle,
+    onToggleResource: (groupId: string, resourceId: string) => {
+      touch();
+      return resources.toggle(groupId, resourceId);
+    },
     hasResourceGroups: resources.hasGroups,
     missingGroupName: resources.missingGroupName,
     paymentDataLoading,
@@ -1123,7 +1156,11 @@ export function useReserveForm(
       governmentIdRejection && governmentIdRejection.value === governmentId.trim()
         ? governmentIdRejection.message
         : null,
-    setGovernmentId: (value: string) => setGovernmentIdState(formatGovernmentId(value)),
+    setGovernmentId: (value: string) => {
+      touch();
+      setGovernmentIdState(formatGovernmentId(value));
+    },
+    interacted,
     submit,
     preparePaidOrder,
     validateForAccount,

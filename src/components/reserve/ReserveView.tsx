@@ -7,6 +7,7 @@ import { ArrowLeft, Lock } from "lucide-react";
 import { useActivePaymentOrder } from "@/hooks/useActivePaymentOrder";
 import { useCardCheckout } from "@/hooks/useCardCheckout";
 import { useBuyerUnitPrices } from "@/hooks/useBuyerUnitPrices";
+import { useLeaveGuard } from "@/hooks/useLeaveGuard";
 import { useReserveForm } from "@/hooks/useReserveForm";
 import { useTurnstile } from "@/hooks/useTurnstile";
 import { useAuth } from "@/components/app/AuthProvider";
@@ -19,6 +20,7 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { EventCover, EventPosterWash } from "@/components/events/EventCover";
 import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
 import { HoldCountdown } from "./HoldCountdown";
+import { LeaveCheckoutModal } from "./LeaveCheckoutModal";
 import { GuestPendingOrderNotice } from "./GuestPendingOrderNotice";
 import { PendingOrderNotice } from "./PendingOrderNotice";
 import { ReserveAccountModal } from "./ReserveAccountModal";
@@ -56,6 +58,8 @@ export function ReserveView({ eventId }: { eventId: string }) {
   // reservation always takes the account, since the API issues it to one.
   const { user, loading: authLoading } = useAuth();
   const ready = !authLoading;
+  // Set once the guard exists below; the card hook is created first.
+  const releaseGuardRef = useRef<(() => void) | null>(null);
   const isGuest = ready && !user;
   const accountRequired = requiresAccount(form.event) || form.isFree || form.guestUnavailable;
   const needsAccount = isGuest && accountRequired && !form.preview;
@@ -73,9 +77,20 @@ export function ReserveView({ eventId }: { eventId: string }) {
     onGuestPending: form.noteGuestPending,
     onGuestUnavailable: form.noteGuestUnavailable,
     onOrderPlaced: () => {
+      releaseGuardRef.current?.();
       const buyer = form.guestBuyer();
       if (buyer) form.orderPlaced(buyer);
     },
+  });
+  // Leaving a started checkout asks first. Not armed while the sale is only
+  // previewed, nor before the buyer touched anything; stood down when the
+  // checkout itself moves on (order placed, Google sign-in).
+  const back = `/eventos/${encodeURIComponent(eventId)}`;
+  const leaveGuard = useLeaveGuard({
+    armed:
+      !form.preview &&
+      (form.interacted || checkout.draft.number.length > 0 || checkout.draft.name.length > 0),
+    fallbackHref: back,
   });
   const pendingOrder = useActivePaymentOrder(
     eventId,
@@ -112,6 +127,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
     !(checkout.loading && !chargesNothing);
 
   const pageRef = useRef<HTMLDivElement>(null);
+  releaseGuardRef.current = leaveGuard.release;
   // The sign-in asked for on "Reservar" when the event wants an account. It
   // sits over the filled form; once the session opens it closes and the
   // page scrolls to the payment step, right where the buyer left off. After
@@ -154,7 +170,10 @@ export function ReserveView({ eventId }: { eventId: string }) {
       return;
     }
     if (!payInApp) {
-      void form.submit();
+      void form.submit().then(() => {
+        // Placed and on its way to /pagar, or still here with an error.
+        if (form.valid) leaveGuard.release();
+      });
     } else {
       const input = form.preparePaidOrder();
       if (input) void checkout.pay(input);
@@ -182,7 +201,6 @@ export function ReserveView({ eventId }: { eventId: string }) {
   }
 
   const event = form.event;
-  const back = `/eventos/${encodeURIComponent(eventId)}`;
   const opensAt =
     form.preview && form.entryType?.saleStartsAt
       ? formatDateTime(form.entryType.saleStartsAt)
@@ -528,6 +546,13 @@ export function ReserveView({ eventId }: { eventId: string }) {
         ) : null}
       </div>
 
+      <LeaveCheckoutModal
+        open={leaveGuard.pending}
+        holdsTicket={Boolean(form.holdExpiresAt)}
+        onStay={leaveGuard.stay}
+        onLeave={leaveGuard.leave}
+      />
+
       <ReserveAccountModal
         open={accountOpen && needsAccount}
         onClose={() => setAccountOpen(false)}
@@ -540,6 +565,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
         suggestedName={form.buyer.name}
         onName={form.setBuyerNameFromAccount}
         onLeave={() => {
+          leaveGuard.release();
           form.saveDraft();
           try {
             window.sessionStorage.setItem(resumeKey(eventId), "1");
