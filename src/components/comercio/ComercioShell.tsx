@@ -10,6 +10,7 @@ import {
   Dumbbell,
   Flag,
   Handshake,
+  KeyRound,
   LayoutDashboard,
   ScanLine,
   Smartphone,
@@ -96,7 +97,12 @@ const NAV: NavItem[] = [
     label: "Escanear",
     Icon: ScanLine,
     exact: true,
-    isNew: true,
+  },
+  {
+    href: "/comercio/cuenta",
+    label: "Cuenta",
+    Icon: KeyRound,
+    exact: true,
   },
 ];
 

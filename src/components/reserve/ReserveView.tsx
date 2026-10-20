@@ -18,7 +18,6 @@ import { PAYMENTS_OUTAGE } from "@/lib/paymentsOutage";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { EventCover, EventPosterWash } from "@/components/events/EventCover";
 import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
-import { ThreeDsChallenge } from "@/components/pay/ThreeDsChallenge";
 import { HoldCountdown } from "./HoldCountdown";
 import { GuestPendingOrderNotice } from "./GuestPendingOrderNotice";
 import { PendingOrderNotice } from "./PendingOrderNotice";
@@ -509,11 +508,6 @@ export function ReserveView({ eventId }: { eventId: string }) {
           </p>
         ) : null}
       </div>
-
-      <ThreeDsChallenge
-        challenge={checkout.threeDsChallenge}
-        onDone={checkout.finishThreeDs}
-      />
 
       <ReserveAccountModal
         open={accountOpen && needsAccount}

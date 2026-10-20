@@ -6,19 +6,34 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/components/app/AuthProvider";
 import { buttonClass } from "@/components/ui/Button";
+import { SectionTitle } from "@/components/ui/Card";
 import { SearchPill } from "@/components/ui/Pill";
 import { canManageEvents } from "@/lib/role";
 import { useProviderAccess } from "@/hooks/useProviderAccess";
 import { useProviderLive } from "./ProviderLive";
-import { listProviderEvents, providerKeys } from "@/lib/api/provider";
+import {
+  listProviderEvents,
+  providerKeys,
+  type ProviderEventListItem,
+} from "@/lib/api/provider";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { DashboardPrivacy } from "./dashboardPrivacy";
 import { ProviderEventCard } from "./ProviderEventCard";
 
 const NEW_HREF = "/comercio/events/nueva";
 
+const time = (iso: string | null) => (iso ? new Date(iso).getTime() : null);
+
+/** Over once it has ended, or started if it has no end. Undated events stay active. */
+function isPastEvent(event: ProviderEventListItem, now: number) {
+  if (event.status === "ended") return true;
+  const end = time(event.endsAt) ?? time(event.startsAt);
+  return end !== null && end < now;
+}
+
 /**
- * Every event this comercio has, newest first, with a search box and, for
+ * Every event this comercio has, split into active (soonest first) and past
+ * (most recent first), with a search box and, for
  * the members who can manage events, a way to create one. New events go to
  * Allons' review before they are published.
  */
@@ -52,13 +67,30 @@ export function ComercioEventsListView({
   });
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
-  const sorted = [...(events.data ?? [])]
-    .filter((event) => !needle || event.title.toLowerCase().includes(needle))
-    .sort((a, b) => {
-      const ta = a.startsAt ? new Date(a.startsAt).getTime() : 0;
-      const tb = b.startsAt ? new Date(b.startsAt).getTime() : 0;
-      return tb - ta;
-    });
+  const matches = (events.data ?? []).filter(
+    (event) => !needle || event.title.toLowerCase().includes(needle),
+  );
+  const now = Date.now();
+  const start = (event: ProviderEventListItem) => time(event.startsAt) ?? 0;
+  const active = matches
+    .filter((event) => !isPastEvent(event, now))
+    .sort((a, b) => start(a) - start(b));
+  const past = matches
+    .filter((event) => isPastEvent(event, now))
+    .sort((a, b) => start(b) - start(a));
+  const grid = (list: ProviderEventListItem[], isPast: boolean) => (
+    <div className="grid gap-5 sm:grid-cols-2">
+      {list.map((event) => (
+        <ProviderEventCard
+          key={event.id}
+          event={event}
+          basePath={basePath}
+          moneyOnly={moneyOnly}
+          past={isPast}
+        />
+      ))}
+    </div>
+  );
 
   return (
     <DashboardPrivacy>
@@ -89,7 +121,7 @@ export function ComercioEventsListView({
             message={(events.error as Error).message}
             onRetry={() => void events.refetch()}
           />
-        ) : sorted.length === 0 ? (
+        ) : matches.length === 0 ? (
           <EmptyState
             title={needle ? "Ningún evento coincide" : "Aún no tienes eventos"}
             body={
@@ -102,15 +134,19 @@ export function ComercioEventsListView({
             action={!needle && canCreate ? createLink : undefined}
           />
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2">
-            {sorted.map((event) => (
-              <ProviderEventCard
-                key={event.id}
-                event={event}
-                basePath={basePath}
-                moneyOnly={moneyOnly}
-              />
-            ))}
+          <div className="flex flex-col gap-8">
+            {active.length > 0 ? (
+              <div>
+                <SectionTitle>Activos</SectionTitle>
+                {grid(active, false)}
+              </div>
+            ) : null}
+            {past.length > 0 ? (
+              <div>
+                <SectionTitle>Pasados</SectionTitle>
+                {grid(past, true)}
+              </div>
+            ) : null}
           </div>
         )}
       </section>

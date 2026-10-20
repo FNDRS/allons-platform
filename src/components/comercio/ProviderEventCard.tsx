@@ -29,14 +29,17 @@ export function ProviderEventCard({
   event,
   basePath = "/comercio/events",
   moneyOnly = false,
+  past = false,
 }: {
   event: ProviderEventListItem;
   /** Where this card opens: `/comercio/events` for the event's own config, `/comercio/finanzas` for its sales and money. */
   basePath?: string;
   /** Finanzas: drop tickets sold and the capacity bar, keep the money. */
   moneyOnly?: boolean;
+  /** Already happened: greyed out, labeled "Finalizado". */
+  past?: boolean;
 }) {
-  const status = eventStatusLabel(event.status);
+  const status = past ? "Finalizado" : eventStatusLabel(event.status);
   const prefetch = usePrefetchProviderEvent();
   const warm = () => prefetch(event.id);
   const day = formatCardDay(event.startsAt);
@@ -59,7 +62,7 @@ export function ProviderEventCard({
       onMouseEnter={warm}
       onFocus={warm}
       onTouchStart={warm}
-      className="group block h-full w-full"
+      className={`group block h-full w-full ${past ? "opacity-55 grayscale transition-opacity hover:opacity-80" : ""}`}
     >
       <article className="flex h-full flex-col rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-4 transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/[0.14] hover:bg-white/[0.05] sm:p-5">
         <div className="flex min-w-0 items-start gap-3">

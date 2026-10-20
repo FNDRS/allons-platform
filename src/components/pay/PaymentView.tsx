@@ -17,6 +17,7 @@ import {
 import { isClassPackageOrder, paymentLinkStorageKey } from "@/lib/api/payments";
 import { paidOutcomeFor, retryHrefFor } from "@/lib/paymentOrderLinks";
 import { formatCents } from "@/lib/format";
+import { dropBankHandoffCard } from "@/lib/threeDs";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorState, Skeleton } from "@/components/ui/States";
@@ -106,6 +107,13 @@ export function PaymentView({ orderId }: { orderId: string }) {
     guestToken && !user ? () => getGuestOrder(orderId, guestToken) : undefined,
   );
   const countdown = useCountdown(order?.expiresAt);
+  // A one-off card vaulted for a 3DS charge waited in the vault for the
+  // bank's answer. The order is settled: let it go.
+  const orderStatus = order?.status ?? null;
+  useEffect(() => {
+    if (!orderStatus || orderStatus === "pending_payment") return;
+    dropBankHandoffCard(orderId);
+  }, [orderId, orderStatus]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const opened = useRef(false);
   const celebrated = useRef(false);
