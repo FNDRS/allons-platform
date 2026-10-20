@@ -167,6 +167,15 @@ function readStoredDraft(eventId: string): StoredDraft | null {
  * when it is created: a reload during the bank's verification, or a retry
  * after a decline, must find the form as it was.
  */
+/**
+ * The buyer chose to leave: the held entry and the draft go with them, so
+ * coming back starts clean, as the leave modal said it would.
+ */
+export function abandonReserve(eventId: string) {
+  clearStoredHold(eventId);
+  clearReserveDraft(eventId);
+}
+
 export function clearReserveDraft(eventId: string) {
   try {
     window.sessionStorage.removeItem(draftStorageKey(eventId));
