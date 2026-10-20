@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Info } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import type { EventDonationInfo } from "@/lib/eventDonations";
@@ -16,16 +16,6 @@ function HeartMark() {
         strokeWidth="1.4"
         strokeLinejoin="round"
       />
-    </svg>
-  );
-}
-
-function InfoMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden>
-      <circle cx="12" cy="12" r="8.25" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M12 11v5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <circle cx="12" cy="8" r="0.9" fill="currentColor" />
     </svg>
   );
 }
@@ -107,21 +97,22 @@ export function DonationCard({
 
       {/* The one thing a donor must not get wrong, said once, in the same
           voice as the rest of the card: a quiet panel with a mark, not a
-          yellow warning box. */}
+          yellow warning box. Generic on purpose: this card also sits on a
+          comercio profile, with no event or kit in view. */}
       <div
         role="note"
-        className="flex gap-3.5 rounded-[18px] bg-[linear-gradient(135deg,rgba(246,112,16,0.10),rgba(255,255,255,0.02)_60%)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ring-1 ring-accent/25"
+        className="flex gap-3.5 rounded-[14px] bg-linear-135 from-accent/10 to-white/2 to-60% p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ring-1 ring-accent/25"
       >
         <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-accent/15 text-accent ring-1 ring-accent/30">
-          <InfoMark />
+          <Info className="size-4" aria-hidden />
         </span>
         <div className="min-w-0">
           <p className="text-[14px] font-bold tracking-tight text-white">
-            Esta donación es aparte del pago de tu kit
+            Esta donación es aparte de tu compra
           </p>
           <p className="mt-1 text-[13px] leading-5 text-white/60">
-            Depositar aquí no te inscribe ni te da entrada. Tu entrada y tu kit se pagan
-            solo aquí, en Allons.
+            Depositar aquí no te inscribe ni te da entrada. Las entradas, y el kit cuando
+            el evento lo incluye, se pagan solo aquí, en Allons.
           </p>
         </div>
       </div>
