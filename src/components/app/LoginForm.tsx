@@ -110,10 +110,10 @@ export function LoginForm() {
       setNotice("Tu correo quedó confirmado. Entra con tu contraseña para continuar.");
       return;
     }
+    // No PKCE verifier here, so the link cannot open a session, and the
+    // form has no code field until a code goes out from this browser.
     setMode("code");
-    setNotice(
-      "El enlace se abrió en otro navegador. Escribe aquí tu correo y el código que viene en el mismo mensaje.",
-    );
+    setNotice("El enlace se abrió en otro navegador. Escribe tu correo y te enviamos un código nuevo.");
   }, [loading, user, params]);
 
   // A recovery link lands here with a session already open. Supabase raises
@@ -269,8 +269,10 @@ export function LoginForm() {
         // An existing email comes back as a fake user with no identities and
         // no email is sent, so telling them to check their inbox would lie.
         if (data.user && data.user.identities?.length === 0) {
+          // The email stays in the field: one tap sends them a code.
+          setMode("code");
           setError(
-            "Ya existe una cuenta con este correo. Entra con tu contraseña, con Google o Apple, o recupera tu contraseña.",
+            "Ya existe una cuenta con este correo. Pide un código aquí para entrar, o usa Google o Apple.",
           );
           return;
         }
@@ -467,7 +469,7 @@ export function LoginForm() {
           size="lg"
           full
           loading={busy === "form"}
-          disabled={busy === "google"}
+          disabled={busy === "google" || busy === "decline"}
           className="!duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-[0_12px_48px_rgba(246,112,16,0.32)] active:!duration-500 active:scale-[0.99]"
         >
           {mode === "login"
