@@ -13,7 +13,7 @@ import {
 } from "@/lib/api/events";
 import { formatCents, formatDateTime } from "@/lib/format";
 import { ListedPrice } from "@/components/ui/ListedPrice";
-import { sessionSubtitle } from "@/components/events/EntryTypeSessionModal";
+import { sessionSubtitle } from "@/lib/sessionSubtitle";
 import type { BuyerDraft, HolderDraft } from "@/hooks/useReserveForm";
 import { FieldError, Input, Label, Select, SelectItem, Textarea } from "@/components/ui/Field";
 import { StatusPill } from "@/components/ui/Pill";

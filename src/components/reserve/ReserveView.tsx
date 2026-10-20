@@ -57,7 +57,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
   const { user, loading: authLoading } = useAuth();
   const ready = !authLoading;
   const isGuest = ready && !user;
-  const accountRequired = requiresAccount(form.event) || form.isFree;
+  const accountRequired = requiresAccount(form.event) || form.isFree || form.guestUnavailable;
   const needsAccount = isGuest && accountRequired && !form.preview;
   // A promo code can cover the ticket in full; nothing is charged, so the
   // card step is as pointless there as it is on a genuinely free entry.
@@ -71,6 +71,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
     guestBuyer: isGuest && !accountRequired ? form.guestBuyer : null,
     proveHuman: turnstile.getToken,
     onGuestPending: form.noteGuestPending,
+    onGuestUnavailable: form.noteGuestUnavailable,
     onOrderPlaced: () => {
       const buyer = form.guestBuyer();
       if (buyer) form.orderPlaced(buyer);
@@ -116,6 +117,12 @@ export function ReserveView({ eventId }: { eventId: string }) {
   // page scrolls to the payment step, right where the buyer left off. After
   // a Google round trip the same spot is restored from the flag below.
   const [accountOpen, setAccountOpen] = useState(false);
+  // The API turned a guest purchase down because guest checkout is off on
+  // this deployment: the buyer already pressed pay, so the account step
+  // opens by itself instead of making them press again.
+  useEffect(() => {
+    if (form.guestUnavailable && isGuest) setAccountOpen(true);
+  }, [form.guestUnavailable, isGuest]);
   useEffect(() => {
     if (!user) return;
     let resume = false;
@@ -524,6 +531,11 @@ export function ReserveView({ eventId }: { eventId: string }) {
       <ReserveAccountModal
         open={accountOpen && needsAccount}
         onClose={() => setAccountOpen(false)}
+        reason={
+          form.guestUnavailable
+            ? "Por ahora este evento pide entrar con tu cuenta para pagar. Todo lo que llenaste sigue aquí."
+            : null
+        }
         suggestedEmail={form.buyer.email}
         suggestedName={form.buyer.name}
         onName={form.setBuyerNameFromAccount}

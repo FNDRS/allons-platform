@@ -3,7 +3,6 @@
 /* eslint-disable @next/next/no-img-element */
 
 import Link from "next/link";
-import { useState } from "react";
 import { Flag, Handshake, Undo2 } from "lucide-react";
 import { formatEventWhen } from "@/lib/allons-api";
 import { placeLabelOf, placeMapsUrl } from "@/lib/googleMapsLink";
@@ -23,7 +22,7 @@ import { ListedPrice } from "@/components/ui/ListedPrice";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { CalendarMark, KitMark, MetaTile, PinMark } from "@/components/ui/MetaTile";
 import { EventCover, EventPosterWash } from "./EventCover";
-import { EntryTypeSessionModal, sessionSubtitle } from "./EntryTypeSessionModal";
+import { sessionSubtitle } from "@/lib/sessionSubtitle";
 
 export function EventHero({ event }: { event: EventDetail }) {
   const provider = event.provider;
@@ -233,24 +232,18 @@ export function EntryTypesCard({
    */
   priceCentsFor?: (listCents: number) => number | null;
   /**
-   * The event, for a bundle: each row is a session and opens its detail.
-   * A single event leaves the rows as they are.
+   * The event, for a bundle: each row is a session with its own date,
+   * place and description, and goes straight to reserving it. A single
+   * event leaves the rows as they are.
    */
   event?: EventDetail;
-  /** Reserving is open or in preview, so a session detail links to it. */
+  /** Reserving is open or in preview, so a session row links to it. */
   reservable?: boolean;
 }) {
-  const [openId, setOpenId] = useState<string | null>(null);
   if (types.length === 0) return null;
   const now = Date.now();
   const sessions = event && isBundleEvent(event) ? event : null;
   const priceOf = (cents: number) => (priceCentsFor ?? ((value) => value))(cents);
-  const opened = sessions ? (types.find((type) => type.id === openId) ?? null) : null;
-  const openedReservable =
-    opened != null &&
-    reservable &&
-    !(opened.soldOut || opened.remaining === 0) &&
-    (isEntryTypeOnSale(opened, now) || isEntryTypeUpcoming(opened, now));
   return (
     <section>
       <SectionTitle>Entradas</SectionTitle>
@@ -270,12 +263,18 @@ export function EntryTypesCard({
                   ? `${type.remaining} disponibles`
                   : "Disponible";
           const subtitle = sessions ? sessionSubtitle(type) : null;
+          // What the session is about, right in the row: the reserve page
+          // repeats it under the picked entry, so no detail screen in between.
+          const details = sessions ? type.description?.trim() || null : null;
           const row = (
             <>
               <div className="min-w-0">
                 <p className="text-[15px] font-bold tracking-tight">{type.name}</p>
                 {subtitle ? (
                   <p className="mt-0.5 text-[13px] text-white/70">{subtitle}</p>
+                ) : null}
+                {details ? (
+                  <p className="mt-1 line-clamp-2 text-[13px] leading-5 text-white/55">{details}</p>
                 ) : null}
                 <p className="mt-0.5 text-[13px] text-muted">{status}</p>
               </div>
@@ -285,15 +284,27 @@ export function EntryTypesCard({
             </>
           );
           if (sessions) {
+            // One tap takes the session into the checkout with it picked.
+            const sessionReservable =
+              reservable && !soldOut && (onSale || upcoming);
+            if (sessionReservable) {
+              return (
+                <Link
+                  key={type.id}
+                  href={`/eventos/${encodeURIComponent(sessions.id)}/reservar?entrada=${encodeURIComponent(type.id)}`}
+                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-white/[0.04]"
+                >
+                  {row}
+                </Link>
+              );
+            }
             return (
-              <button
+              <div
                 key={type.id}
-                type="button"
-                onClick={() => setOpenId(type.id)}
-                className={`flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-white/[0.04] ${soldOut || (!onSale && !previewable) ? "opacity-60" : ""}`}
+                className="flex w-full items-center justify-between gap-4 px-5 py-4 opacity-60"
               >
                 {row}
-              </button>
+              </div>
             );
           }
           if (previewable && previewEventId) {
@@ -317,19 +328,6 @@ export function EntryTypesCard({
           );
         })}
       </Card>
-      {sessions ? (
-        <EntryTypeSessionModal
-          event={sessions}
-          type={opened}
-          priceCents={opened ? priceOf(opened.priceCents) : null}
-          reserveHref={
-            opened && openedReservable
-              ? `/eventos/${encodeURIComponent(sessions.id)}/reservar?entrada=${encodeURIComponent(opened.id)}`
-              : null
-          }
-          onClose={() => setOpenId(null)}
-        />
-      ) : null}
     </section>
   );
 }

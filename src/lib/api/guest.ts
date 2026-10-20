@@ -1,5 +1,5 @@
 import { PAYMENTS_OUTAGE, paymentsOutageError } from "@/lib/paymentsOutage";
-import { apiFetch } from "./client";
+import { apiFetch, isApiError } from "./client";
 import type {
   ChargeSavedCardResponse,
   DirectCardInput,
@@ -50,6 +50,19 @@ export interface GuestProof {
 
 /** The API paused guest card charges (too many declines): pay on the hosted form. */
 export const GUEST_CARD_PAUSED_CODE = "guest_card_paused";
+
+/** Guest checkout is off on this deployment; the account flow still works. */
+export const GUEST_UNAVAILABLE_CODE = "guest_checkout_unavailable";
+
+/**
+ * The API refused the guest purchase because the deployment has guest
+ * checkout off. Older APIs answer the same 503 without the code.
+ */
+export function isGuestUnavailable(err: unknown): boolean {
+  if (!isApiError(err)) return false;
+  if (err.code === GUEST_UNAVAILABLE_CODE) return true;
+  return err.status === 503 && /sin cuenta/i.test(err.message);
+}
 
 export function guestInitiatePayment(
   input: InitiatePaymentInput & { buyer: GuestBuyer } & GuestProof,

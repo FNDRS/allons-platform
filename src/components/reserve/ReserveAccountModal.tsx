@@ -36,6 +36,7 @@ export function ReserveAccountModal({
   suggestedName,
   onLeave,
   onName,
+  reason = null,
 }: {
   open: boolean;
   onClose: () => void;
@@ -45,6 +46,8 @@ export function ReserveAccountModal({
   onLeave: () => void;
   /** The name typed with the code, for the ticket and the new account. */
   onName?: (name: string) => void;
+  /** Why the account is asked for now, when it is not the event's own rule. */
+  reason?: string | null;
 }) {
   const [email, setEmail] = useState("");
   // Asked with the code only when the form has no name yet: the code
@@ -149,8 +152,8 @@ export function ReserveAccountModal({
   return (
     <Modal open={open} onClose={onClose} title="Tu cuenta">
       <p className="text-[14px] leading-6 text-white/55">
-        Este evento guarda tus tickets en una cuenta de Allons. Entra o créala
-        aquí; tu reserva sigue tal como la dejaste.
+        {reason ??
+          "Este evento guarda tus tickets en una cuenta de Allons. Entra o créala aquí; tu reserva sigue tal como la dejaste."}
       </p>
       <div className="mt-5">
         {sentTo ? (
