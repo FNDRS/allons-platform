@@ -20,6 +20,7 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { EventCover, EventPosterWash } from "@/components/events/EventCover";
 import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
 import { HoldCountdown } from "./HoldCountdown";
+import { ConsentNote, consentLabelFor } from "@/components/pay/ConsentNote";
 import { LeaveCheckoutModal } from "./LeaveCheckoutModal";
 import { GuestPendingOrderNotice } from "./GuestPendingOrderNotice";
 import { PendingOrderNotice } from "./PendingOrderNotice";
@@ -511,25 +512,10 @@ export function ReserveView({ eventId }: { eventId: string }) {
       {/* Where Turnstile draws its box when it needs a click; empty otherwise. */}
       <div ref={turnstile.container} className="flex justify-center empty:hidden" />
 
-      {/* Informed consent before paying: the terms, the refund policy, the
-          privacy notice and the event's own refund rules are linked right where
-          the buyer commits. Same tab on purpose: the leave guard asks first,
-          and a new tab behind the checkout read as leaving without being asked. */}
-      <p className="text-center text-[12px] leading-relaxed text-white/45">
-        Al {chargesNothing ? "confirmar" : "pagar"} aceptas los{" "}
-        <Link href="/terminos" className="underline underline-offset-2 hover:text-white">
-          Términos y Condiciones
-        </Link>
-        , la{" "}
-        <Link href="/reembolsos" className="underline underline-offset-2 hover:text-white">
-          Política de Reembolsos
-        </Link>{" "}
-        y la{" "}
-        <Link href="/privacidad" className="underline underline-offset-2 hover:text-white">
-          Política de Privacidad
-        </Link>{" "}
-        de Allons, y compartes con el organizador los datos de los asistentes.
-      </p>
+      {/* Same tab: a policy opened behind the checkout read as leaving with
+          no warning. The leave guard asks first; reading one keeps the hold
+          and the draft, so coming back lands where they were. */}
+      <ConsentNote verb={chargesNothing ? "confirmar" : "pagar"} sharesAttendees />
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(14px,env(safe-area-inset-bottom))] sm:px-6">
         <div className="pointer-events-auto mx-auto flex max-w-2xl items-center gap-2 rounded-[28px] border border-white/10 bg-[#0a0a0b]/80 p-2 pl-4 shadow-[0_-20px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:gap-3 sm:p-2.5 sm:pl-5">
@@ -583,9 +569,12 @@ export function ReserveView({ eventId }: { eventId: string }) {
         open={leaveGuard.pending}
         holdExpiresAt={form.holdExpiresAt}
         hasInput={hasInput}
+        readingPolicy={consentLabelFor(leaveGuard.pendingHref)}
         onStay={leaveGuard.stay}
         onLeave={() => {
-          abandonReserve(eventId);
+          // A policy page is a detour, not an exit: the hold and the draft
+          // stay in storage and the checkout resumes on the way back.
+          if (!consentLabelFor(leaveGuard.pendingHref)) abandonReserve(eventId);
           leaveGuard.leave();
         }}
       />

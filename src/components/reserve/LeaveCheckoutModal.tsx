@@ -14,6 +14,7 @@ export function LeaveCheckoutModal({
   open,
   holdExpiresAt,
   hasInput,
+  readingPolicy = null,
   onStay,
   onLeave,
 }: {
@@ -22,14 +23,19 @@ export function LeaveCheckoutModal({
   holdExpiresAt: string | null;
   /** Something was typed, so leaving also loses that. */
   hasInput: boolean;
+  /** The policy page they tapped, when that is the exit: nothing is lost. */
+  readingPolicy?: string | null;
   onStay: () => void;
   onLeave: () => void;
 }) {
   // From the clock, not the prop: once it runs out the copy must not keep
   // promising a reserved entry for the second before the form leaves.
   const holdsTicket = useCountdown(open ? holdExpiresAt : null) !== null;
-  const cost =
-    holdsTicket && hasInput
+  const cost = readingPolicy
+    ? holdsTicket
+      ? `Vas a salir del checkout para leer ${readingPolicy}. Tu entrada sigue reservada mientras tanto y lo que llenaste se guarda: al volver, sigues donde estabas.`
+      : `Vas a salir del checkout para leer ${readingPolicy}. Lo que llenaste se guarda: al volver, sigues donde estabas.`
+    : holdsTicket && hasInput
       ? "Tu entrada está reservada y lo que llenaste sigue aquí. Si sales ahora, la entrada se libera y tendrás que empezar de nuevo."
       : holdsTicket
         ? "Tu entrada está reservada. Si sales ahora, se libera y tendrás que empezar de nuevo."
@@ -47,7 +53,7 @@ export function LeaveCheckoutModal({
           Permanecer
         </Button>
         <Button size="lg" full variant="secondary" onClick={onLeave}>
-          Salir y perder el avance
+          {readingPolicy ? "Ir a leerlo" : "Salir y perder el avance"}
         </Button>
       </div>
     </Modal>

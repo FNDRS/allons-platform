@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ConsentNote } from "@/components/pay/ConsentNote";
 import { ArrowLeft, Lock } from "lucide-react";
 import { useClassPackageCheckout } from "@/hooks/useClassPackageCheckout";
 import { formatHNL } from "@/lib/format";
@@ -74,21 +75,7 @@ export function ClassCheckoutView({
 
       {state.payError ? <ErrorState message={state.payError} /> : null}
 
-      <p className="text-center text-[12px] leading-relaxed text-white/45">
-        Al pagar aceptas los{" "}
-        <Link href="/terminos" target="_blank" className="underline underline-offset-2 hover:text-white">
-          Términos y Condiciones
-        </Link>
-        , la{" "}
-        <Link href="/reembolsos" target="_blank" className="underline underline-offset-2 hover:text-white">
-          Política de Reembolsos
-        </Link>{" "}
-        y la{" "}
-        <Link href="/privacidad" target="_blank" className="underline underline-offset-2 hover:text-white">
-          Política de Privacidad
-        </Link>{" "}
-        de Allons.
-      </p>
+      <ConsentNote verb="pagar" newTab />
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(14px,env(safe-area-inset-bottom))] sm:px-6">
         <div className="pointer-events-auto mx-auto flex max-w-2xl items-center gap-2 rounded-[28px] border border-white/10 bg-[#0a0a0b]/80 p-2 pl-4 shadow-[0_-20px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:gap-3 sm:p-2.5 sm:pl-5">

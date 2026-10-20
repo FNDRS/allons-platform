@@ -20,6 +20,27 @@ function HeartMark() {
   );
 }
 
+/** The card's icon badge: the same shape for the heart and the note. */
+function IconBadge({
+  tone = "neutral",
+  children,
+}: {
+  tone?: "neutral" | "accent";
+  children: React.ReactNode;
+}) {
+  const color =
+    tone === "accent"
+      ? "bg-accent/15 text-accent ring-accent/30"
+      : "bg-white/[0.045] text-white/80 ring-white/[0.08]";
+  return (
+    <span
+      className={`grid size-10 shrink-0 place-items-center rounded-[13px] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ${color}`}
+    >
+      {children}
+    </span>
+  );
+}
+
 function AccountNumber({ label, number }: { label: string; number: string }) {
   const [copied, setCopied] = useState(false);
   const reset = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -83,9 +104,9 @@ export function DonationCard({
   return (
     <Card className="flex flex-col gap-5">
       <div className="flex gap-4">
-        <span className="grid size-10 shrink-0 place-items-center rounded-[13px] bg-white/[0.045] text-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/[0.08]">
+        <IconBadge>
           <HeartMark />
-        </span>
+        </IconBadge>
         <div>
           <p className="text-[15px] font-bold tracking-tight">Haz una donación extra</p>
           <p className="mt-1 text-sm leading-6 text-white/70">
@@ -103,9 +124,9 @@ export function DonationCard({
         role="note"
         className="flex gap-3.5 rounded-[14px] bg-linear-135 from-accent/10 to-white/2 to-60% p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ring-1 ring-accent/25"
       >
-        <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-[12px] bg-accent/15 text-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-accent/30">
+        <IconBadge tone="accent">
           <HandCoins className="size-[18px]" strokeWidth={1.75} aria-hidden />
-        </span>
+        </IconBadge>
         <div className="min-w-0">
           <p className="text-[14px] font-bold tracking-tight text-white">
             Esta donación es aparte de tu compra
