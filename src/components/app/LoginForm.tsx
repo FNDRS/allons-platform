@@ -62,6 +62,11 @@ function friendlyAuthError(message: string): string {
     return "La contraseña necesita al menos 6 caracteres.";
   if (lower.includes("rate limit"))
     return "Demasiados intentos. Espera un momento.";
+  // Supabase: "For security purposes, you can only request this after N seconds."
+  if (lower.includes("security purposes"))
+    return "Acabas de pedir un código. Espera unos segundos y vuelve a intentarlo.";
+  if (lower.includes("token has expired") || lower.includes("otp_expired"))
+    return "El código no es válido o ya venció. Pide uno nuevo.";
   if (lower.includes("bad_oauth_state") || lower.includes("invalid_request"))
     return "No se pudo entrar con Google. Inténtalo de nuevo.";
   return message || "Algo salió mal. Intenta de nuevo.";
