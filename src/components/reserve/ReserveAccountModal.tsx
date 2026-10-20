@@ -9,15 +9,7 @@ import { SmoothInput } from "@/components/ui/SmoothInput";
 import { GoogleMark } from "@/components/app/LoginForm";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { rememberLoginNext } from "@/lib/login-next";
-
-function friendlyOtpError(message: string): string {
-  const lower = message.toLowerCase();
-  if (lower.includes("expired") || lower.includes("invalid"))
-    return "El código no es válido o ya venció. Pide uno nuevo.";
-  if (lower.includes("rate limit") || lower.includes("security purposes"))
-    return "Espera un momento antes de pedir otro código.";
-  return message || "Algo salió mal. Intenta de nuevo.";
-}
+import { friendlyOtpError } from "@/lib/auth-errors";
 
 /**
  * Sign-in asked for at the moment of reserving, on top of the filled form,

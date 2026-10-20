@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { FieldError, Label } from "@/components/ui/Field";
 import { SmoothInput } from "@/components/ui/SmoothInput";
 import type { User } from "@supabase/supabase-js";
+import { friendlyOtpError } from "@/lib/auth-errors";
+import { shouldOfferPassword } from "@/lib/auth-user";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import {
   forgetLoginNext,
@@ -32,24 +34,6 @@ function initialMode(param: string | null): Mode {
   return "code";
 }
 
-/**
- * Whether to ask, once, if they want a password after entering with a code.
- * Not for Google or Apple accounts (they already have a way in without
- * waiting for a code) and not again once they answered either way.
- */
-export function shouldOfferPassword(user: User | null | undefined): boolean {
-  if (!user) return false;
-  const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-  if (meta.passwordOffered === true) return false;
-  // An invited account that already chose its password.
-  if (meta.mustSetPassword === false) return false;
-  const providers = (user.app_metadata?.providers ?? []) as unknown;
-  if (Array.isArray(providers) && providers.some((p) => p === "google" || p === "apple")) {
-    return false;
-  }
-  return true;
-}
-
 function friendlyAuthError(message: string): string {
   const lower = message.toLowerCase();
   if (lower.includes("invalid login credentials"))
@@ -60,16 +44,9 @@ function friendlyAuthError(message: string): string {
     return "Ese correo ya tiene cuenta. Inicia sesión.";
   if (lower.includes("password should be at least"))
     return "La contraseña necesita al menos 6 caracteres.";
-  if (lower.includes("rate limit"))
-    return "Demasiados intentos. Espera un momento.";
-  // Supabase: "For security purposes, you can only request this after N seconds."
-  if (lower.includes("security purposes"))
-    return "Acabas de pedir un código. Espera unos segundos y vuelve a intentarlo.";
-  if (lower.includes("token has expired") || lower.includes("otp_expired"))
-    return "El código no es válido o ya venció. Pide uno nuevo.";
   if (lower.includes("bad_oauth_state") || lower.includes("invalid_request"))
     return "No se pudo entrar con Google. Inténtalo de nuevo.";
-  return message || "Algo salió mal. Intenta de nuevo.";
+  return friendlyOtpError(message);
 }
 
 export function LoginForm() {
@@ -86,7 +63,7 @@ export function LoginForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState<"google" | "form" | null>(null);
+  const [busy, setBusy] = useState<"google" | "form" | "decline" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   // Passwordless sign-in: where the code went, and what was typed back.
@@ -97,6 +74,10 @@ export function LoginForm() {
   // The account that just entered with a code, while the password offer is
   // up: AuthProvider may not have published the session yet.
   const [verifiedUser, setVerifiedUser] = useState<User | null>(null);
+  // True from the moment a code is sent to verify until this form decides
+  // where the new session goes. Supabase publishes the session before
+  // verifyOtp resolves, and the redirect effect must not get there first.
+  const [deciding, setDeciding] = useState(false);
 
   // Supabase reports a failed email link either in the query (PKCE) or in
   // the hash (implicit). An expired confirmation link is not a Google error.
@@ -117,14 +98,22 @@ export function LoginForm() {
     setError("No se pudo entrar con Google. Inténtalo de nuevo.");
   }, [params]);
 
-  // The confirmation link lands here with ?code=. supabase-js only exchanges
-  // it when the PKCE verifier is in this browser's storage; opened from a
-  // different browser (mail app) there is no session, but the email is
-  // already confirmed by then, so a password login gets them in.
+  // An email link lands here with ?code=. supabase-js only exchanges it when
+  // the PKCE verifier is in this browser's storage; opened from a different
+  // browser (mail app) there is no session. After a sign-up the email is
+  // confirmed by then, so the password gets them in. The code mail carries
+  // the same code as the link, so that one is typed here instead.
   useEffect(() => {
     if (loading || user || !params.get("code")) return;
-    setMode("login");
-    setNotice("Tu correo quedó confirmado. Entra con tu contraseña para continuar.");
+    if (params.get("from") === "signup") {
+      setMode("login");
+      setNotice("Tu correo quedó confirmado. Entra con tu contraseña para continuar.");
+      return;
+    }
+    setMode("code");
+    setNotice(
+      "El enlace se abrió en otro navegador. Escribe aquí tu correo y el código que viene en el mismo mensaje.",
+    );
   }, [loading, user, params]);
 
   // A recovery link lands here with a session already open. Supabase raises
@@ -159,16 +148,18 @@ export function LoginForm() {
   // Update mode without a session (stale tab, link used elsewhere) has no
   // account to change, so fall back to a normal login.
   useEffect(() => {
-    if (loading || user || verifiedUser || (mode !== "update" && mode !== "offer")) return;
+    if (loading || user || verifiedUser || mode !== "update") return;
     if (window.location.hash.includes("type=recovery")) return;
-    setMode(mode === "update" ? "login" : "code");
+    setMode("login");
   }, [loading, user, verifiedUser, mode]);
 
   useEffect(() => {
-    if (!nextReady || loading || !user || mode === "update" || mode === "offer") return;
+    if (!nextReady || loading || !user || deciding || mode === "update" || mode === "offer") {
+      return;
+    }
     forgetLoginNext();
     router.replace(homeFor(user, next));
-  }, [nextReady, loading, user, router, next, mode]);
+  }, [nextReady, loading, user, router, next, mode, deciding]);
 
   function finish(account: User | null) {
     forgetLoginNext();
@@ -176,12 +167,12 @@ export function LoginForm() {
   }
 
   async function declinePassword() {
-    setBusy("form");
+    setBusy("decline");
     try {
       // Best effort: the worst case is being asked once more next time.
-      await getSupabaseBrowser()
-        .auth.updateUser({ data: { passwordOffered: true } })
-        .catch(() => null);
+      await getSupabaseBrowser().auth.updateUser({ data: { passwordOffered: true } });
+    } catch {
+      /* same destination either way */
     } finally {
       finish(user ?? verifiedUser);
     }
@@ -216,19 +207,26 @@ export function LoginForm() {
           setError("Escribe el código completo.");
           return;
         }
+        setDeciding(true);
         const { data, error: err } = await supabase.auth.verifyOtp({
           email: codeSentTo,
           token,
           type: "email",
         });
         if (err) throw err;
+        setVerifiedUser(data.user);
+        setPassword("");
+        const meta = (data.user?.user_metadata ?? {}) as Record<string, unknown>;
+        if (meta.mustSetPassword === true) {
+          // An invited account still owes its password: not optional.
+          setMode("update");
+          return;
+        }
         if (shouldOfferPassword(data.user)) {
-          setVerifiedUser(data.user);
-          setPassword("");
           setMode("offer");
           return;
         }
-        // The session is open; the effect above sends them on.
+        finish(data.user);
         return;
       }
       if (mode === "offer") {
@@ -248,7 +246,7 @@ export function LoginForm() {
           password,
         });
         if (err) throw err;
-        router.replace(homeFor(data.user, next));
+        finish(data.user);
         return;
       }
       if (mode === "signup") {
@@ -260,10 +258,11 @@ export function LoginForm() {
           email: email.trim().toLowerCase(),
           password,
           options: {
-            data: { full_name: name.trim() },
+            // They chose a password here; never offer one after a code.
+            data: { full_name: name.trim(), passwordOffered: true },
             // Without this the link follows the project Site URL, which is
             // shared with the app, and the user never comes back here.
-            emailRedirectTo: `${window.location.origin}/login`,
+            emailRedirectTo: `${window.location.origin}/login?from=signup`,
           },
         });
         if (err) throw err;
@@ -276,7 +275,7 @@ export function LoginForm() {
           return;
         }
         if (data.session) {
-          router.replace(homeFor(data.user, next));
+          finish(data.user);
         } else {
           // The link opens /login with a session; this is where it goes next.
           rememberLoginNext(next);
@@ -292,7 +291,7 @@ export function LoginForm() {
         // ask for a new password again on every sign-in.
         const { error: err } = await supabase.auth.updateUser({
           password,
-          data: { mustSetPassword: false },
+          data: { mustSetPassword: false, passwordOffered: true },
         });
         if (err) throw err;
         toast.success("Contraseña actualizada");
@@ -311,6 +310,7 @@ export function LoginForm() {
       toast.success("Revisa tu correo para cambiar la contraseña.");
       setMode("login");
     } catch (err) {
+      setDeciding(false);
       setError(friendlyAuthError((err as Error).message ?? ""));
     } finally {
       setBusy(null);
@@ -364,7 +364,9 @@ export function LoginForm() {
             ? "Opcional. Con una contraseña entras también sin esperar el código. Si prefieres, sigue entrando con un código: siempre funciona."
           : mode === "update"
             ? "Escribe la contraseña que usarás desde ahora, en la web y en la app."
-            : "Entra con tu contraseña. Es la misma cuenta que en la app."}
+            : mode === "signup"
+              ? "Usa la misma cuenta que en la app. Tus tickets se ven en los dos lados."
+              : "Entra con tu contraseña. Es la misma cuenta que en la app."}
       </p>
 
       {showGoogle ? (
@@ -486,7 +488,8 @@ export function LoginForm() {
             variant="secondary"
             size="lg"
             full
-            disabled={busy !== null}
+            loading={busy === "decline"}
+            disabled={busy !== null && busy !== "decline"}
             onClick={() => void declinePassword()}
           >
             Ahora no

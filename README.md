@@ -24,7 +24,7 @@ la sesión de Supabase (Bearer); no hay rutas `/api/*` propias para esto.
 | `/comercio/events/{id}` | Ventas por tipo y por hora, pagos, mapa y editor de recursos |
 | `/comercio/colaboraciones` | Invitaciones a colaborar en eventos de otros comercios, y los que ya comparte |
 | `/comercio/staff` | Invitar y desactivar staff |
-| `/login` | Correo + contraseña (misma cuenta que la app) |
+| `/login` | Google, o correo + código de un solo uso; la contraseña es opcional (misma cuenta que la app) |
 
 Requiere `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` en el
 navegador y, opcionalmente, `NEXT_PUBLIC_ALLONS_API_URL`.
