@@ -83,13 +83,19 @@ export function ReserveView({ eventId }: { eventId: string }) {
     },
   });
   // Leaving a started checkout asks first. Not armed while the sale is only
-  // previewed, nor before the buyer touched anything; stood down when the
-  // checkout itself moves on (order placed, Google sign-in).
+  // previewed, nor before there is something to lose: a held ticket (the
+  // clock started the moment a paid entry was picked, even one picked for
+  // them from the event page), something typed, or a card being entered.
+  // Stood down when the checkout itself moves on (order placed, Google
+  // sign-in).
   const back = `/eventos/${encodeURIComponent(eventId)}`;
   const leaveGuard = useLeaveGuard({
     armed:
       !form.preview &&
-      (form.interacted || checkout.draft.number.length > 0 || checkout.draft.name.length > 0),
+      (Boolean(form.holdExpiresAt) ||
+        form.interacted ||
+        checkout.draft.number.length > 0 ||
+        checkout.draft.name.length > 0),
     fallbackHref: back,
   });
   const pendingOrder = useActivePaymentOrder(
@@ -139,6 +145,9 @@ export function ReserveView({ eventId }: { eventId: string }) {
   useEffect(() => {
     if (form.guestUnavailable && isGuest) setAccountOpen(true);
   }, [form.guestUnavailable, isGuest]);
+  // Set when the session arrives through the modal or the Google round
+  // trip; consumed below once the payment step is really on the page.
+  const scrollToPay = useRef(false);
   useEffect(() => {
     if (!user) return;
     let resume = false;
@@ -150,12 +159,24 @@ export function ReserveView({ eventId }: { eventId: string }) {
     }
     if (!accountOpen && !resume) return;
     setAccountOpen(false);
+    scrollToPay.current = true;
+  }, [user, accountOpen, eventId]);
+  // The sign-in redraws the page: the buyer step appears above, the saved
+  // cards load into the payment step, a pending order may show up at the
+  // top. Scrolling the moment the modal closes landed on a layout that was
+  // still moving, so it waits for the step to be rendered and settled.
+  const payRendered = Boolean(user) && !needsAccount && !checkout.loading;
+  useEffect(() => {
+    if (!scrollToPay.current || !payRendered || accountOpen) return;
+    scrollToPay.current = false;
+    // Not cancelled on re-render: the modal closing right after is one, and
+    // it used to take the scroll with it.
     window.setTimeout(() => {
       document
         .getElementById("reserve-pay")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 150);
-  }, [user, accountOpen, eventId]);
+    }, 250);
+  }, [payRendered, accountOpen, pendingOrder]);
 
   function onPay() {
     if (form.preview) return;
