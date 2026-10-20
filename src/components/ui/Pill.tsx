@@ -83,6 +83,8 @@ const PILL = {
     "bg-black/45 text-white ring-1 ring-white/15 backdrop-blur-md",
   mute: "bg-white/10 text-white/50 ring-1 ring-white/10",
   gray: "bg-[#3f3f46] text-white",
+  open: "bg-white/[0.07] text-white/85 ring-1 ring-white/[0.12]",
+  danger: "bg-red-500/12 text-red-300 ring-1 ring-red-400/30",
 } as const;
 
 /** Status chip: white, glass, or mute. Use this for every label pill. */
@@ -101,5 +103,27 @@ export function StatusPill({
     >
       {children}
     </span>
+  );
+}
+
+/**
+ * Stock under an entry, readable from across the room: the StatusPill in
+ * uppercase and spaced. Sold out is the one a buyer must not miss, so it
+ * is the only one in red.
+ */
+export function StockPill({
+  tone,
+  children,
+}: {
+  tone: "open" | "soldOut" | "closed";
+  children: ReactNode;
+}) {
+  return (
+    <StatusPill
+      tone={tone === "soldOut" ? "danger" : tone === "open" ? "open" : "mute"}
+      className="!px-2.5 !py-1 !text-[11px] !font-bold uppercase !tracking-[0.14em]"
+    >
+      {children}
+    </StatusPill>
   );
 }

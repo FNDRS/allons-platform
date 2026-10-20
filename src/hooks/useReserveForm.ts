@@ -22,8 +22,7 @@ import {
   isEntryTypeUpcoming,
   isSoldOutOption,
   type EventEntryType,
-  type EventQuestion,
-} from "@/lib/api/events";
+  type EventQuestion, isEntryTypeSoldOut } from "@/lib/api/events";
 import {
   cancelGuestOrder,
   guestInitiatePayment,
@@ -310,7 +309,7 @@ export function useReserveForm(
     if (!event || reserveKind === "closed" || reserveKind === null) return [];
     const now = Date.now();
     return (event.entryTypes ?? []).filter((type) => {
-      if (type.soldOut || type.remaining === 0) return false;
+      if (isEntryTypeSoldOut(type)) return false;
       if (isEntryTypeOnSale(type, now)) return true;
       return preview && isEntryTypeUpcoming(type, now);
     });

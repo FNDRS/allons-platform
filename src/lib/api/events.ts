@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/format";
 import type { EventDonationInfo } from "@/lib/eventDonations";
 import { apiFetch } from "./client";
 
@@ -361,9 +362,34 @@ export function isEntryTypeOnSale(type: EventEntryType, now = Date.now()) {
   return true;
 }
 
+/** Nothing left to sell: the flag, or a count at (or, oversold, below) zero. */
+export function isEntryTypeSoldOut(type: EventEntryType) {
+  return type.soldOut || (type.remaining != null && type.remaining <= 0);
+}
+
+/**
+ * What a row says under an entry about its stock, the same on the event
+ * page and in the checkout picker. `upcoming` is a date, too long for a
+ * badge; the other three are short enough to shout.
+ */
+export function entryStockStatus(
+  type: EventEntryType,
+  now = Date.now(),
+): { label: string; tone: "open" | "soldOut" | "closed" | "upcoming" } {
+  if (isEntryTypeSoldOut(type)) return { label: "Agotado", tone: "soldOut" };
+  if (!isEntryTypeOnSale(type, now)) {
+    if (type.saleStartsAt && new Date(type.saleStartsAt).getTime() > now) {
+      return { label: `A la venta desde ${formatDateTime(type.saleStartsAt)}`, tone: "upcoming" };
+    }
+    return { label: "Venta cerrada", tone: "closed" };
+  }
+  if (type.remaining != null) return { label: `${type.remaining} disponibles`, tone: "open" };
+  return { label: "Disponible", tone: "open" };
+}
+
 /** The price is already listed, but the sale has not opened yet. */
 export function isEntryTypeUpcoming(type: EventEntryType, now = Date.now()) {
-  if (type.soldOut || type.remaining === 0) return false;
+  if (isEntryTypeSoldOut(type)) return false;
   if (!type.saleStartsAt) return false;
   const start = new Date(type.saleStartsAt).getTime();
   if (!Number.isFinite(start) || start <= now) return false;

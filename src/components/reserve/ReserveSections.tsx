@@ -1,7 +1,6 @@
 "use client";
 
 import { Check, Minus, Plus, User } from "lucide-react";
-import { StockBadge } from "@/components/events/EventDetailSections";
 import { useId, useState } from "react";
 import {
   allOptionsSoldOut,
@@ -10,14 +9,13 @@ import {
   optionLeft,
   type EventCampaign,
   type EventEntryType,
-  type EventQuestion,
-} from "@/lib/api/events";
+  type EventQuestion, entryStockStatus } from "@/lib/api/events";
 import { formatCents, formatDateTime } from "@/lib/format";
 import { ListedPrice } from "@/components/ui/ListedPrice";
 import { sessionSubtitle } from "@/lib/sessionSubtitle";
 import type { BuyerDraft, HolderDraft } from "@/hooks/useReserveForm";
 import { FieldError, Input, Label, Select, SelectItem, Textarea } from "@/components/ui/Field";
-import { StatusPill } from "@/components/ui/Pill";
+import { StatusPill, StockPill } from "@/components/ui/Pill";
 
 export function StepHeading({
   n,
@@ -129,9 +127,7 @@ export function EntryTypePicker({
                         </p>
                       ) : type.remaining != null ? (
                         <div className="mt-1.5">
-                          <StockBadge tone={type.remaining === 0 ? "soldOut" : "open"}>
-                            {type.remaining === 0 ? "Agotado" : `${type.remaining} disponibles`}
-                          </StockBadge>
+                          <StockPill tone="open">{entryStockStatus(type).label}</StockPill>
                         </div>
                       ) : null}
                     </div>

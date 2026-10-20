@@ -1,5 +1,6 @@
 "use client";
 
+import { isEntryTypeSoldOut } from "@/lib/api/events";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import {
@@ -33,7 +34,7 @@ export function deriveReserveState(event: EventDetail): ReserveState {
     }
     return { kind: "closed", label: "Reservas cerradas" };
   }
-  if (onSale.every((type) => type.soldOut || type.remaining === 0)) {
+  if (onSale.every((type) => isEntryTypeSoldOut(type))) {
     return { kind: "closed", label: "Agotado" };
   }
   return { kind: "open", label: "Reservar" };
