@@ -107,6 +107,30 @@ function GuestTicket({
   });
   const ticket = query.data;
   const href = `/tickets/${encodeURIComponent(ticketId)}?k=${encodeURIComponent(accessKey)}`;
+  if (query.isError) {
+    // The ticket exists (the order is paid); only this read failed. The
+    // signed page link and the mail still open it.
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] p-5 text-center">
+        <p className="text-[14px] leading-relaxed text-white/60">
+          No pudimos mostrar el ticket {total > 1 ? `${index + 1} ` : ""}aquí.
+          Está en tu correo, o ábrelo en su página.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => void query.refetch()}
+            className={buttonClass({ size: "sm", variant: "secondary" })}
+          >
+            Volver a intentar
+          </button>
+          <Link href={href} className={buttonClass({ size: "sm" })}>
+            Abrir el ticket
+          </Link>
+        </div>
+      </div>
+    );
+  }
   if (!ticket) {
     return (
       <div className="flex flex-col items-center gap-4">
