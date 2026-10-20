@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { FieldError, Label } from "@/components/ui/Field";
 import { SmoothInput } from "@/components/ui/SmoothInput";
+import type { User } from "@supabase/supabase-js";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import {
   forgetLoginNext,
@@ -17,8 +18,37 @@ import {
 } from "@/lib/login-next";
 import { useAuth } from "./AuthProvider";
 
-/** `code` is the passwordless sign-in: a one-time code by email. */
-type Mode = "login" | "signup" | "reset" | "update" | "code";
+/**
+ * `code` is the passwordless sign-in: a one-time code by email, and the way
+ * in by default. `login` is the password form. `offer` comes right after a
+ * code sign-in, once per account: a password is optional, never required.
+ */
+type Mode = "login" | "signup" | "reset" | "update" | "code" | "offer";
+
+/** `?mode=password` opens the password form; anything else starts on the code. */
+function initialMode(param: string | null): Mode {
+  if (param === "update") return "update";
+  if (param === "password") return "login";
+  return "code";
+}
+
+/**
+ * Whether to ask, once, if they want a password after entering with a code.
+ * Not for Google or Apple accounts (they already have a way in without
+ * waiting for a code) and not again once they answered either way.
+ */
+export function shouldOfferPassword(user: User | null | undefined): boolean {
+  if (!user) return false;
+  const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+  if (meta.passwordOffered === true) return false;
+  // An invited account that already chose its password.
+  if (meta.mustSetPassword === false) return false;
+  const providers = (user.app_metadata?.providers ?? []) as unknown;
+  if (Array.isArray(providers) && providers.some((p) => p === "google" || p === "apple")) {
+    return false;
+  }
+  return true;
+}
 
 function friendlyAuthError(message: string): string {
   const lower = message.toLowerCase();
@@ -47,9 +77,7 @@ export function LoginForm() {
   const { user, loading } = useAuth();
 
   // /verify lands here with a session already open from the invite link.
-  const [mode, setMode] = useState<Mode>(
-    params.get("mode") === "update" ? "update" : "login",
-  );
+  const [mode, setMode] = useState<Mode>(() => initialMode(params.get("mode")));
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -61,6 +89,9 @@ export function LoginForm() {
   // this is their way in; it also works for any account.
   const [codeSentTo, setCodeSentTo] = useState<string | null>(null);
   const [code, setCode] = useState("");
+  // The account that just entered with a code, while the password offer is
+  // up: AuthProvider may not have published the session yet.
+  const [verifiedUser, setVerifiedUser] = useState<User | null>(null);
 
   // Supabase reports a failed email link either in the query (PKCE) or in
   // the hash (implicit). An expired confirmation link is not a Google error.
@@ -123,16 +154,33 @@ export function LoginForm() {
   // Update mode without a session (stale tab, link used elsewhere) has no
   // account to change, so fall back to a normal login.
   useEffect(() => {
-    if (loading || user || mode !== "update") return;
+    if (loading || user || verifiedUser || (mode !== "update" && mode !== "offer")) return;
     if (window.location.hash.includes("type=recovery")) return;
-    setMode("login");
-  }, [loading, user, mode]);
+    setMode(mode === "update" ? "login" : "code");
+  }, [loading, user, verifiedUser, mode]);
 
   useEffect(() => {
-    if (!nextReady || loading || !user || mode === "update") return;
+    if (!nextReady || loading || !user || mode === "update" || mode === "offer") return;
     forgetLoginNext();
     router.replace(homeFor(user, next));
   }, [nextReady, loading, user, router, next, mode]);
+
+  function finish(account: User | null) {
+    forgetLoginNext();
+    router.replace(homeFor(account, next));
+  }
+
+  async function declinePassword() {
+    setBusy("form");
+    try {
+      // Best effort: the worst case is being asked once more next time.
+      await getSupabaseBrowser()
+        .auth.updateUser({ data: { passwordOffered: true } })
+        .catch(() => null);
+    } finally {
+      finish(user ?? verifiedUser);
+    }
+  }
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -163,13 +211,30 @@ export function LoginForm() {
           setError("Escribe el código completo.");
           return;
         }
-        const { error: err } = await supabase.auth.verifyOtp({
+        const { data, error: err } = await supabase.auth.verifyOtp({
           email: codeSentTo,
           token,
           type: "email",
         });
         if (err) throw err;
+        if (shouldOfferPassword(data.user)) {
+          setVerifiedUser(data.user);
+          setPassword("");
+          setMode("offer");
+          return;
+        }
         // The session is open; the effect above sends them on.
+        return;
+      }
+      if (mode === "offer") {
+        const { error: err } = await supabase.auth.updateUser({
+          password,
+          data: { mustSetPassword: false, passwordOffered: true },
+        });
+        if (err) throw err;
+        toast.success("Contraseña guardada. También puedes seguir entrando con un código.");
+        setPassword("");
+        finish(user ?? verifiedUser);
         return;
       }
       if (mode === "login") {
@@ -227,8 +292,7 @@ export function LoginForm() {
         if (err) throw err;
         toast.success("Contraseña actualizada");
         setPassword("");
-        forgetLoginNext();
-        router.replace(homeFor(user, next));
+        finish(user);
         return;
       }
       const { error: err } = await supabase.auth.resetPasswordForEmail(
@@ -267,15 +331,17 @@ export function LoginForm() {
   }
 
   const title =
-    mode === "login"
+    mode === "login" || mode === "code"
       ? "Entra a Allons"
       : mode === "signup"
         ? "Crea tu cuenta"
         : mode === "update"
           ? "Elige una nueva contraseña"
-          : mode === "code"
-            ? "Entra con un código"
+          : mode === "offer"
+            ? "¿Quieres una contraseña?"
             : "Recupera tu contraseña";
+  // Google sits above the form wherever an account can be opened from scratch.
+  const showGoogle = mode === "login" || mode === "signup" || (mode === "code" && !codeSentTo);
 
   return (
     <div className="mx-auto w-full max-w-md">
@@ -288,13 +354,15 @@ export function LoginForm() {
           : mode === "code"
             ? codeSentTo
               ? `Te enviamos un código a ${codeSentTo}. Escríbelo aquí, no hace falta salir de esta página.`
-              : "Te enviamos un código de un solo uso a tu correo. Sin contraseña."
+              : "Escribe tu correo y te enviamos un código de un solo uso. Sin contraseña. Si aún no tienes cuenta, la creamos con este paso."
+          : mode === "offer"
+            ? "Opcional. Con una contraseña entras también sin esperar el código. Si prefieres, sigue entrando con un código: siempre funciona."
           : mode === "update"
             ? "Escribe la contraseña que usarás desde ahora, en la web y en la app."
-            : "Usa la misma cuenta que en la app. Tus tickets se ven en los dos lados."}
+            : "Entra con tu contraseña. Es la misma cuenta que en la app."}
       </p>
 
-      {mode === "login" || mode === "signup" ? (
+      {showGoogle ? (
         <div className="mt-8">
           <Button
             type="button"
@@ -319,7 +387,7 @@ export function LoginForm() {
 
       <form
         onSubmit={onSubmit}
-        className={`flex flex-col gap-4 ${mode === "login" || mode === "signup" ? "" : "mt-8"}`}
+        className={`flex flex-col gap-4 ${showGoogle ? "" : "mt-8"}`}
       >
         {mode === "signup" ? (
           <label className="block">
@@ -333,7 +401,7 @@ export function LoginForm() {
             />
           </label>
         ) : null}
-        {mode !== "update" && !(mode === "code" && codeSentTo) ? (
+        {mode !== "update" && mode !== "offer" && !(mode === "code" && codeSentTo) ? (
         <label className="block">
           <Label>Correo</Label>
           <SmoothInput
@@ -366,7 +434,7 @@ export function LoginForm() {
         ) : null}
         {mode !== "reset" && mode !== "code" ? (
           <label className="block">
-            <Label>{mode === "update" ? "Nueva contraseña" : "Contraseña"}</Label>
+            <Label>{mode === "update" || mode === "offer" ? "Nueva contraseña" : "Contraseña"}</Label>
             <SmoothInput
               type="password"
               value={password}
@@ -374,6 +442,7 @@ export function LoginForm() {
               autoComplete={mode === "login" ? "current-password" : "new-password"}
               placeholder="Mínimo 6 caracteres"
               minLength={6}
+              autoFocus={mode === "offer"}
               required
             />
           </label>
@@ -398,7 +467,7 @@ export function LoginForm() {
             ? "Entrar"
             : mode === "signup"
               ? "Crear cuenta"
-              : mode === "update"
+              : mode === "update" || mode === "offer"
                 ? "Guardar contraseña"
                 : mode === "code"
                   ? codeSentTo
@@ -406,6 +475,18 @@ export function LoginForm() {
                     : "Enviarme un código"
                   : "Enviar enlace"}
         </Button>
+        {mode === "offer" ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="lg"
+            full
+            disabled={busy !== null}
+            onClick={() => void declinePassword()}
+          >
+            Ahora no
+          </Button>
+        ) : null}
         {mode === "code" && codeSentTo ? (
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-white/50">
             <button
@@ -424,6 +505,7 @@ export function LoginForm() {
         ) : null}
       </form>
 
+      {mode !== "offer" ? (
       <div className="mt-6 flex flex-col items-center gap-3 text-sm text-white/55">
         {mode === "login" ? (
           <>
@@ -482,6 +564,7 @@ export function LoginForm() {
           </>
         )}
       </div>
+      ) : null}
     </div>
   );
 }
