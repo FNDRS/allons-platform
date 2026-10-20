@@ -101,14 +101,10 @@ export function useLeaveGuard({
       router.push(target.href);
       return;
     }
-    // Two steps back: over our own entry and the checkout. A tab that
-    // opened straight on the checkout has nowhere to go back to, so after
-    // a moment the event page is used instead.
-    const before = window.location.href;
-    window.history.go(-2);
-    window.setTimeout(() => {
-      if (window.location.href === before) router.replace(fallbackHref);
-    }, 350);
+    // The back button almost always means "the event page", which is also
+    // what a tab that opened straight on the checkout needs. Going there by
+    // route is predictable; walking the history over our own entry was not.
+    router.replace(fallbackHref);
   }, [pending, router, fallbackHref]);
 
   /** The checkout is moving on by itself: do not ask. */
