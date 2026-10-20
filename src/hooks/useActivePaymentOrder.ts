@@ -34,7 +34,11 @@ export function useActivePaymentOrder(eventId: string, enabled: boolean) {
 
   // A card charge has no link and is still shown: the buyer has to know why
   // a new checkout is refused. A link order without one cannot be resumed.
-  if (!order || (order.channel !== "card" && !order.paymentLink)) return null;
-  if (expiresAt && new Date(expiresAt).getTime() <= Date.now()) return null;
-  return order;
+  const usable =
+    order &&
+    (order.channel === "card" || order.paymentLink) &&
+    !(expiresAt && new Date(expiresAt).getTime() <= Date.now());
+  // `settled`: the first answer is in (or was never asked for), so the page
+  // will not grow a notice at the top later.
+  return { order: usable ? order : null, settled: !enabled || !query.isPending };
 }

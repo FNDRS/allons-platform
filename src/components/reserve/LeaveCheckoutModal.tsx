@@ -11,22 +11,27 @@ import { Modal } from "@/components/ui/Modal";
 export function LeaveCheckoutModal({
   open,
   holdsTicket,
+  hasInput,
   onStay,
   onLeave,
 }: {
   open: boolean;
   /** A paid entry is picked, so leaving also gives up its place. */
   holdsTicket: boolean;
+  /** Something was typed, so leaving also loses that. */
+  hasInput: boolean;
   onStay: () => void;
   onLeave: () => void;
 }) {
+  const cost =
+    holdsTicket && hasInput
+      ? "Si sales, tu entrada se libera y pierdes lo que llevas llenado."
+      : holdsTicket
+        ? "Si sales, tu entrada se libera."
+        : "Si sales, pierdes lo que llevas llenado.";
   return (
     <Modal open={open} onClose={onStay} title="¿Salir del checkout?">
-      <p className="text-[15px] leading-7 text-white/65">
-        {holdsTicket
-          ? "Si sales, tu entrada se libera y pierdes lo que llevas llenado."
-          : "Si sales, pierdes lo que llevas llenado."}
-      </p>
+      <p className="text-[15px] leading-7 text-white/65">{cost}</p>
       <div className="mt-6 flex flex-col gap-3">
         <Button size="lg" full onClick={onStay} autoFocus>
           Permanecer
