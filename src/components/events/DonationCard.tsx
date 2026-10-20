@@ -20,6 +20,16 @@ function HeartMark() {
   );
 }
 
+function InfoMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="8.25" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M12 11v5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="12" cy="8" r="0.9" fill="currentColor" />
+    </svg>
+  );
+}
+
 function AccountNumber({ label, number }: { label: string; number: string }) {
   const [copied, setCopied] = useState(false);
   const reset = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,18 +102,27 @@ export function DonationCard({
             Estas cuentas son solo para donar directo a {info.beneficiary}, con un depósito o
             una transferencia. Toca un número para copiarlo.
           </p>
-          <div
-            role="note"
-            className="mt-3 rounded-[14px] border border-amber-400/30 bg-amber-400/10 px-3.5 py-3 text-sm leading-6"
-          >
-            <p className="font-bold text-amber-200">
-              Esta donación no equivale al pago del kit. Es aparte.
-            </p>
-            <p className="mt-1 text-amber-100/80">
-              Depositar aquí no te inscribe ni te da entrada. Tu entrada y tu kit se pagan
-              solo aquí en Allons.
-            </p>
-          </div>
+        </div>
+      </div>
+
+      {/* The one thing a donor must not get wrong, said once, in the same
+          voice as the rest of the card: a quiet panel with a mark, not a
+          yellow warning box. */}
+      <div
+        role="note"
+        className="flex gap-3.5 rounded-[18px] bg-[linear-gradient(135deg,rgba(246,112,16,0.10),rgba(255,255,255,0.02)_60%)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ring-1 ring-accent/25"
+      >
+        <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-accent/15 text-accent ring-1 ring-accent/30">
+          <InfoMark />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[14px] font-bold tracking-tight text-white">
+            Esta donación es aparte del pago de tu kit
+          </p>
+          <p className="mt-1 text-[13px] leading-5 text-white/60">
+            Depositar aquí no te inscribe ni te da entrada. Tu entrada y tu kit se pagan
+            solo aquí, en Allons.
+          </p>
         </div>
       </div>
 
