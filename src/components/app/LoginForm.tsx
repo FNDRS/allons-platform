@@ -17,7 +17,8 @@ import {
 } from "@/lib/login-next";
 import { useAuth } from "./AuthProvider";
 
-type Mode = "login" | "signup" | "reset" | "update";
+/** `code` is the passwordless sign-in: a one-time code by email. */
+type Mode = "login" | "signup" | "reset" | "update" | "code";
 
 function friendlyAuthError(message: string): string {
   const lower = message.toLowerCase();
@@ -55,6 +56,11 @@ export function LoginForm() {
   const [busy, setBusy] = useState<"google" | "form" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // Passwordless sign-in: where the code went, and what was typed back.
+  // Accounts made at checkout (code or Google) have no password at all, so
+  // this is their way in; it also works for any account.
+  const [codeSentTo, setCodeSentTo] = useState<string | null>(null);
+  const [code, setCode] = useState("");
 
   // Supabase reports a failed email link either in the query (PKCE) or in
   // the hash (implicit). An expired confirmation link is not a Google error.
@@ -68,7 +74,7 @@ export function LoginForm() {
     if (!failed) return;
     if (code === "otp_expired" || /expired|invalid/i.test(description)) {
       setError(
-        "El enlace ya no sirve. Vuelve a crear la cuenta o usa Olvidé mi contraseña.",
+        "El enlace venció o ya se usó. Pide uno nuevo, o entra con un código por correo: no necesitas contraseña.",
       );
       return;
     }
@@ -135,6 +141,37 @@ export function LoginForm() {
     setBusy("form");
     try {
       const supabase = getSupabaseBrowser();
+      if (mode === "code") {
+        const target = email.trim().toLowerCase();
+        if (!codeSentTo) {
+          const { error: err } = await supabase.auth.signInWithOtp({
+            email: target,
+            options: {
+              // An email without an account gets one: same as the checkout.
+              shouldCreateUser: true,
+              emailRedirectTo: `${window.location.origin}/login`,
+            },
+          });
+          if (err) throw err;
+          rememberLoginNext(next);
+          setCodeSentTo(target);
+          setCode("");
+          return;
+        }
+        const token = code.replace(/\D/g, "");
+        if (token.length < 6) {
+          setError("Escribe el código completo.");
+          return;
+        }
+        const { error: err } = await supabase.auth.verifyOtp({
+          email: codeSentTo,
+          token,
+          type: "email",
+        });
+        if (err) throw err;
+        // The session is open; the effect above sends them on.
+        return;
+      }
       if (mode === "login") {
         const { data, error: err } = await supabase.auth.signInWithPassword({
           email: email.trim().toLowerCase(),
@@ -236,7 +273,9 @@ export function LoginForm() {
         ? "Crea tu cuenta"
         : mode === "update"
           ? "Elige una nueva contraseña"
-          : "Recupera tu contraseña";
+          : mode === "code"
+            ? "Entra con un código"
+            : "Recupera tu contraseña";
 
   return (
     <div className="mx-auto w-full max-w-md">
@@ -245,7 +284,11 @@ export function LoginForm() {
       </h1>
       <p className="mt-3 text-sm text-white/55">
         {mode === "reset"
-          ? "Te enviaremos un enlace para elegir una nueva contraseña."
+          ? "Te enviaremos un enlace para elegir una nueva contraseña. Si creaste tu cuenta con un código por correo o con Google, no tienes contraseña: entra con un código."
+          : mode === "code"
+            ? codeSentTo
+              ? `Te enviamos un código a ${codeSentTo}. Escríbelo aquí, no hace falta salir de esta página.`
+              : "Te enviamos un código de un solo uso a tu correo. Sin contraseña."
           : mode === "update"
             ? "Escribe la contraseña que usarás desde ahora, en la web y en la app."
             : "Usa la misma cuenta que en la app. Tus tickets se ven en los dos lados."}
@@ -290,7 +333,7 @@ export function LoginForm() {
             />
           </label>
         ) : null}
-        {mode !== "update" ? (
+        {mode !== "update" && !(mode === "code" && codeSentTo) ? (
         <label className="block">
           <Label>Correo</Label>
           <SmoothInput
@@ -304,7 +347,24 @@ export function LoginForm() {
           />
         </label>
         ) : null}
-        {mode !== "reset" ? (
+        {mode === "code" && codeSentTo ? (
+          <label className="block">
+            <Label>Código</Label>
+            <SmoothInput
+              value={code}
+              onChange={(event) =>
+                setCode(event.target.value.replace(/\D/g, "").slice(0, 8))
+              }
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              placeholder="123456"
+              autoFocus
+              className="tracking-[0.4em]"
+              required
+            />
+          </label>
+        ) : null}
+        {mode !== "reset" && mode !== "code" ? (
           <label className="block">
             <Label>{mode === "update" ? "Nueva contraseña" : "Contraseña"}</Label>
             <SmoothInput
@@ -340,13 +400,43 @@ export function LoginForm() {
               ? "Crear cuenta"
               : mode === "update"
                 ? "Guardar contraseña"
-                : "Enviar enlace"}
+                : mode === "code"
+                  ? codeSentTo
+                    ? "Entrar"
+                    : "Enviarme un código"
+                  : "Enviar enlace"}
         </Button>
+        {mode === "code" && codeSentTo ? (
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-white/50">
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() => {
+                setCodeSentTo(null);
+                setCode("");
+                setError(null);
+              }}
+              className="transition-colors hover:text-white disabled:opacity-50"
+            >
+              Reenviar o usar otro correo
+            </button>
+          </div>
+        ) : null}
       </form>
 
       <div className="mt-6 flex flex-col items-center gap-3 text-sm text-white/55">
         {mode === "login" ? (
           <>
+            <button
+              type="button"
+              className="font-semibold text-white/80 transition-colors duration-700 ease-out hover:text-white"
+              onClick={() => {
+                setError(null);
+                setMode("code");
+              }}
+            >
+              Entrar con un código por correo, sin contraseña
+            </button>
             <button
               type="button"
               className="transition-colors duration-700 ease-out hover:text-white"
@@ -366,13 +456,30 @@ export function LoginForm() {
             </p>
           </>
         ) : (
-          <button
-            type="button"
-            className="transition-colors duration-700 ease-out hover:text-white"
-            onClick={() => setMode("login")}
-          >
-            Ya tengo cuenta, entrar
-          </button>
+          <>
+            {mode === "reset" ? (
+              <button
+                type="button"
+                className="font-semibold text-white/80 transition-colors duration-700 ease-out hover:text-white"
+                onClick={() => {
+                  setError(null);
+                  setMode("code");
+                }}
+              >
+                Entrar con un código por correo
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="transition-colors duration-700 ease-out hover:text-white"
+              onClick={() => {
+                setCodeSentTo(null);
+                setMode("login");
+              }}
+            >
+              {mode === "code" ? "Entrar con contraseña" : "Ya tengo cuenta, entrar"}
+            </button>
+          </>
         )}
       </div>
     </div>
