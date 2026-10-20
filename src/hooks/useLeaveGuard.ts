@@ -10,20 +10,30 @@ type Pending = { kind: "back" } | { kind: "href"; href: string };
 export const ALLOW_LEAVE_ATTR = "data-allow-leave";
 
 /**
- * Asks before the buyer leaves a checkout they have started: the browser's
- * back button, any link on the page (the nav, "Volver al evento") and
- * closing or reloading the tab. In-app moves show our own modal through
- * `pending`; closing the tab can only get the browser's native prompt.
+ * Asks before the buyer leaves a checkout they have started. Two levels:
  *
- * Armed only while there is something to lose. `release()` stands down
- * for a navigation the checkout itself makes (the order was placed, Google
- * sign-in), so those never ask.
+ * `armed` catches any link on the page (the nav, "Volver al evento", the
+ * footer) with our own modal through `pending`. A held ticket is enough
+ * for this: the buyer may not have typed anything yet, but the clock on
+ * their entry is running.
+ *
+ * `unsaved` also traps the browser's back button and asks on closing or
+ * reloading the tab (the native prompt is all a tab close can get). Only
+ * while something typed would really be lost: a reload with nothing typed
+ * restores the ticket and the draft on its own, and a back-button trap on
+ * every landing loops a buyer who merely mis-tapped Reservar.
+ *
+ * `release()` stands down for a navigation the checkout itself makes (the
+ * order was placed, Google sign-in), so those never ask.
  */
 export function useLeaveGuard({
   armed,
+  unsaved = armed,
   fallbackHref,
 }: {
   armed: boolean;
+  /** Something typed that a reload would lose. Defaults to `armed`. */
+  unsaved?: boolean;
   /** Where "leave" goes when there is no page to go back to. */
   fallbackHref: string;
 }) {
@@ -33,7 +43,7 @@ export function useLeaveGuard({
   const trapped = useRef(false);
 
   useEffect(() => {
-    if (!armed) return;
+    if (!armed || !unsaved) return;
     released.current = false;
 
     // One extra history entry under the checkout: the back button lands on
@@ -47,6 +57,23 @@ export function useLeaveGuard({
       window.history.pushState({ allonsLeaveGuard: true }, "", window.location.href);
       setPending({ kind: "back" });
     };
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (released.current) return;
+      event.preventDefault();
+      // Older browsers read this; modern ones show their own text.
+      event.returnValue = "";
+    };
+    window.addEventListener("popstate", onPop);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [armed, unsaved]);
+
+  useEffect(() => {
+    if (!armed) return;
+    released.current = false;
 
     // Capture phase on the document runs before React's own handlers, so
     // the Link never navigates; the modal does, if the buyer confirms.
@@ -73,20 +100,9 @@ export function useLeaveGuard({
       setPending({ kind: "href", href: url.pathname + url.search + url.hash });
     };
 
-    const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (released.current) return;
-      event.preventDefault();
-      // Older browsers read this; modern ones show their own text.
-      event.returnValue = "";
-    };
-
-    window.addEventListener("popstate", onPop);
     document.addEventListener("click", onClick, true);
-    window.addEventListener("beforeunload", onBeforeUnload);
     return () => {
-      window.removeEventListener("popstate", onPop);
       document.removeEventListener("click", onClick, true);
-      window.removeEventListener("beforeunload", onBeforeUnload);
     };
   }, [armed]);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Lock } from "lucide-react";
 import { useActivePaymentOrder } from "@/hooks/useActivePaymentOrder";
@@ -83,16 +83,20 @@ export function ReserveView({ eventId }: { eventId: string }) {
     },
   });
   // Leaving a started checkout asks first. Not armed while the sale is only
-  // previewed, nor before the buyer touched anything; stood down when the
-  // checkout itself moves on (order placed, Google sign-in).
+  // previewed, nor before there is something to lose: a held ticket (the
+  // clock started the moment a paid entry was picked, even one picked for
+  // them from the event page), something typed, or a card being entered.
+  // Stood down when the checkout itself moves on (order placed, Google
+  // sign-in).
   const back = `/eventos/${encodeURIComponent(eventId)}`;
+  const hasInput =
+    form.interacted || checkout.draft.number.length > 0 || checkout.draft.name.length > 0;
   const leaveGuard = useLeaveGuard({
-    armed:
-      !form.preview &&
-      (form.interacted || checkout.draft.number.length > 0 || checkout.draft.name.length > 0),
+    armed: !form.preview && (Boolean(form.holdExpiresAt) || hasInput),
+    unsaved: !form.preview && hasInput,
     fallbackHref: back,
   });
-  const pendingOrder = useActivePaymentOrder(
+  const { order: pendingOrder, settled: pendingOrderSettled } = useActivePaymentOrder(
     eventId,
     ready && Boolean(user) && !form.preview,
   );
@@ -139,6 +143,9 @@ export function ReserveView({ eventId }: { eventId: string }) {
   useEffect(() => {
     if (form.guestUnavailable && isGuest) setAccountOpen(true);
   }, [form.guestUnavailable, isGuest]);
+  // Set when the session arrives through the modal or the Google round
+  // trip; consumed below once the payment step is really on the page.
+  const scrollToPay = useRef(false);
   useEffect(() => {
     if (!user) return;
     let resume = false;
@@ -150,12 +157,37 @@ export function ReserveView({ eventId }: { eventId: string }) {
     }
     if (!accountOpen && !resume) return;
     setAccountOpen(false);
-    window.setTimeout(() => {
-      document
-        .getElementById("reserve-pay")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 150);
+    scrollToPay.current = true;
   }, [user, accountOpen, eventId]);
+  // The sign-in redraws the page: the buyer step appears above, the saved
+  // cards load into the payment step, a pending order may show up at the
+  // top, and after Google the whole form is still a skeleton. The old
+  // scroll fired 150ms after the modal closed, before any of that was on
+  // the page, so it waits for the pay container to be mounted (a ref, not
+  // an id lookup, so a skeleton or an empty state cannot fool it) and for
+  // everything that lands above it to have answered.
+  const payNode = useRef<HTMLDivElement | null>(null);
+  const [payMounted, setPayMounted] = useState(false);
+  const setPayNode = useCallback((node: HTMLDivElement | null) => {
+    payNode.current = node;
+    setPayMounted(node !== null);
+  }, []);
+  const paySettled =
+    payMounted &&
+    Boolean(user) &&
+    !needsAccount &&
+    !accountOpen &&
+    !form.isLoading &&
+    !checkout.loading &&
+    pendingOrderSettled;
+  useEffect(() => {
+    if (!scrollToPay.current || !paySettled) return;
+    scrollToPay.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      payNode.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [paySettled]);
 
   function onPay() {
     if (form.preview) return;
@@ -447,7 +479,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
         />
       </section>
 
-      <div id="reserve-pay" className="scroll-mt-6">
+      <div id="reserve-pay" ref={setPayNode} className="scroll-mt-6">
         {!needsAccount && !chargesNothing ? (
           <PaymentMethodStep step={payStep} checkout={checkout} />
         ) : null}
@@ -549,6 +581,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
       <LeaveCheckoutModal
         open={leaveGuard.pending}
         holdsTicket={Boolean(form.holdExpiresAt)}
+        hasInput={hasInput}
         onStay={leaveGuard.stay}
         onLeave={leaveGuard.leave}
       />
