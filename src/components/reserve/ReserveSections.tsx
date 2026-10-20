@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Minus, Plus, User } from "lucide-react";
+import { StockBadge } from "@/components/events/EventDetailSections";
 import { useId, useState } from "react";
 import {
   allOptionsSoldOut,
@@ -127,9 +128,11 @@ export function EntryTypePicker({
                           A la venta desde {opensAt}
                         </p>
                       ) : type.remaining != null ? (
-                        <p className="mt-0.5 text-[13px] text-white/40">
-                          {type.remaining} disponibles
-                        </p>
+                        <div className="mt-1.5">
+                          <StockBadge tone={type.remaining === 0 ? "soldOut" : "open"}>
+                            {type.remaining === 0 ? "Agotado" : `${type.remaining} disponibles`}
+                          </StockBadge>
+                        </div>
                       ) : null}
                     </div>
                   </div>
