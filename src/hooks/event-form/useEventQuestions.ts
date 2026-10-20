@@ -78,8 +78,10 @@ function toPayload(drafts: EventQuestionDraft[]): ProviderEventQuestionInput[] {
     label: draft.label.trim(),
     kind: draft.kind,
     ...(questionNeedsOptions(draft.kind) ? { options: parseQuestionOptions(draft.optionsText) } : {}),
-    ...(questionTakesLimits(draft.kind) && draft.scope === "attendee"
-      ? { optionLimits: limitsPayload(draft) }
+    // Null clears stored limits: a question asked once per order has no
+    // per-option stock, and the editor hides the limits for it.
+    ...(questionTakesLimits(draft.kind)
+      ? { optionLimits: draft.scope === "attendee" ? limitsPayload(draft) : null }
       : {}),
     required: draft.required,
     scope: draft.scope,

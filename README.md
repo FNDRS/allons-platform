@@ -29,10 +29,10 @@ la sesión de Supabase (Bearer); no hay rutas `/api/*` propias para esto.
 Requiere `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` en el
 navegador y, opcionalmente, `NEXT_PUBLIC_ALLONS_API_URL`.
 
-Los pagos están pausados en código mientras Clinpays esté caído
-(`src/lib/paymentsOutage.ts`). En local, `NEXT_PUBLIC_PAYMENTS_OUTAGE=false`
-en `.env.local` los habilita contra una API con la pasarela simulada; ver
-`docs/guest-checkout.md` en allons-api.
+`NEXT_PUBLIC_PAYMENTS_OUTAGE=true` pausa los pagos en todo el sitio (banner y
+botones) mientras Clinpays esté caído; sin la variable, corren. Para probar
+el checkout en local con la pasarela simulada ver `docs/guest-checkout.md`
+en allons-api.
 
 ## Stack
 

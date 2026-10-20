@@ -41,7 +41,7 @@ export type CardChargeResult = {
   status: "paid" | "failed" | "pending";
   redirectData?: string | null;
   /** Set on a guest charge: how this browser reads the order back. */
-  guestToken?: string;
+  guestToken?: string | null;
   buyerEmail?: string;
 };
 
@@ -62,6 +62,7 @@ export function useCardCheckout({
   guestBuyer = null,
   proveHuman,
   onOrderPlaced,
+  onGuestPending,
 }: {
   userId: string | null;
   enabled: boolean;
@@ -81,6 +82,11 @@ export function useCardCheckout({
   proveHuman?: () => Promise<string | null>;
   /** The order exists and the buyer is about to leave for `/pagar`. */
   onOrderPlaced?: (orderId: string) => void;
+  /**
+   * A guest's own checkout is still open and the API refused this one.
+   * Returns true when the caller now shows the notice for it.
+   */
+  onGuestPending?: (err: unknown) => boolean;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -268,9 +274,12 @@ export function useCardCheckout({
       paidOrderId = result.orderId;
     } catch (err) {
       if (isApiError(err) && err.code === GUEST_CARD_PAUSED_CODE) setPaused(true);
-      if (!eventId || !rememberPendingOrder(queryClient, eventId, err)) {
-        setError(messageFor(err));
-      }
+      // A guest's open checkout has its own notice; the signed-in one reads
+      // `/me` queries a guest cannot make.
+      const covered = isGuest
+        ? Boolean(onGuestPending?.(err))
+        : Boolean(eventId) && rememberPendingOrder(queryClient, eventId as string, err);
+      if (!covered) setError(messageFor(err));
     } finally {
       // The buyer did not ask to keep the card: drop it from the vault
       // whether the charge went through or not, before leaving the page.

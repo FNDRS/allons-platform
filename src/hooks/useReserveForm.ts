@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "@/components/app/AuthProvider";
+import { accountNameOf, useAuth } from "@/components/app/AuthProvider";
 import { deriveReserveState, useEventDetail } from "@/hooks/useEventDetail";
 import { isApiError } from "@/lib/api/client";
 import {
@@ -167,16 +167,6 @@ function clearStoredDraft(eventId: string) {
   }
 }
 
-/** The name stored on the account, or null. Never the email prefix. */
-function accountNameOf(user: { user_metadata?: Record<string, unknown> }): string | null {
-  const meta = user.user_metadata ?? {};
-  for (const key of ["full_name", "name"]) {
-    const value = meta[key];
-    if (typeof value === "string" && value.trim()) return value.trim();
-  }
-  return null;
-}
-
 function emptyHolder(): HolderDraft {
   return { name: "", email: "", answers: {} };
 }
@@ -226,7 +216,7 @@ export function useReserveForm(
 ) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const detail = useEventDetail(eventId);
   const event = detail.event;
 
@@ -269,7 +259,9 @@ export function useReserveForm(
   // name no longer overrides them, only its email does.
   const buyerEdited = useRef(false);
 
-  const isGuest = !user;
+  // Not a guest until the session has been read: a signed-in buyer who
+  // reloads must not be sent through the guest endpoints meanwhile.
+  const isGuest = !authLoading && !user;
 
   const reserveKind =
     event && !detail.isPlaceholderData ? deriveReserveState(event).kind : null;
@@ -351,8 +343,7 @@ export function useReserveForm(
       // The account's own name only (Google, or what was typed when the
       // account was created). An account without one leaves the field
       // empty, and it is asked for before paying, not filled from the email.
-      name:
-        buyerEdited.current && current.name ? current.name : (accountNameOf(user) ?? current.name),
+      name: buyerEdited.current && current.name ? current.name : (accountNameOf(user) ?? ""),
       email: user.email ?? current.email,
     }));
   }, [user]);
@@ -607,7 +598,7 @@ export function useReserveForm(
   // Full checkout before signing in: the account will bring the email and,
   // with Google, the name. Neither is asked for yet; what is missing after
   // the sign-in is flagged then, by the pay button.
-  const accountPending = isGuest && requiresAccount(event);
+  const accountPending = isGuest && (requiresAccount(event) || isFree);
   const buyerErrors = useMemo(() => {
     const errors: { name?: string; email?: string; answers: string[] } = {
       answers: missingAnswers(buyerQuestions, buyerAnswers),
@@ -695,6 +686,10 @@ export function useReserveForm(
     setTouched(true);
     setError(null);
     if (!event || !entryType) return null;
+    if (authLoading) {
+      setError("Un momento, estamos cargando tu sesión.");
+      return null;
+    }
     if (!isFree && PAYMENTS_OUTAGE) {
       setError(PAYMENTS_OUTAGE_MESSAGE);
       return null;
@@ -822,10 +817,35 @@ export function useReserveForm(
     return buyerValid ? { name: buyerName, email: buyerEmail } : null;
   }
 
-  /** The order was placed: nothing to restore the next time this page opens. */
+  /**
+   * The order was placed: nothing to restore the next time this page opens.
+   * Only a guest's details are remembered for the next purchase; an
+   * account's name and email must not show up for the next person on a
+   * shared device.
+   */
   function orderPlaced(buyerInfo: GuestBuyer) {
     clearStoredDraft(eventId);
-    rememberGuestBuyer(buyerInfo);
+    if (isGuest) rememberGuestBuyer(buyerInfo);
+  }
+
+  /**
+   * A guest's own checkout is still open and the API refused another. With
+   * its token from this browser it can be resumed or dropped; otherwise it
+   * is waited out. True when the notice now covers the error.
+   */
+  function noteGuestPending(err: unknown): boolean {
+    if (!isGuest || !isApiError(err) || err.code !== PENDING_ORDER_EXISTS_CODE) return false;
+    const details = err.details ?? {};
+    const orderId = typeof details.orderId === "string" ? details.orderId : null;
+    if (!orderId) return false;
+    const stored = readGuestOrder(orderId);
+    setGuestPending({
+      orderId,
+      token: stored?.token ?? null,
+      expiresAt: typeof details.expiresAt === "string" ? details.expiresAt : null,
+      channel: details.channel === "card" ? "card" : "link",
+    });
+    return true;
   }
 
   async function submit() {
@@ -863,11 +883,15 @@ export function useReserveForm(
           buyer: draft.buyer,
           ...(turnstileToken ? { turnstileToken } : {}),
         });
-        rememberGuestOrder(placed.orderId, {
-          token: placed.guestToken,
-          eventId: event.id,
-          email: placed.buyerEmail,
-        });
+        // Null when the API could not store it: the receipt mail is then
+        // the way to the ticket, and /pagar says so.
+        if (placed.guestToken) {
+          rememberGuestOrder(placed.orderId, {
+            token: placed.guestToken,
+            eventId: event.id,
+            email: placed.buyerEmail,
+          });
+        }
         order = placed;
       } else {
         order = await initiatePayment(input);
@@ -900,22 +924,9 @@ export function useReserveForm(
       }
       router.replace(payOrderHref(order.orderId, event.id, order.paymentLink));
     } catch (err) {
-      // A guest's own checkout is still open. With its token from this
-      // browser it can be resumed or dropped; otherwise they wait it out.
-      if (isGuest && isApiError(err) && err.code === PENDING_ORDER_EXISTS_CODE) {
-        const details = err.details ?? {};
-        const orderId = typeof details.orderId === "string" ? details.orderId : null;
-        if (orderId) {
-          const stored = readGuestOrder(orderId);
-          setGuestPending({
-            orderId,
-            token: stored?.token ?? null,
-            expiresAt: typeof details.expiresAt === "string" ? details.expiresAt : null,
-            channel: details.channel === "card" ? "card" : "link",
-          });
-          setSubmitting(false);
-          return;
-        }
+      if (noteGuestPending(err)) {
+        setSubmitting(false);
+        return;
       }
       // Su propio pago con tarjeta sigue esperando al banco: lo explica el
       // aviso junto al botón de pagar, con el tiempo que falta.
@@ -1073,6 +1084,7 @@ export function useReserveForm(
     setBuyerNameFromAccount,
     guestBuyer,
     orderPlaced,
+    noteGuestPending,
     guestPending,
     dropGuestPending,
     clearGuestPending: () => setGuestPending(null),

@@ -70,6 +70,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
     directCard: form.cardPaymentEnabled,
     guestBuyer: isGuest && !accountRequired ? form.guestBuyer : null,
     proveHuman: turnstile.getToken,
+    onGuestPending: form.noteGuestPending,
     onOrderPlaced: () => {
       const buyer = form.guestBuyer();
       if (buyer) form.orderPlaced(buyer);
@@ -330,6 +331,17 @@ export function ReserveView({ eventId }: { eventId: string }) {
           onAnswer={form.setBuyerAnswer}
           signInHref={isGuest && !accountRequired ? signInHref : null}
         />
+        {/* One ticket with nothing else to ask: the attendee card is not
+            shown, so this is how it goes to someone else. */}
+        {soloBuyer ? (
+          <button
+            type="button"
+            onClick={() => form.setFirstIsBuyer(false)}
+            className="mt-3 text-[13px] font-semibold text-white/50 underline underline-offset-4 transition hover:text-white"
+          >
+            La entrada es para otra persona
+          </button>
+        ) : null}
       </section>
       ) : null}
 

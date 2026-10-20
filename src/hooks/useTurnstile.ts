@@ -46,7 +46,12 @@ function loadTurnstile(): Promise<TurnstileApi> {
       if (window.turnstile) resolve(window.turnstile);
       else reject(new Error("Turnstile no cargó"));
     };
-    script.onerror = () => reject(new Error("Turnstile no cargó"));
+    script.onerror = () => {
+      // A blocked or flaky load must not poison every later attempt.
+      scriptLoading = null;
+      script.remove();
+      reject(new Error("No pudimos cargar la verificación. Recarga la página e intenta de nuevo."));
+    };
     document.head.appendChild(script);
   });
   return scriptLoading;
@@ -100,6 +105,11 @@ export function useTurnstile() {
           pending.current = null;
         },
         "expired-callback": () => {
+          // The challenge timed out while the buyer was on it: say so now
+          // rather than leaving the button spinning until our own timeout.
+          pending.current?.reject(
+            new Error("La verificación venció. Pulsa pagar de nuevo."),
+          );
           pending.current = null;
         },
       });

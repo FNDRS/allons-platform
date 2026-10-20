@@ -18,13 +18,10 @@ import { getGuestTicket, guestKeys, type GuestOrderDetail } from "@/lib/api/gues
 export function GuestTicketsPanel({
   order,
   eventId,
-  token,
 }: {
   order: GuestOrderDetail;
   eventId: string | null;
-  token: string;
 }) {
-  void token;
   const tickets = (order.tickets ?? []).filter(
     (ticket): ticket is { id: string; key: string } => Boolean(ticket.key),
   );

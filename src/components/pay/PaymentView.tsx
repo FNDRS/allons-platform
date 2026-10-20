@@ -9,6 +9,7 @@ import { useAuth } from "@/components/app/AuthProvider";
 import { useCountdown } from "@/hooks/useCountdown";
 import { usePaymentOrder } from "@/hooks/usePaymentOrder";
 import {
+  forgetGuestOrder,
   getGuestOrder,
   readGuestOrder,
   type GuestOrderDetail,
@@ -41,7 +42,11 @@ const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
  * URL cannot make this page open somewhere else.
  */
 function trustedLink(orderId: string, fromQuery: string | null): string | null {
-  const candidates = [readStoredLink(orderId), fromQuery];
+  return trustedCandidate([readStoredLink(orderId), fromQuery]);
+}
+
+/** The first candidate that is a payment form on a host we know. */
+function trustedCandidate(candidates: Array<string | null | undefined>): string | null {
   for (const raw of candidates) {
     if (!raw) continue;
     try {
@@ -85,8 +90,10 @@ export function PaymentView({ orderId }: { orderId: string }) {
     setGuest(readGuestOrder(orderId));
   }, [orderId]);
   const guestToken = guest?.token ?? null;
-  // A signed-in buyer reads their own orders; a guest, theirs by token. With
-  // neither there is nothing to poll, and the page says so below.
+  // An order placed as a guest answers to its token, even once the buyer
+  // has signed in: the account does not own it until the claim runs. With
+  // neither a token nor a session there is nothing to poll, and the page
+  // says so below.
   const ready = !authLoading && guest !== undefined && (Boolean(user) || Boolean(guestToken));
   const [link, setLink] = useState<string | null>(null);
   useEffect(() => {
@@ -104,8 +111,22 @@ export function PaymentView({ orderId }: { orderId: string }) {
   const returnedFailed = estado === "error";
   const { order, phase, error, resume } = usePaymentOrder(
     ready ? orderId : "",
-    guestToken && !user ? () => getGuestOrder(orderId, guestToken) : undefined,
+    guestToken ? () => getGuestOrder(orderId, guestToken) : undefined,
   );
+  const asGuest = Boolean(guestToken);
+  // A guest resuming a link order in a new tab has no stored link; the
+  // order carries the form's URL, checked against the same hosts.
+  const orderLink = asGuest ? ((order as GuestOrderDetail | undefined)?.paymentLink ?? null) : null;
+  useEffect(() => {
+    if (link || !orderLink) return;
+    setLink(trustedCandidate([orderLink]));
+  }, [link, orderLink]);
+  // A closed order needs no token any more. (`orderStatus` is read below.)
+  const closedStatus =
+    order && order.status !== "pending_payment" && order.status !== "paid" ? order.status : null;
+  useEffect(() => {
+    if (asGuest && closedStatus) forgetGuestOrder(orderId);
+  }, [asGuest, orderId, closedStatus]);
   const countdown = useCountdown(order?.expiresAt);
   // A one-off card vaulted for a 3DS charge waited in the vault for the
   // bank's answer. The order is settled: let it go.
@@ -149,7 +170,6 @@ export function PaymentView({ orderId }: { orderId: string }) {
 
   const retryHref = retryHrefFor(order, eventId);
   const forClass = order ? isClassPackageOrder(order) : false;
-  const asGuest = Boolean(guestToken) && !user;
 
   if (phase === "paid" && order) {
     if (asGuest) {
@@ -157,7 +177,6 @@ export function PaymentView({ orderId }: { orderId: string }) {
         <GuestTicketsPanel
           order={order as GuestOrderDetail}
           eventId={order.eventId ?? eventId}
-          token={guestToken as string}
         />
       );
     }

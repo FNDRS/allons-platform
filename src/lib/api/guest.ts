@@ -24,12 +24,13 @@ export interface GuestBuyer {
 }
 
 export interface GuestInitiateResponse extends InitiatePaymentResponse {
-  guestToken: string;
+  /** Null when the API could not store it; the receipt mail is then the way in. */
+  guestToken: string | null;
   buyerEmail: string;
 }
 
 export interface GuestChargeResponse extends ChargeSavedCardResponse {
-  guestToken: string;
+  guestToken: string | null;
   buyerEmail: string;
 }
 
@@ -94,7 +95,6 @@ export function getGuestTicket(ticketId: string, key: string) {
 }
 
 export const guestKeys = {
-  order: (id: string) => ["guest", "orders", id] as const,
   ticket: (id: string, key: string) => ["guest", "tickets", id, key] as const,
 };
 
