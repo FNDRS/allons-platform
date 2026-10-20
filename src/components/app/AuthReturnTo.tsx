@@ -23,11 +23,23 @@ export function AuthReturnTo() {
   const sent = useRef(false);
 
   useEffect(() => {
-    if (sent.current || pathname !== "/") return;
+    // `/` redirects to `/eventos` with its query string, so the return
+    // from Supabase (a Google sign-in, a recovery or confirmation link that
+    // fell back to the Site URL, or its error) lands on either.
+    if (sent.current || (pathname !== "/" && pathname !== "/eventos")) return;
     const params = new URLSearchParams(window.location.search);
-    if (params.get("error") || params.get("error_code")) {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    if (params.get("error") || params.get("error_code") || hash.get("error_code")) {
       sent.current = true;
-      router.replace("/login?oauth_error=1");
+      // The login page reads the code and says what happened (an expired
+      // link, say) instead of leaving the error on the events list.
+      const code = params.get("error_code") ?? hash.get("error_code");
+      const description =
+        params.get("error_description") ?? hash.get("error_description");
+      const query = new URLSearchParams({ oauth_error: "1" });
+      if (code) query.set("error_code", code);
+      if (description) query.set("error_description", description);
+      router.replace(`/login?${query.toString()}`);
       return;
     }
     if (loading || !user) return;
