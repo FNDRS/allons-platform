@@ -1,17 +1,17 @@
-import { THREE_DS_DONE } from "@/lib/threeDs";
+import { THREE_DS_RETURN_KEY_PREFIX, threeDsFallbackReturnHref } from "@/lib/threeDs";
 
 /**
- * Where the bank's 3DS window sends the buyer back. It loads inside the
- * sandboxed frame, with an opaque origin where the app itself could not run,
- * so it is a bare page: it tells the checkout the bank is done, or, opened on
- * its own, goes to the order page. The outcome is read from the API either way.
+ * Where the bank's 3DS page sends the buyer back. It lands on the order page
+ * the checkout stashed before handing the tab over, or on the plain order
+ * page when nothing was stashed. The outcome is read from the API either
+ * way. Should a bank load this inside a frame of its own, the top window is
+ * sent instead.
  */
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ orderId: string }> },
 ) {
   const { orderId } = await params;
-  const origin = new URL(request.url).origin;
   // JSON inside <script>: `<` escaped so the id cannot close the tag.
   const data = (value: unknown) => JSON.stringify(value).replace(/</g, "\\u003c");
   const html = `<!doctype html>
@@ -20,12 +20,16 @@ export async function GET(
 <p>Confirmando tu pago…</p>
 <script>
 (function () {
-  var message = { type: ${data(THREE_DS_DONE)}, orderId: ${data(orderId)} };
-  if (window.top !== window.self) {
-    window.top.postMessage(message, ${data(origin)});
-  } else {
-    window.location.replace(${data(`/pagar/${encodeURIComponent(orderId)}`)});
-  }
+  var fallback = ${data(threeDsFallbackReturnHref(orderId))};
+  var href = fallback;
+  try {
+    var stashed = window.sessionStorage.getItem(${data(`${THREE_DS_RETURN_KEY_PREFIX}${orderId}`)});
+    // Only a same-origin path: a poisoned entry must not send the buyer away.
+    if (stashed && stashed.charAt(0) === "/" && stashed.charAt(1) !== "/") href = stashed;
+  } catch (e) {}
+  var target = window;
+  try { if (window.top && window.top !== window) target = window.top; } catch (e) {}
+  try { target.location.replace(href); } catch (e) { window.location.replace(href); }
 })();
 </script>
 </body></html>`;

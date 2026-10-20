@@ -16,7 +16,6 @@ import { PAYMENTS_OUTAGE } from "@/lib/paymentsOutage";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { EventCover, EventPosterWash } from "@/components/events/EventCover";
 import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
-import { ThreeDsChallenge } from "@/components/pay/ThreeDsChallenge";
 import { HoldCountdown } from "./HoldCountdown";
 import { PendingOrderNotice } from "./PendingOrderNotice";
 import { ReserveAccountStep } from "./ReserveAccountStep";
@@ -427,10 +426,6 @@ export function ReserveView({ eventId }: { eventId: string }) {
         ) : null}
       </div>
 
-      <ThreeDsChallenge
-        challenge={checkout.threeDsChallenge}
-        onDone={checkout.finishThreeDs}
-      />
     </div>
   );
 }

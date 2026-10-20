@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
-import { useThreeDsChallenge } from "@/hooks/useThreeDsChallenge";
 import { isApiError } from "@/lib/api/client";
 import {
   enrollCard,
@@ -28,6 +27,7 @@ import {
   validateCardDraft,
   type CardDraft,
 } from "@/lib/cards";
+import { handOffToBank } from "@/lib/threeDs";
 
 /** What a card charge answers, whatever was bought. */
 export type CardChargeResult = {
@@ -66,7 +66,6 @@ export function useCardCheckout({
   const direct = directCard && !saved.enrollmentEnabled;
   const canEnterCard = saved.enrollmentEnabled || direct;
   const needsIdNumber = saved.needsIdNumber && !direct;
-  const threeDs = useThreeDsChallenge();
   const listKey = paymentMethodKeys.list(userId ?? "");
 
   const [choice, setChoice] = useState<CardChoice>("new");
@@ -153,6 +152,8 @@ export function useCardCheckout({
     setSubmitting(true);
     let enrolledId: string | null = null;
     let paidOrderId: string | null = null;
+    // The bank's page took the tab; nothing here may touch the form again.
+    let handedOff = false;
     try {
       let result: CardChargeResult;
       if (usingNewCard && direct) {
@@ -199,10 +200,19 @@ export function useCardCheckout({
         setError(DECLINED_MESSAGE);
         return;
       }
-      // The bank asked for 3DS. Waiting here keeps a one-off card in the
-      // vault until the bank is done with it; /pagar then reads the outcome.
+      // The bank asked for 3DS. Its page takes over the tab and sends the
+      // buyer back to /pagar, which reads the outcome. A one-off card has to
+      // stay in the vault until the bank answers, so /pagar drops it then.
       if (result.status === "pending" && result.redirectData) {
-        await threeDs.run(result.orderId, result.redirectData);
+        const href = hrefFor(result.orderId);
+        handedOff = true;
+        handOffToBank({
+          orderId: result.orderId,
+          html: result.redirectData,
+          returnHref: `${href}${href.includes("?") ? "&" : "?"}pago=tarjeta`,
+          dropCardId: enrolledId && !saveCard ? enrolledId : null,
+        });
+        return;
       }
       paidOrderId = result.orderId;
     } catch (err) {
@@ -213,8 +223,9 @@ export function useCardCheckout({
       // The buyer did not ask to keep the card: drop it from the vault
       // whether the charge went through or not, before leaving the page.
       // One retry, then the buyer is told so the card does not linger as
-      // a silent one-tap option.
-      if (enrolledId && !saveCard) {
+      // a silent one-tap option. Not when the bank has the tab: the card is
+      // still being charged, and the form must stay locked while we leave.
+      if (!handedOff && enrolledId && !saveCard) {
         const removed = await removePaymentMethod(enrolledId)
           .catch(() => removePaymentMethod(enrolledId as string))
           .then(() => true)
@@ -226,15 +237,17 @@ export function useCardCheckout({
           );
         }
       }
-      if (enrolledId) {
+      if (!handedOff && enrolledId) {
         void queryClient.invalidateQueries({ queryKey: listKey });
       }
       // Only a completed payment wipes the form; a decline or an error
       // keeps everything but the CVV so the buyer can fix one field.
-      setDraft(
-        paidOrderId ? EMPTY_CARD_DRAFT : (current) => ({ ...current, cvv: "" }),
-      );
-      setSubmitting(false);
+      if (!handedOff) {
+        setDraft(
+          paidOrderId ? EMPTY_CARD_DRAFT : (current) => ({ ...current, cvv: "" }),
+        );
+        setSubmitting(false);
+      }
     }
     if (paidOrderId) {
       // `pago=tarjeta` tells /pagar this order has no Paygate link and only
@@ -293,9 +306,6 @@ export function useCardCheckout({
     removeCard,
     /** Card being deleted right now, to disable its row. */
     removingId,
-    /** The bank's 3DS window that is open, or null. */
-    threeDsChallenge: threeDs.challenge,
-    finishThreeDs: threeDs.finish,
   };
 }
 
