@@ -27,6 +27,7 @@ import {
 import {
   cancelGuestOrder,
   guestInitiatePayment,
+  isGuestUnavailable,
   readGuestBuyer,
   readGuestOrder,
   rememberGuestBuyer,
@@ -261,6 +262,11 @@ export function useReserveForm(
   const [guestPending, setGuestPending] = useState<GuestPendingOrder | null>(null);
   /** Picks from the draft, handed to the map once it loads. */
   const [restoredResourceIds, setRestoredResourceIds] = useState<string[] | null>(null);
+  /**
+   * The API said this deployment has guest checkout off. From then on the
+   * page behaves like a full checkout: the account step opens on Reservar.
+   */
+  const [guestUnavailable, setGuestUnavailable] = useState(false);
   // Set once the stored draft (or its absence) has been read, so the
   // periodic write below never saves the empty initial state over it.
   const restored = useRef(false);
@@ -624,7 +630,7 @@ export function useReserveForm(
   // Full checkout before signing in: the account will bring the email and,
   // with Google, the name. Neither is asked for yet; what is missing after
   // the sign-in is flagged then, by the pay button.
-  const accountPending = isGuest && (requiresAccount(event) || isFree);
+  const accountPending = isGuest && (requiresAccount(event) || isFree || guestUnavailable);
   const buyerErrors = useMemo(() => {
     const errors: { name?: string; email?: string; answers: string[] } = {
       answers: missingAnswers(buyerQuestions, buyerAnswers),
@@ -955,6 +961,10 @@ export function useReserveForm(
         setSubmitting(false);
         return;
       }
+      if (noteGuestUnavailable(err)) {
+        setSubmitting(false);
+        return;
+      }
       // Su propio pago con tarjeta sigue esperando al banco: lo explica el
       // aviso junto al botón de pagar, con el tiempo que falta.
       if (!isGuest && rememberPendingOrder(queryClient, eventId, err)) {
@@ -984,6 +994,14 @@ export function useReserveForm(
       );
       setSubmitting(false);
     }
+  }
+
+  /** The deployment has guest checkout off: switch to the account flow. */
+  function noteGuestUnavailable(err: unknown): boolean {
+    if (!isGuest || !isGuestUnavailable(err)) return false;
+    setGuestUnavailable(true);
+    setError(null);
+    return true;
   }
 
   /** Drops the guest's open checkout so a new one can start right away. */
@@ -1113,6 +1131,8 @@ export function useReserveForm(
     guestBuyer,
     orderPlaced,
     noteGuestPending,
+    noteGuestUnavailable,
+    guestUnavailable,
     guestPending,
     dropGuestPending,
     clearGuestPending: () => setGuestPending(null),

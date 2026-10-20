@@ -63,6 +63,7 @@ export function useCardCheckout({
   proveHuman,
   onOrderPlaced,
   onGuestPending,
+  onGuestUnavailable,
 }: {
   userId: string | null;
   enabled: boolean;
@@ -87,6 +88,8 @@ export function useCardCheckout({
    * Returns true when the caller now shows the notice for it.
    */
   onGuestPending?: (err: unknown) => boolean;
+  /** Guest checkout is off on this deployment; the form switches to the account. */
+  onGuestUnavailable?: (err: unknown) => boolean;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -277,7 +280,7 @@ export function useCardCheckout({
       // A guest's open checkout has its own notice; the signed-in one reads
       // `/me` queries a guest cannot make.
       const covered = isGuest
-        ? Boolean(onGuestPending?.(err))
+        ? Boolean(onGuestPending?.(err)) || Boolean(onGuestUnavailable?.(err))
         : Boolean(eventId) && rememberPendingOrder(queryClient, eventId as string, err);
       if (!covered) setError(messageFor(err));
     } finally {
