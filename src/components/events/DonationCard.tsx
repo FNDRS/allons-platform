@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Info } from "lucide-react";
+import { Check, Copy, HandCoins } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import type { EventDonationInfo } from "@/lib/eventDonations";
@@ -103,8 +103,8 @@ export function DonationCard({
         role="note"
         className="flex gap-3.5 rounded-[14px] bg-linear-135 from-accent/10 to-white/2 to-60% p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ring-1 ring-accent/25"
       >
-        <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-accent/15 text-accent ring-1 ring-accent/30">
-          <Info className="size-4" aria-hidden />
+        <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-[12px] bg-accent/15 text-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-accent/30">
+          <HandCoins className="size-[18px]" strokeWidth={1.75} aria-hidden />
         </span>
         <div className="min-w-0">
           <p className="text-[14px] font-bold tracking-tight text-white">

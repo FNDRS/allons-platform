@@ -513,18 +513,19 @@ export function ReserveView({ eventId }: { eventId: string }) {
 
       {/* Informed consent before paying: the terms, the refund policy, the
           privacy notice and the event's own refund rules are linked right where
-          the buyer commits. */}
+          the buyer commits. Same tab on purpose: the leave guard asks first,
+          and a new tab behind the checkout read as leaving without being asked. */}
       <p className="text-center text-[12px] leading-relaxed text-white/45">
         Al {chargesNothing ? "confirmar" : "pagar"} aceptas los{" "}
-        <Link href="/terminos" target="_blank" className="underline underline-offset-2 hover:text-white">
+        <Link href="/terminos" className="underline underline-offset-2 hover:text-white">
           Términos y Condiciones
         </Link>
         , la{" "}
-        <Link href="/reembolsos" target="_blank" className="underline underline-offset-2 hover:text-white">
+        <Link href="/reembolsos" className="underline underline-offset-2 hover:text-white">
           Política de Reembolsos
         </Link>{" "}
         y la{" "}
-        <Link href="/privacidad" target="_blank" className="underline underline-offset-2 hover:text-white">
+        <Link href="/privacidad" className="underline underline-offset-2 hover:text-white">
           Política de Privacidad
         </Link>{" "}
         de Allons, y compartes con el organizador los datos de los asistentes.
