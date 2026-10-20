@@ -37,16 +37,25 @@ export function ReserveAccountStep({
   onLeave: () => void;
 }) {
   const [email, setEmail] = useState("");
-  const [emailTouched, setEmailTouched] = useState(false);
+  // The ticket step already asked for an email; it stays the login email
+  // until they say otherwise, so the same question is not asked twice.
+  const [otherEmail, setOtherEmail] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState<"google" | "send" | "verify" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // The first ticket already asks for an email; reuse it until they type here.
   useEffect(() => {
-    if (!emailTouched) setEmail(suggestedEmail);
-  }, [suggestedEmail, emailTouched]);
+    if (!otherEmail) setEmail(suggestedEmail);
+  }, [suggestedEmail, otherEmail]);
+  const reusing = !otherEmail && suggestedEmail.trim().includes("@");
+
+  function useOtherEmail() {
+    setOtherEmail(true);
+    setEmail("");
+    setSentTo(null);
+    setError(null);
+  }
 
   async function sendCode(event?: React.FormEvent) {
     event?.preventDefault();
@@ -62,7 +71,9 @@ export function ReserveAccountStep({
         email: target,
         options: {
           shouldCreateUser: true,
-          data: suggestedName.trim() ? { full_name: suggestedName.trim() } : undefined,
+          data: suggestedName.trim()
+            ? { full_name: suggestedName.trim() }
+            : undefined,
           // The email still carries a link; opened in this browser it lands
           // back on this same checkout.
           emailRedirectTo: window.location.href,
@@ -129,8 +140,8 @@ export function ReserveAccountStep({
           <form onSubmit={verify} className="flex flex-col gap-4">
             <p className="text-sm text-white/60">
               Te enviamos un código a{" "}
-              <span className="font-semibold text-white">{sentTo}</span>. Escríbelo
-              aquí, no hace falta salir de esta página.
+              <span className="font-semibold text-white">{sentTo}</span>.
+              Escríbelo aquí, no hace falta salir de esta página.
             </p>
             <label className="block">
               <Label>Código</Label>
@@ -162,10 +173,7 @@ export function ReserveAccountStep({
               <button
                 type="button"
                 disabled={busy !== null}
-                onClick={() => {
-                  setSentTo(null);
-                  setError(null);
-                }}
+                onClick={useOtherEmail}
                 className="transition-colors hover:text-white disabled:opacity-50"
               >
                 Usar otro correo
@@ -175,8 +183,9 @@ export function ReserveAccountStep({
         ) : (
           <div className="flex flex-col gap-4">
             <p className="text-sm text-white/55">
-              Si ya tienes cuenta en Allons, usa el mismo correo. Si no, la creamos
-              con este paso.
+              {reusing
+                ? "Con este correo guardamos tus tickets. Si ya tienes cuenta en Allons con otro, cámbialo aquí."
+                : "Si ya tienes cuenta en Allons, usa el mismo correo. Si no, la creamos con este paso."}
             </p>
             <Button
               type="button"
@@ -195,21 +204,37 @@ export function ReserveAccountStep({
               <span className="h-px flex-1 bg-white/10" />
             </div>
             <form onSubmit={sendCode} className="flex flex-col gap-4">
-              <label className="block">
-                <Label>Correo</Label>
-                <SmoothInput
-                  type="email"
-                  value={email}
-                  onChange={(event) => {
-                    setEmailTouched(true);
-                    setEmail(event.target.value);
-                  }}
-                  autoComplete="email"
-                  inputMode="email"
-                  placeholder="tu@correo.com"
-                  required
-                />
-              </label>
+              {reusing ? (
+                <p className="text-sm text-white/60">
+                  Te enviaremos un código a{" "}
+                  <span className="font-semibold text-white">
+                    {suggestedEmail.trim()}
+                  </span>
+                  .{" "}
+                  <button
+                    type="button"
+                    disabled={busy !== null}
+                    onClick={useOtherEmail}
+                    className="text-white/50 underline underline-offset-4 transition-colors hover:text-white disabled:opacity-50"
+                  >
+                    Usar otro correo
+                  </button>
+                </p>
+              ) : (
+                <label className="block">
+                  <Label>Correo</Label>
+                  <SmoothInput
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    autoComplete="email"
+                    inputMode="email"
+                    placeholder="tu@correo.com"
+                    autoFocus={otherEmail}
+                    required
+                  />
+                </label>
+              )}
               <FieldError>{error}</FieldError>
               <Button
                 type="submit"
