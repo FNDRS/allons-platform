@@ -114,7 +114,14 @@ export function useLeaveGuard({
     setPending(null);
     if (!target) return;
     if (target.kind === "href") {
-      router.push(target.href);
+      // Over our own trap entry when there is one, so the page they go to
+      // sits on a single checkout entry and one Back brings them here.
+      if (trapped.current) {
+        trapped.current = false;
+        router.replace(target.href);
+      } else {
+        router.push(target.href);
+      }
       return;
     }
     // The back button almost always means "the event page", which is also
@@ -129,5 +136,12 @@ export function useLeaveGuard({
     setPending(null);
   }, []);
 
-  return { pending: pending !== null, stay, leave, release };
+  return {
+    pending: pending !== null,
+    /** The link that was clicked, when the guard stepped in on one. */
+    pendingHref: pending?.kind === "href" ? pending.href : null,
+    stay,
+    leave,
+    release,
+  };
 }

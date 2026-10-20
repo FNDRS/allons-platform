@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Info } from "lucide-react";
+import { Check, Copy, HandCoins } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import type { EventDonationInfo } from "@/lib/eventDonations";
@@ -17,6 +17,27 @@ function HeartMark() {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+/** The card's icon badge: the same shape for the heart and the note. */
+function IconBadge({
+  tone = "neutral",
+  children,
+}: {
+  tone?: "neutral" | "accent";
+  children: React.ReactNode;
+}) {
+  const color =
+    tone === "accent"
+      ? "bg-accent/15 text-accent ring-accent/30"
+      : "bg-white/[0.045] text-white/80 ring-white/[0.08]";
+  return (
+    <span
+      className={`grid size-10 shrink-0 place-items-center rounded-[13px] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ${color}`}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -83,9 +104,9 @@ export function DonationCard({
   return (
     <Card className="flex flex-col gap-5">
       <div className="flex gap-4">
-        <span className="grid size-10 shrink-0 place-items-center rounded-[13px] bg-white/[0.045] text-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/[0.08]">
+        <IconBadge>
           <HeartMark />
-        </span>
+        </IconBadge>
         <div>
           <p className="text-[15px] font-bold tracking-tight">Haz una donación extra</p>
           <p className="mt-1 text-sm leading-6 text-white/70">
@@ -103,9 +124,9 @@ export function DonationCard({
         role="note"
         className="flex gap-3.5 rounded-[14px] bg-linear-135 from-accent/10 to-white/2 to-60% p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ring-1 ring-accent/25"
       >
-        <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-accent/15 text-accent ring-1 ring-accent/30">
-          <Info className="size-4" aria-hidden />
-        </span>
+        <IconBadge tone="accent">
+          <HandCoins className="size-[18px]" strokeWidth={1.75} aria-hidden />
+        </IconBadge>
         <div className="min-w-0">
           <p className="text-[14px] font-bold tracking-tight text-white">
             Esta donación es aparte de tu compra
