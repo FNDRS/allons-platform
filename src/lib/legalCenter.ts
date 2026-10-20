@@ -3,7 +3,9 @@
  * document (v1.1). The text is copied verbatim: legal approved it as written,
  * so edit the master document first and then mirror the change here. Two
  * deliberate deviations: allons.hn doesn't exist, so the site is
- * allonsapp.com, and the contact is soporte@ instead of contacto@.
+ * allonsapp.com, and the contact is soporte@ instead of contacto@. Version
+ * 1.2 adds the second paragraph of "Propiedad intelectual" in the terms (art
+ * made by ALLONS belongs to ALLONS); it is not in the v1.1 master yet.
  */
 
 export interface LegalSection {
@@ -11,7 +13,7 @@ export interface LegalSection {
   body: string[];
 }
 
-export const LEGAL_VERSION = "Versión 1.1 · Última actualización: 16 de octubre de 2026";
+export const LEGAL_VERSION = "Versión 1.2 · Última actualización: 19 de octubre de 2026";
 
 export const LEGAL_ENTITY = {
   name: "ALLONS S. de R.L.",
@@ -136,7 +138,8 @@ export const TERMS_SECTIONS: LegalSection[] = [
   {
     heading: "19. Propiedad intelectual",
     body: [
-      "Marcas, diseños, software, contenidos y materiales de ALLONS están protegidos por la legislación aplicable. Se prohíbe su explotación no autorizada. Los materiales de organizadores pertenecen a sus titulares."
+      "Marcas, diseños, software, contenidos y materiales de ALLONS están protegidos por la legislación aplicable. Se prohíbe su explotación no autorizada. Los materiales de organizadores pertenecen a sus titulares.",
+      "Todo arte, pieza gráfica, diseño, ilustración, animación, fotografía, video y demás material creativo elaborado por ALLONS, por sí o a través de su equipo, para eventos, clases, comercios, organizadores o campañas, es propiedad exclusiva de ALLONS, incluidos sus archivos fuente y versiones intermedias. Salvo acuerdo escrito en contrario, el organizador o comercio recibe únicamente una licencia limitada, no exclusiva e intransferible para usar ese material en la promoción del evento o servicio para el que fue creado. No está permitido reproducirlo, modificarlo, cederlo, revenderlo ni utilizarlo para otros fines sin autorización expresa y por escrito de ALLONS."
     ],
   },
   {
