@@ -8,7 +8,7 @@ import { useActivePaymentOrder } from "@/hooks/useActivePaymentOrder";
 import { useCardCheckout } from "@/hooks/useCardCheckout";
 import { useBuyerUnitPrices } from "@/hooks/useBuyerUnitPrices";
 import { useLeaveGuard } from "@/hooks/useLeaveGuard";
-import { useReserveForm } from "@/hooks/useReserveForm";
+import { useReserveForm, abandonReserve } from "@/hooks/useReserveForm";
 import { useTurnstile } from "@/hooks/useTurnstile";
 import { useAuth } from "@/components/app/AuthProvider";
 import { formatEventWhen } from "@/lib/allons-api";
@@ -583,7 +583,10 @@ export function ReserveView({ eventId }: { eventId: string }) {
         holdExpiresAt={form.holdExpiresAt}
         hasInput={hasInput}
         onStay={leaveGuard.stay}
-        onLeave={leaveGuard.leave}
+        onLeave={() => {
+          abandonReserve(eventId);
+          leaveGuard.leave();
+        }}
       />
 
       <ReserveAccountModal

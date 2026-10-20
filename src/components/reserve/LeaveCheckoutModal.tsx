@@ -3,11 +3,12 @@
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useCountdown } from "@/hooks/useCountdown";
+import { HoldCountdown } from "./HoldCountdown";
 
 /**
  * The buyer is about to leave a checkout they started. Staying is the easy
  * answer (primary, and what closing the sheet does); leaving says plainly
- * what it costs, and the clock says there is no hurry to decide.
+ * what it costs, and the clock shows how long they still have.
  */
 export function LeaveCheckoutModal({
   open,
@@ -24,8 +25,9 @@ export function LeaveCheckoutModal({
   onStay: () => void;
   onLeave: () => void;
 }) {
-  const countdown = useCountdown(open ? holdExpiresAt : null);
-  const holdsTicket = Boolean(holdExpiresAt);
+  // From the clock, not the prop: once it runs out the copy must not keep
+  // promising a reserved entry for the second before the form leaves.
+  const holdsTicket = useCountdown(open ? holdExpiresAt : null) !== null;
   const cost =
     holdsTicket && hasInput
       ? "Tu entrada está reservada y lo que llenaste sigue aquí. Si sales ahora, la entrada se libera y tendrás que empezar de nuevo."
@@ -35,17 +37,10 @@ export function LeaveCheckoutModal({
   return (
     <Modal open={open} onClose={onStay} title="¿Salir del checkout?">
       <p className="text-[15px] leading-7 text-white/65">{cost}</p>
-      {countdown ? (
-        <p
-          role="timer"
-          aria-live="polite"
-          className="mt-4 flex items-center justify-between rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-[13px] text-white/55"
-        >
-          <span>Tiempo para completar tu compra</span>
-          <span className="text-[16px] font-bold tabular-nums tracking-tight text-white">
-            {countdown}
-          </span>
-        </p>
+      {open && holdsTicket && holdExpiresAt ? (
+        <div className="mt-4">
+          <HoldCountdown expiresAt={holdExpiresAt} label="Tiempo para completar tu compra" />
+        </div>
       ) : null}
       <div className="mt-6 flex flex-col gap-3">
         <Button size="lg" full onClick={onStay} autoFocus>
