@@ -133,6 +133,8 @@ interface StoredDraft {
   donation: string;
   promoCode: string | null;
   governmentId: string;
+  /** Bikes or seats picked, put back once the map loads. */
+  resourceIds: string[];
   at: number;
 }
 
@@ -159,7 +161,12 @@ function readStoredDraft(eventId: string): StoredDraft | null {
   }
 }
 
-function clearStoredDraft(eventId: string) {
+/**
+ * Forgets what was typed for this event. Called once the order is paid, not
+ * when it is created: a reload during the bank's verification, or a retry
+ * after a decline, must find the form as it was.
+ */
+export function clearReserveDraft(eventId: string) {
   try {
     window.sessionStorage.removeItem(draftStorageKey(eventId));
   } catch {
@@ -252,12 +259,18 @@ export function useReserveForm(
   } | null>(null);
   /** A guest's own open checkout the API refused to duplicate. */
   const [guestPending, setGuestPending] = useState<GuestPendingOrder | null>(null);
+  /** Picks from the draft, handed to the map once it loads. */
+  const [restoredResourceIds, setRestoredResourceIds] = useState<string[] | null>(null);
   // Set once the stored draft (or its absence) has been read, so the
   // periodic write below never saves the empty initial state over it.
   const restored = useRef(false);
   // The buyer typed (or a draft restored) their own details: the account's
   // name no longer overrides them, only its email does.
   const buyerEdited = useRef(false);
+  // The bike/seat picks live in the resource hook, declared further down;
+  // the draft reads them through a ref and re-saves when they change.
+  const selectedResourceIdsRef = useRef<string[]>([]);
+  const [selectedResourceKey, setSelectedResourceKey] = useState("");
 
   // Not a guest until the session has been read: a signed-in buyer who
   // reloads must not be sent through the guest endpoints meanwhile.
@@ -327,6 +340,9 @@ export function useReserveForm(
       setPromoCode(draft.promoCode);
       setPromoCodeDraft(draft.promoCode ?? "");
       setGovernmentIdState(draft.governmentId);
+      if (Array.isArray(draft.resourceIds) && draft.resourceIds.length > 0) {
+        setRestoredResourceIds(draft.resourceIds);
+      }
     } else {
       const remembered = readGuestBuyer();
       if (remembered) setBuyer(remembered);
@@ -373,6 +389,7 @@ export function useReserveForm(
         donation,
         promoCode,
         governmentId,
+        resourceIds: selectedResourceIdsRef.current,
         at: Date.now(),
       };
       try {
@@ -393,6 +410,7 @@ export function useReserveForm(
     donation,
     promoCode,
     governmentId,
+    selectedResourceKey,
   ]);
 
   const questions = useMemo(
@@ -578,7 +596,15 @@ export function useReserveForm(
   const resources = useReserveResourceSelection({
     groups: resourceGroups,
     quantity,
+    restoreIds: restoredResourceIds,
   });
+  const selectedIdsKey = resources.selectedIds.join("|");
+  useEffect(() => {
+    selectedResourceIdsRef.current = resources.selectedIds;
+    setSelectedResourceKey(selectedIdsKey);
+    // selectedIds is the array behind the key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdsKey]);
   const quoteReady = isFree || Boolean(quoteQuery.data);
   const resourcesLoaded = resourceQuery.isSuccess;
   const paymentDataLoading = Boolean(entryType) && (
@@ -818,13 +844,13 @@ export function useReserveForm(
   }
 
   /**
-   * The order was placed: nothing to restore the next time this page opens.
-   * Only a guest's details are remembered for the next purchase; an
-   * account's name and email must not show up for the next person on a
-   * shared device.
+   * The order was placed. The draft stays until the order is paid (the pay
+   * page clears it), so a bank verification or a declined card brings the
+   * buyer back to a filled form. Only a guest's details are remembered for
+   * the next purchase; an account's name and email must not show up for the
+   * next person on a shared device.
    */
   function orderPlaced(buyerInfo: GuestBuyer) {
-    clearStoredDraft(eventId);
     if (isGuest) rememberGuestBuyer(buyerInfo);
   }
 
@@ -867,6 +893,7 @@ export function useReserveForm(
           consentedCampaignIds,
         });
         orderPlaced(draft.buyer);
+        clearReserveDraft(eventId);
         const ticketId = result.ticketIds?.[0];
         router.replace(
           ticketId ? `/tickets/${encodeURIComponent(ticketId)}?nuevo=1` : "/tickets",
@@ -993,6 +1020,7 @@ export function useReserveForm(
       donation,
       promoCode,
       governmentId,
+      resourceIds: resources.selectedIds,
       at: Date.now(),
     };
     try {

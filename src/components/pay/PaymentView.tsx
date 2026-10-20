@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/app/AuthProvider";
 import { useCountdown } from "@/hooks/useCountdown";
 import { usePaymentOrder } from "@/hooks/usePaymentOrder";
+import { clearReserveDraft } from "@/hooks/useReserveForm";
 import {
   forgetGuestOrder,
   getGuestOrder,
@@ -149,8 +150,10 @@ export function PaymentView({ orderId }: { orderId: string }) {
   useEffect(() => {
     if (phase !== "paid" || celebrated.current) return;
     celebrated.current = true;
+    // Paid: the filled form has nothing left to restore.
+    if (order?.eventId) clearReserveDraft(order.eventId);
     void confetti({ particleCount: 140, spread: 80, origin: { y: 0.6 }, colors: ["#f67010", "#ffffff", "#ffb27a"] });
-  }, [phase]);
+  }, [phase, order?.eventId]);
 
   if (!authLoading && guest !== undefined && !user && !guestToken) {
     return <NoAccessPanel orderId={orderId} eventId={eventId} />;
