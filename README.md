@@ -17,9 +17,9 @@ la sesión de Supabase (Bearer); no hay rutas `/api/*` propias para esto.
 | --- | --- |
 | `/events` | Lista pública de eventos, con búsqueda y filtro por ciudad |
 | `/events/{id}` | Detalle del evento + CTA de reserva (y enlace a la app) |
-| `/events/{id}/reservar` | Checkout: tipo de entrada, asistentes, preguntas, aporte |
+| `/events/{id}/reservar` | Checkout: tipo de entrada, datos del comprador, asistentes, preguntas, aporte. Sin cuenta: el pedido queda ligado a un token del navegador y el ticket llega por correo |
 | `/pagar/{orderId}` | Abre el link de Paygate en otra pestaña y espera la confirmación |
-| `/tickets`, `/tickets/{id}` | Mis tickets: QR, código `ALL-`, y elección de recurso (bici/asiento) |
+| `/tickets`, `/tickets/{id}` | Mis tickets: QR, código `ALL-`, y elección de recurso (bici/asiento). `/tickets/{id}?k=` abre un ticket comprado sin cuenta |
 | `/comercio` | Resumen del comercio: KPIs y eventos |
 | `/comercio/events/{id}` | Ventas por tipo y por hora, pagos, mapa y editor de recursos |
 | `/comercio/colaboraciones` | Invitaciones a colaborar en eventos de otros comercios, y los que ya comparte |
@@ -28,6 +28,11 @@ la sesión de Supabase (Bearer); no hay rutas `/api/*` propias para esto.
 
 Requiere `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` en el
 navegador y, opcionalmente, `NEXT_PUBLIC_ALLONS_API_URL`.
+
+`NEXT_PUBLIC_PAYMENTS_OUTAGE=true` pausa los pagos en todo el sitio (banner y
+botones) mientras Clinpays esté caído; sin la variable, corren. Para probar
+el checkout en local con la pasarela simulada ver `docs/guest-checkout.md`
+en allons-api.
 
 ## Stack
 

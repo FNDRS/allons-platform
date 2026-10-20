@@ -90,14 +90,17 @@ function metadataString(meta: Record<string, unknown>, key: string) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+/** The name stored on the account (Google, or given at sign-up), or null. */
+export function accountNameOf(user: User | null): string | null {
+  if (!user) return null;
+  const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+  return metadataString(meta, "full_name") ?? metadataString(meta, "name");
+}
+
 /** Display name from Supabase metadata, falling back to the email prefix. */
 export function displayNameOf(user: User | null): string {
   if (!user) return "";
-  const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-  const name =
-    metadataString(meta, "full_name") ?? metadataString(meta, "name") ?? "";
-  if (name) return name;
-  return user.email?.split("@")[0] ?? "";
+  return accountNameOf(user) ?? user.email?.split("@")[0] ?? "";
 }
 
 /**

@@ -1,4 +1,4 @@
-import type { EventQuestionKind } from "@/lib/api/events";
+import type { EventQuestionKind, EventQuestionScope } from "@/lib/api/events";
 
 /**
  * Kinds of registration-form question, with the names the allons-admin
@@ -51,4 +51,14 @@ export function parseOptionLimit(text: string): number | undefined | null {
   if (!/^\d+$/.test(trimmed)) return null;
   const value = Number(trimmed);
   return value <= MAX_OPTION_LIMIT ? value : null;
+}
+
+/** Who answers a question, as the comercio picks it in the editor. */
+export const EVENT_QUESTION_SCOPES: { value: EventQuestionScope; label: string; hint: string }[] = [
+  { value: "attendee", label: "Cada asistente", hint: "Una respuesta por ticket, como la talla." },
+  { value: "buyer", label: "Solo quien compra", hint: "Una vez por compra, como un teléfono de contacto." },
+];
+
+export function isEventQuestionScope(value: unknown): value is EventQuestionScope {
+  return value === "attendee" || value === "buyer";
 }

@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { FieldError, Label } from "@/components/ui/Field";
+import { Modal } from "@/components/ui/Modal";
 import { SmoothInput } from "@/components/ui/SmoothInput";
 import { GoogleMark } from "@/components/app/LoginForm";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { rememberLoginNext } from "@/lib/login-next";
-import { StepHeading } from "./ReserveSections";
 
 function friendlyOtpError(message: string): string {
   const lower = message.toLowerCase();
@@ -19,43 +19,47 @@ function friendlyOtpError(message: string): string {
 }
 
 /**
- * Sign-in without leaving the checkout: the buyer gets a code by email and
- * types it here. Works the same for a new email (the account is created) and
- * for an existing one, whether it was made with a password or with Google.
- * Once the session opens, AuthProvider picks it up and the page goes on.
+ * Sign-in asked for at the moment of reserving, on top of the filled form,
+ * and only on events whose comercio wants every purchase on an account. The
+ * buyer gets a code by email and types it here, or continues with Google;
+ * either way they land back on this same checkout with everything they
+ * typed still in place. Works the same for a new email (the account is
+ * created) and for an existing one, whether it was made with a password or
+ * with Google. Once the session opens, AuthProvider picks it up and the
+ * checkout goes on.
  */
-export function ReserveAccountStep({
-  step,
+export function ReserveAccountModal({
+  open,
+  onClose,
   suggestedEmail,
   suggestedName,
   onLeave,
+  onName,
 }: {
-  step: number;
+  open: boolean;
+  onClose: () => void;
   suggestedEmail: string;
   suggestedName: string;
   /** Called before the page is left for Google, to keep the form. */
   onLeave: () => void;
+  /** The name typed with the code, for the ticket and the new account. */
+  onName?: (name: string) => void;
 }) {
   const [email, setEmail] = useState("");
-  // The ticket step already asked for an email; it stays the login email
-  // until they say otherwise, so the same question is not asked twice.
-  const [otherEmail, setOtherEmail] = useState(false);
+  // Asked with the code only when the form has no name yet: the code
+  // sign-up has no other place to learn it, and the ticket needs one.
+  const [name, setName] = useState("");
+  const askName = suggestedName.trim().length < 2;
+  const [emailTouched, setEmailTouched] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState<"google" | "send" | "verify" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // The buyer step already asked for an email; reuse it until they type here.
   useEffect(() => {
-    if (!otherEmail) setEmail(suggestedEmail);
-  }, [suggestedEmail, otherEmail]);
-  const reusing = !otherEmail && suggestedEmail.trim().includes("@");
-
-  function useOtherEmail() {
-    setOtherEmail(true);
-    setEmail("");
-    setSentTo(null);
-    setError(null);
-  }
+    if (!emailTouched) setEmail(suggestedEmail);
+  }, [suggestedEmail, emailTouched]);
 
   async function sendCode(event?: React.FormEvent) {
     event?.preventDefault();
@@ -71,9 +75,7 @@ export function ReserveAccountStep({
         email: target,
         options: {
           shouldCreateUser: true,
-          data: suggestedName.trim()
-            ? { full_name: suggestedName.trim() }
-            : undefined,
+          data: suggestedName.trim() ? { full_name: suggestedName.trim() } : undefined,
           // The email still carries a link; opened in this browser it lands
           // back on this same checkout.
           emailRedirectTo: window.location.href,
@@ -97,16 +99,29 @@ export function ReserveAccountStep({
       setError("Escribe el código completo.");
       return;
     }
+    const typedName = name.trim().replace(/\s+/g, " ");
+    if (askName && typedName.length < 2) {
+      setError("Escribe tu nombre: va en tu ticket.");
+      return;
+    }
     setError(null);
     setBusy("verify");
     try {
-      const { error: err } = await getSupabaseBrowser().auth.verifyOtp({
+      const supabase = getSupabaseBrowser();
+      const { error: err } = await supabase.auth.verifyOtp({
         email: sentTo,
         token,
         type: "email",
       });
       if (err) throw err;
-      // AuthProvider sees the new session and this step goes away.
+      if (askName && typedName) {
+        // Best effort: the ticket gets the name either way through onName.
+        await supabase.auth
+          .updateUser({ data: { full_name: typedName } })
+          .catch(() => null);
+        onName?.(typedName);
+      }
+      // AuthProvider sees the new session; the checkout closes this modal.
     } catch (err) {
       setError(friendlyOtpError((err as Error).message ?? ""));
       setBusy(null);
@@ -131,18 +146,31 @@ export function ReserveAccountStep({
   }
 
   return (
-    <section id="reserve-account" data-reserve-account>
-      <StepHeading n={step} hint="Ahí guardamos tus tickets">
-        Tu cuenta
-      </StepHeading>
-      <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4 sm:p-5">
+    <Modal open={open} onClose={onClose} title="Tu cuenta">
+      <p className="text-[14px] leading-6 text-white/55">
+        Este evento guarda tus tickets en una cuenta de Allons. Entra o créala
+        aquí; tu reserva sigue tal como la dejaste.
+      </p>
+      <div className="mt-5">
         {sentTo ? (
           <form onSubmit={verify} className="flex flex-col gap-4">
             <p className="text-sm text-white/60">
               Te enviamos un código a{" "}
-              <span className="font-semibold text-white">{sentTo}</span>.
-              Escríbelo aquí, no hace falta salir de esta página.
+              <span className="font-semibold text-white">{sentTo}</span>. Escríbelo
+              aquí, no hace falta salir de esta página.
             </p>
+            {askName ? (
+              <label className="block">
+                <Label>Tu nombre</Label>
+                <SmoothInput
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  autoComplete="name"
+                  autoCapitalize="words"
+                  placeholder="Nombre y apellido"
+                />
+              </label>
+            ) : null}
             <label className="block">
               <Label>Código</Label>
               <SmoothInput
@@ -153,7 +181,7 @@ export function ReserveAccountStep({
                 autoComplete="one-time-code"
                 inputMode="numeric"
                 placeholder="123456"
-                autoFocus
+                autoFocus={!askName}
                 className="tracking-[0.4em]"
               />
             </label>
@@ -173,7 +201,10 @@ export function ReserveAccountStep({
               <button
                 type="button"
                 disabled={busy !== null}
-                onClick={useOtherEmail}
+                onClick={() => {
+                  setSentTo(null);
+                  setError(null);
+                }}
                 className="transition-colors hover:text-white disabled:opacity-50"
               >
                 Usar otro correo
@@ -182,11 +213,6 @@ export function ReserveAccountStep({
           </form>
         ) : (
           <div className="flex flex-col gap-4">
-            <p className="text-sm text-white/55">
-              {reusing
-                ? "Con este correo guardamos tus tickets. Si ya tienes cuenta en Allons con otro, cámbialo aquí."
-                : "Si ya tienes cuenta en Allons, usa el mismo correo. Si no, la creamos con este paso."}
-            </p>
             <Button
               type="button"
               variant="secondary"
@@ -204,37 +230,21 @@ export function ReserveAccountStep({
               <span className="h-px flex-1 bg-white/10" />
             </div>
             <form onSubmit={sendCode} className="flex flex-col gap-4">
-              {reusing ? (
-                <p className="text-sm text-white/60">
-                  Te enviaremos un código a{" "}
-                  <span className="font-semibold text-white">
-                    {suggestedEmail.trim()}
-                  </span>
-                  .{" "}
-                  <button
-                    type="button"
-                    disabled={busy !== null}
-                    onClick={useOtherEmail}
-                    className="text-white/50 underline underline-offset-4 transition-colors hover:text-white disabled:opacity-50"
-                  >
-                    Usar otro correo
-                  </button>
-                </p>
-              ) : (
-                <label className="block">
-                  <Label>Correo</Label>
-                  <SmoothInput
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    autoComplete="email"
-                    inputMode="email"
-                    placeholder="tu@correo.com"
-                    autoFocus={otherEmail}
-                    required
-                  />
-                </label>
-              )}
+              <label className="block">
+                <Label>Correo</Label>
+                <SmoothInput
+                  type="email"
+                  value={email}
+                  onChange={(event) => {
+                    setEmailTouched(true);
+                    setEmail(event.target.value);
+                  }}
+                  autoComplete="email"
+                  inputMode="email"
+                  placeholder="tu@correo.com"
+                  required
+                />
+              </label>
               <FieldError>{error}</FieldError>
               <Button
                 type="submit"
@@ -245,10 +255,14 @@ export function ReserveAccountStep({
               >
                 Enviarme un código
               </Button>
+              <p className="text-center text-[12px] leading-5 text-white/35">
+                Si ya tienes cuenta, usa el mismo correo. Si no, la creamos con
+                este paso.
+              </p>
             </form>
           </div>
         )}
       </div>
-    </section>
+    </Modal>
   );
 }

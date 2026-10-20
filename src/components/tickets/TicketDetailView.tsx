@@ -5,7 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { formatEventWhen } from "@/lib/allons-api";
+import { getGuestTicket, guestKeys } from "@/lib/api/guest";
 import { getMyTicket, ticketKeys } from "@/lib/api/tickets";
+import { buttonClass } from "@/components/ui/Button";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { AnotherSessionCard } from "@/components/pay/AnotherSessionCard";
 import { TicketCode } from "./TicketCode";
@@ -22,17 +24,24 @@ const CODE_COPY_BY_EVENT: Record<string, { label: string; hint: string }> = {
 };
 
 export function TicketDetailView({ ticketId }: { ticketId: string }) {
-  const { ready } = useRequireAuth();
   const params = useSearchParams();
+  // A guest opens the ticket with the signed key from the receipt mail or
+  // the paid page. No session is asked for; the key is the proof.
+  const accessKey = params.get("k");
+  const asGuest = Boolean(accessKey);
+  const { ready } = useRequireAuth({ enabled: !asGuest });
   const isNew = params.get("nuevo") === "1";
   const query = useQuery({
-    queryKey: ticketKeys.detail(ticketId),
-    queryFn: () => getMyTicket(ticketId),
-    enabled: ready && Boolean(ticketId),
+    queryKey: asGuest
+      ? guestKeys.ticket(ticketId, accessKey as string)
+      : ticketKeys.detail(ticketId),
+    queryFn: () =>
+      asGuest ? getGuestTicket(ticketId, accessKey as string) : getMyTicket(ticketId),
+    enabled: (asGuest || ready) && Boolean(ticketId),
   });
   const ticket = query.data;
 
-  if (!ready || query.isLoading) {
+  if ((!asGuest && !ready) || query.isLoading) {
     return (
       <div className="flex flex-col items-center gap-4">
         <Skeleton className="h-8 w-1/2" />
@@ -42,7 +51,16 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
     );
   }
   if (query.error || !ticket) {
-    return <ErrorState message={(query.error as Error | null)?.message} onRetry={() => void query.refetch()} />;
+    return (
+      <ErrorState
+        message={
+          asGuest
+            ? "No pudimos abrir este ticket. Usa el enlace del correo con el que lo compraste."
+            : (query.error as Error | null)?.message
+        }
+        onRetry={() => void query.refetch()}
+      />
+    );
   }
 
   const when = formatEventWhen(ticket.event?.startsAt ?? null);
@@ -53,11 +71,11 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   return (
     <div className="flex flex-col gap-8">
       <Link
-        href="/tickets"
+        href={asGuest ? (ticket.eventId ? `/eventos/${encodeURIComponent(ticket.eventId)}` : "/eventos") : "/tickets"}
         className="inline-flex w-fit items-center gap-1.5 text-[13px] font-semibold text-white/45 transition hover:text-white"
       >
         <BackMark />
-        Mis tickets
+        {asGuest ? "Volver al evento" : "Mis tickets"}
       </Link>
 
       {isNew ? <ReadyChip /> : null}
@@ -114,11 +132,30 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         kitPickupInfo={ticket.kitPickupInfo}
       />
 
-      <p className="text-center text-[13px] leading-relaxed text-white/32">
-        Este ticket también está en la app de Allons con la misma cuenta.
-      </p>
+      {asGuest ? (
+        <div className="flex flex-col items-center gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] p-5 text-center">
+          <p className="text-[14px] leading-relaxed text-white/60">
+            Este ticket también está en tu correo. Guárdalo o toma una captura
+            del QR para el día del evento.
+          </p>
+          <Link
+            href="/login?next=%2Ftickets"
+            className={buttonClass({ size: "md", variant: "secondary", full: true })}
+          >
+            Guardarlo en una cuenta de Allons
+          </Link>
+          <p className="text-[12px] leading-relaxed text-white/35">
+            Opcional. Entra con el correo con el que compraste y aparece en tu
+            cuenta y en la app.
+          </p>
+        </div>
+      ) : (
+        <p className="text-center text-[13px] leading-relaxed text-white/32">
+          Este ticket también está en la app de Allons con la misma cuenta.
+        </p>
+      )}
 
-      {isNew && ticket.eventId ? (
+      {isNew && ticket.eventId && !asGuest ? (
         <div className="flex justify-center">
           <AnotherSessionCard eventId={ticket.eventId} ticketId={ticket.id} />
         </div>
