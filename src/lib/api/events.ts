@@ -109,7 +109,19 @@ export interface EventQuestion {
   /** What each limited option has left. Missing on older APIs and on unlimited questions. */
   optionsLeft?: Record<string, number> | null;
   required: boolean;
+  /**
+   * Who answers: each attendee (`attendee`, the default) or the buyer once
+   * per order (`buyer`). Missing on older APIs, which only asked attendees.
+   */
+  scope?: EventQuestionScope;
   sortOrder: number;
+}
+
+export type EventQuestionScope = "attendee" | "buyer";
+
+/** A question asked once per purchase rather than once per ticket. */
+export function isBuyerQuestion(question: Pick<EventQuestion, "scope">) {
+  return question.scope === "buyer";
 }
 
 /** The option ran out, so it can no longer be picked. */
@@ -218,6 +230,16 @@ export interface EventDetail extends EventListItem {
    * the quote total, not `entryTypes[].priceCents`.
    */
   feeMode?: FeeMode;
+  /**
+   * Whether the comercio lets people pay without an account. False is the
+   * full checkout: sign in before paying. Missing on older APIs reads as true.
+   */
+  guestCheckout?: boolean;
+}
+
+/** The event asks for an account before paying. */
+export function requiresAccount(event: Pick<EventDetail, "guestCheckout"> | null | undefined) {
+  return event?.guestCheckout === false;
 }
 
 export function listEvents() {

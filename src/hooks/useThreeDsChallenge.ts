@@ -2,7 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getPaymentOrder, paymentKeys } from "@/lib/api/payments";
+import {
+  getPaymentOrder,
+  paymentKeys,
+  type PaymentOrderDetail,
+} from "@/lib/api/payments";
 
 export interface ThreeDsChallengeState {
   orderId: string;
@@ -26,13 +30,23 @@ const POLL_MS = 3_000;
 export function useThreeDsChallenge() {
   const [challenge, setChallenge] = useState<ThreeDsChallengeState | null>(null);
   const done = useRef<(() => void) | null>(null);
+  // A guest reads the order with its token rather than a session.
+  const reader = useRef<(() => Promise<PaymentOrderDetail>) | null>(null);
 
-  const run = useCallback((orderId: string, html: string) => {
-    setChallenge({ orderId, html });
-    return new Promise<void>((resolve) => {
-      done.current = resolve;
-    });
-  }, []);
+  const run = useCallback(
+    (
+      orderId: string,
+      html: string,
+      fetchOrder?: () => Promise<PaymentOrderDetail>,
+    ) => {
+      reader.current = fetchOrder ?? null;
+      setChallenge({ orderId, html });
+      return new Promise<void>((resolve) => {
+        done.current = resolve;
+      });
+    },
+    [],
+  );
 
   const finish = useCallback(() => {
     setChallenge(null);
@@ -43,7 +57,7 @@ export function useThreeDsChallenge() {
   const orderId = challenge?.orderId ?? "";
   const order = useQuery({
     queryKey: paymentKeys.order(orderId),
-    queryFn: () => getPaymentOrder(orderId),
+    queryFn: () => (reader.current ? reader.current() : getPaymentOrder(orderId)),
     enabled: Boolean(challenge),
     refetchInterval: POLL_MS,
     refetchIntervalInBackground: true,

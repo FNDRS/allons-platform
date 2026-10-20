@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Minus, Plus } from "lucide-react";
+import { Check, Minus, Plus, User } from "lucide-react";
 import { useId, useState } from "react";
 import {
   allOptionsSoldOut,
@@ -14,7 +14,7 @@ import {
 import { formatCents, formatDateTime } from "@/lib/format";
 import { ListedPrice } from "@/components/ui/ListedPrice";
 import { sessionSubtitle } from "@/components/events/EntryTypeSessionModal";
-import type { HolderDraft } from "@/hooks/useReserveForm";
+import type { BuyerDraft, HolderDraft } from "@/hooks/useReserveForm";
 import { FieldError, Input, Label, Select, SelectItem, Textarea } from "@/components/ui/Field";
 import { StatusPill } from "@/components/ui/Pill";
 
@@ -245,6 +245,8 @@ export function HolderCard({
   questions,
   typeName,
   isMe,
+  forBuyer,
+  onForBuyer,
   onChange,
   onAnswer,
 }: {
@@ -255,19 +257,67 @@ export function HolderCard({
   questions: EventQuestion[];
   typeName: string;
   isMe: boolean;
+  /**
+   * Ticket 1 only: it is the buyer's own, so name and email come from the
+   * buyer step and are not asked again. Undefined on the other tickets.
+   */
+  forBuyer?: boolean;
+  onForBuyer?: (value: boolean) => void;
   onChange: (patch: Partial<HolderDraft>) => void;
   onAnswer: (questionId: string, value: string) => void;
 }) {
+  const canBeBuyers = typeof onForBuyer === "function";
   return (
-    <Shell>
+    <Shell active={forBuyer === true}>
       <div className="flex flex-col gap-4 py-1">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[14px] font-semibold tracking-tight">
             Ticket {index + 1}
             <span className="font-medium text-white/35"> · {typeName}</span>
           </p>
-          {isMe ? <StatusPill tone="glass">Para mí</StatusPill> : null}
+          {isMe || forBuyer ? <StatusPill tone="glass">Para ti</StatusPill> : null}
         </div>
+        {canBeBuyers ? (
+          <div
+            role="radiogroup"
+            aria-label="Para quién es el ticket 1"
+            className="grid grid-cols-2 gap-2"
+          >
+            {[
+              { value: true, label: "Es para mí" },
+              { value: false, label: "Es para otra persona" },
+            ].map((option) => {
+              const selected = forBuyer === option.value;
+              return (
+                <button
+                  key={String(option.value)}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => onForBuyer(option.value)}
+                  className={`flex h-12 items-center justify-center rounded-[14px] border px-3 text-[14px] font-semibold transition ${
+                    selected
+                      ? "border-accent bg-accent text-black"
+                      : "border-border bg-surface-2 text-white/85 hover:border-border-strong hover:bg-white/[0.08]"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+        {forBuyer ? (
+          <p className="flex items-center gap-2 text-[14px] text-white/60">
+            <User className="size-4 shrink-0 text-white/40" strokeWidth={1.75} aria-hidden />
+            <span className="min-w-0 truncate">
+              {holder.name.trim() || "Tu nombre"}
+              {holder.email.trim() ? (
+                <span className="text-white/40"> · {holder.email.trim()}</span>
+              ) : null}
+            </span>
+          </p>
+        ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
             <Label>Nombre</Label>
@@ -294,6 +344,7 @@ export function HolderCard({
             <FieldError>{showErrors ? errors.email : null}</FieldError>
           </label>
         </div>
+        )}
         {questions.length > 0 ? (
           <div className="flex flex-col gap-3 border-t border-white/[0.06] pt-4">
             {questions.map((question) => (
@@ -310,6 +361,138 @@ export function HolderCard({
               />
             ))}
           </div>
+        ) : null}
+      </div>
+    </Shell>
+  );
+}
+
+/**
+ * Who is buying, asked once. Name and email are where the ticket goes, so
+ * the email is checked twice as hard: what they typed is read back under the
+ * field. A signed-in buyer keeps the account's email.
+ */
+export function BuyerCard({
+  buyer,
+  errors,
+  showErrors,
+  emailLocked,
+  emailFromAccount = false,
+  questions,
+  answers,
+  onChange,
+  onAnswer,
+  signInHref,
+}: {
+  buyer: BuyerDraft;
+  errors: { name?: string; email?: string; answers: string[] };
+  showErrors: boolean;
+  /** The buyer is signed in: the receipt goes to the account's email. */
+  emailLocked: boolean;
+  /**
+   * The event asks for an account before paying and nobody is signed in
+   * yet: the email comes with the account, so it is not asked here.
+   */
+  emailFromAccount?: boolean;
+  questions: EventQuestion[];
+  answers: Record<string, string>;
+  onChange: (patch: Partial<BuyerDraft>) => void;
+  onAnswer: (questionId: string, value: string) => void;
+  /** Offered to a guest who already has an account; hidden when signed in. */
+  signInHref?: string | null;
+}) {
+  const email = buyer.email.trim();
+  // Before the sign-in on a full checkout only the comercio's questions for
+  // the buyer are shown; name and email come with the account.
+  if (emailFromAccount) {
+    return (
+      <Shell>
+        <div className="flex flex-col gap-3 py-1">
+          {questions.map((question) => (
+            <QuestionField
+              key={question.id}
+              question={question}
+              value={answers[question.id] ?? ""}
+              onChange={(value) => onAnswer(question.id, value)}
+              error={
+                showErrors && errors.answers.includes(question.id)
+                  ? answerError(question, answers[question.id] ?? "")
+                  : null
+              }
+            />
+          ))}
+        </div>
+      </Shell>
+    );
+  }
+  return (
+    <Shell>
+      <div className="flex flex-col gap-4 py-1">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <Label>Tu nombre</Label>
+            <Input
+              value={buyer.name}
+              onChange={(event) => onChange({ name: event.target.value })}
+              placeholder="Nombre y apellido"
+              autoComplete="name"
+              autoCapitalize="words"
+              aria-invalid={showErrors && Boolean(errors.name)}
+            />
+            <FieldError>{showErrors ? errors.name : null}</FieldError>
+          </label>
+          <label className="block">
+            <Label hint={emailLocked ? "(de tu cuenta)" : undefined}>Tu correo</Label>
+            <Input
+              type="email"
+              inputMode="email"
+              value={buyer.email}
+              onChange={(event) => onChange({ email: event.target.value })}
+              placeholder="tu@correo.com"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              disabled={emailLocked}
+              aria-invalid={showErrors && Boolean(errors.email)}
+            />
+            <FieldError>{showErrors ? errors.email : null}</FieldError>
+          </label>
+        </div>
+        <p className="text-[14px] leading-6 text-white/55">
+          {email && !errors.email ? (
+            <>
+              Tu ticket llega a <span className="font-semibold text-white">{email}</span>.
+              Revisa que esté bien escrito.
+            </>
+          ) : (
+            "A este correo te enviamos el ticket con su código QR. No necesitas crear una cuenta."
+          )}
+        </p>
+        {questions.length > 0 ? (
+          <div className="flex flex-col gap-3 border-t border-white/[0.06] pt-4">
+            {questions.map((question) => (
+              <QuestionField
+                key={question.id}
+                question={question}
+                value={answers[question.id] ?? ""}
+                onChange={(value) => onAnswer(question.id, value)}
+                error={
+                  showErrors && errors.answers.includes(question.id)
+                    ? answerError(question, answers[question.id] ?? "")
+                    : null
+                }
+              />
+            ))}
+          </div>
+        ) : null}
+        {signInHref ? (
+          <p className="text-[13px] text-white/40">
+            ¿Ya tienes cuenta en Allons?{" "}
+            <a href={signInHref} className="font-semibold text-white/70 underline underline-offset-2 hover:text-white">
+              Inicia sesión
+            </a>{" "}
+            para ver tus compras anteriores.
+          </p>
         ) : null}
       </div>
     </Shell>

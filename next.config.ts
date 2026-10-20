@@ -49,6 +49,11 @@ function contentSecurityPolicy(overrides: Record<string, string[]> = {}): string
 
   const connect = ["'self'", api, "https://api.allonsapp.com", supabase, supabaseWs];
   if (isDev) connect.push("ws:", "http://localhost:*", "http://127.0.0.1:*");
+  // Cloudflare Turnstile, the invisible anti-bot check on the guest checkout.
+  // Only when a site key is configured: a build without one loads nothing.
+  const turnstile = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim()
+    ? ["https://challenges.cloudflare.com"]
+    : [];
 
   const media = [
     "'self'",
@@ -62,15 +67,15 @@ function contentSecurityPolicy(overrides: Record<string, string[]> = {}): string
 
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
-    "script-src": ["'self'", "'unsafe-inline'", ...(isDev ? ["'unsafe-eval'"] : [])],
+    "script-src": ["'self'", "'unsafe-inline'", ...(isDev ? ["'unsafe-eval'"] : []), ...turnstile],
     "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
     "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
     "img-src": Array.from(new Set([...media, "data:", "blob:"])),
     "media-src": Array.from(new Set([...media, "blob:"])),
-    "connect-src": Array.from(new Set(connect)),
+    "connect-src": Array.from(new Set([...connect, ...turnstile])),
     "worker-src": ["'self'", "blob:"],
     // Only our own 3DS page (`/pagar/:orderId/verificar`), which hosts the bank's window.
-    "frame-src": ["'self'"],
+    "frame-src": ["'self'", ...turnstile],
     "object-src": ["'none'"],
     "base-uri": ["'self'"],
     "form-action": ["'self'"],
@@ -148,7 +153,9 @@ const config: NextConfig = {
               "font-src": ["'self'", "data:", "https:"],
               "connect-src": ["'self'", "https:"],
               "frame-src": ["'self'", "https:"],
-              "form-action": ["'self'", "https:"],
+              // Developing against the simulated gateway, the "bank" page
+              // posts to the local API over plain http.
+              "form-action": ["'self'", "https:", ...(isDev ? ["http://localhost:*", "http://127.0.0.1:*"] : [])],
               "frame-ancestors": ["'self'"],
             }),
           },

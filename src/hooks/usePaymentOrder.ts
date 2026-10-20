@@ -8,6 +8,7 @@ import {
   getPaymentOrder,
   isClassPackageOrder,
   paymentKeys,
+  type PaymentOrderDetail,
 } from "@/lib/api/payments";
 
 const POLL_MS = 3_000;
@@ -29,7 +30,14 @@ export type PayPhase =
  * Polls the order until it is terminal. Paygate has no return URL and
  * blocks iframes, so the buyer pays in another tab and this page watches.
  */
-export function usePaymentOrder(orderId: string) {
+export function usePaymentOrder(
+  orderId: string,
+  /**
+   * How to read the order. Defaults to the signed-in buyer's endpoint; a
+   * guest passes a reader bound to their order token.
+   */
+  fetcher?: () => Promise<PaymentOrderDetail>,
+) {
   const queryClient = useQueryClient();
   const [pollingSince, setPollingSince] = useState(() => Date.now());
   const [paidSince, setPaidSince] = useState<number | null>(null);
@@ -40,7 +48,7 @@ export function usePaymentOrder(orderId: string) {
 
   const query = useQuery({
     queryKey: paymentKeys.order(orderId),
-    queryFn: () => getPaymentOrder(orderId),
+    queryFn: () => (fetcher ? fetcher() : getPaymentOrder(orderId)),
     enabled: Boolean(orderId),
     refetchInterval: (state) => {
       const data = state.state.data;

@@ -14,11 +14,19 @@ import {
   type PaymentMethodList,
 } from "@/lib/api/paymentMethods";
 import {
+  GUEST_CARD_PAUSED_CODE,
+  getGuestOrder,
+  guestChargeWithCard,
+  rememberGuestOrder,
+  type GuestBuyer,
+} from "@/lib/api/guest";
+import {
   chargeWithCard,
   chargeWithSavedCard,
   rememberPendingOrder,
   type DirectCardInput,
   type InitiatePaymentInput,
+  type PaymentOrderDetail,
 } from "@/lib/api/payments";
 import {
   EMPTY_CARD_DRAFT,
@@ -34,6 +42,9 @@ export type CardChargeResult = {
   orderId: string;
   status: "paid" | "failed" | "pending";
   redirectData?: string | null;
+  /** Set on a guest charge: how this browser reads the order back. */
+  guestToken?: string;
+  buyerEmail?: string;
 };
 
 /** A saved card id, or "new" for the form. */
@@ -50,6 +61,9 @@ export function useCardCheckout({
   userId,
   enabled,
   directCard = false,
+  guestBuyer = null,
+  proveHuman,
+  onOrderPlaced,
 }: {
   userId: string | null;
   enabled: boolean;
@@ -59,11 +73,23 @@ export function useCardCheckout({
    * page, with no option to keep the card.
    */
   directCard?: boolean;
+  /**
+   * Who is paying when there is no account. Resolved at pay time, so the
+   * form can still be edited; null means the buyer is signed in (or the
+   * buyer step is not valid yet).
+   */
+  guestBuyer?: (() => GuestBuyer | null) | null;
+  /** Runs the invisible anti-bot check for a guest charge. */
+  proveHuman?: () => Promise<string | null>;
+  /** The order exists and the buyer is about to leave for `/pagar`. */
+  onOrderPlaced?: (orderId: string) => void;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const saved = usePaymentMethods({ userId, enabled });
-  const direct = directCard && !saved.enrollmentEnabled;
+  const isGuest = !userId;
+  const saved = usePaymentMethods({ userId, enabled: enabled && !isGuest });
+  // A guest has no vault, so only the typed card can be charged.
+  const direct = directCard && (isGuest || !saved.enrollmentEnabled);
   const canEnterCard = saved.enrollmentEnabled || direct;
   const needsIdNumber = saved.needsIdNumber && !direct;
   const threeDs = useThreeDsChallenge();
@@ -77,6 +103,9 @@ export function useCardCheckout({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  // The API paused guest card charges (a run of declines). The step hides
+  // and the checkout falls back to the hosted form for this visit.
+  const [paused, setPaused] = useState(false);
 
   // Preselect the default card once the list lands, so a returning buyer
   // pays in one tap. Only runs while the buyer has not picked anything.
@@ -123,7 +152,18 @@ export function useCardCheckout({
       (paymentMethodId) => chargeWithSavedCard({ ...input, paymentMethodId }),
       (orderId) =>
         `/pagar/${encodeURIComponent(orderId)}?event=${encodeURIComponent(input.eventId)}`,
-      (card) => chargeWithCard({ ...input, card }),
+      async (card) => {
+        if (!isGuest) return chargeWithCard({ ...input, card });
+        const buyer = guestBuyer?.() ?? null;
+        if (!buyer) throw new Error("Completa tus datos antes de pagar.");
+        const turnstileToken = proveHuman ? await proveHuman() : null;
+        return guestChargeWithCard({
+          ...input,
+          buyer,
+          card,
+          ...(turnstileToken ? { turnstileToken } : {}),
+        });
+      },
       input.eventId,
     );
   }
@@ -195,17 +235,33 @@ export function useCardCheckout({
 
         result = await charge(paymentMethodId);
       }
+      // A guest's order answers only to its token: keep it before anything
+      // else can fail, so the paid page (and a reload) can read it.
+      let readOrder: (() => Promise<PaymentOrderDetail>) | undefined;
+      if (result.guestToken) {
+        rememberGuestOrder(result.orderId, {
+          token: result.guestToken,
+          eventId: eventId ?? null,
+          email: result.buyerEmail ?? null,
+        });
+        const token = result.guestToken;
+        readOrder = () => getGuestOrder(result.orderId, token);
+      }
       if (result.status === "failed") {
         setError(DECLINED_MESSAGE);
         return;
       }
+      // The order exists from here on, whatever the bank answers next: the
+      // form's draft is spent and the buyer's details are worth keeping.
+      onOrderPlaced?.(result.orderId);
       // The bank asked for 3DS. Waiting here keeps a one-off card in the
       // vault until the bank is done with it; /pagar then reads the outcome.
       if (result.status === "pending" && result.redirectData) {
-        await threeDs.run(result.orderId, result.redirectData);
+        await threeDs.run(result.orderId, result.redirectData, readOrder);
       }
       paidOrderId = result.orderId;
     } catch (err) {
+      if (isApiError(err) && err.code === GUEST_CARD_PAUSED_CODE) setPaused(true);
       if (!eventId || !rememberPendingOrder(queryClient, eventId, err)) {
         setError(messageFor(err));
       }
@@ -263,8 +319,8 @@ export function useCardCheckout({
 
   return {
     /** False when there is no card to charge here: hide the step. */
-    available: saved.available || direct,
-    loading: saved.loading,
+    available: !paused && (saved.available || direct),
+    loading: isGuest ? false : saved.loading,
     cards: saved.cards,
     needsIdNumber,
     /** Whether a new card can be typed on this deployment. */
@@ -303,6 +359,12 @@ export type CardCheckout = ReturnType<typeof useCardCheckout>;
 
 function messageFor(err: unknown): string {
   if (isApiError(err)) {
+    if (err.code === GUEST_CARD_PAUSED_CODE || err.code === "captcha_failed") {
+      return err.message;
+    }
+    if (err.code === "card_declined") {
+      return err.message || DECLINED_MESSAGE;
+    }
     if (err.code === "card_declined_lockout") {
       return "Tu tarjeta fue rechazada varias veces. Espera unos minutos e intenta de nuevo.";
     }
@@ -311,5 +373,6 @@ function messageFor(err: unknown): string {
     }
     return err.message;
   }
+  if (err instanceof Error && err.message) return err.message;
   return "No pudimos procesar el pago. Intenta de nuevo.";
 }
