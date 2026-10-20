@@ -115,6 +115,9 @@ export function useEventForm(event: ProviderEventDetail | null) {
   const [smokingAllowed, setSmokingAllowed] = useState(Boolean(event?.smokingAllowed));
   const [petFriendly, setPetFriendly] = useState(Boolean(event?.petFriendly));
   const [parkingAvailable, setParkingAvailable] = useState(Boolean(event?.parkingAvailable));
+  // On unless the comercio turned it off: an older API that does not send
+  // the field means every event still allows it.
+  const [guestCheckout, setGuestCheckout] = useState(event?.guestCheckout !== false);
   const [kitPickupEnabled, setKitPickupEnabled] = useState(Boolean(event?.kitPickupInfo?.trim()));
   const [kitPickupInfo, setKitPickupInfo] = useState(event?.kitPickupInfo ?? "");
   const questions = useEventQuestions(event);
@@ -200,6 +203,7 @@ export function useEventForm(event: ProviderEventDetail | null) {
       smokingAllowed,
       petFriendly,
       parkingAvailable,
+      guestCheckout,
       // Off clears it, same as the admin's switch.
       kitPickupInfo: kitPickupEnabled ? kitPickupInfo.trim().slice(0, 2000) : "",
     };
@@ -379,6 +383,8 @@ export function useEventForm(event: ProviderEventDetail | null) {
     setPetFriendly,
     parkingAvailable,
     setParkingAvailable,
+    guestCheckout,
+    setGuestCheckout,
     kitPickupEnabled,
     setKitPickupEnabled,
     kitPickupInfo,

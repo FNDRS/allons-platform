@@ -10,6 +10,7 @@ import { EventFormActions } from "./EventFormActions";
 import { EventKitPickupField } from "./EventKitPickupField";
 import { EventLocationFields } from "./EventLocationFields";
 import { EventPolicyFields } from "./EventPolicyFields";
+import { EventCheckoutModeField } from "./EventCheckoutModeField";
 import { EventQuestionsFields } from "./EventQuestionsFields";
 import { EventScheduleFields } from "./EventScheduleFields";
 import { EventTicketEditorModal } from "./EventTicketEditorModal";
@@ -62,7 +63,10 @@ export function EventForm({ event }: { event: ProviderEventDetail | null }) {
         </div>
       </Section>
       <Section title="Formulario de registro">
-        <EventQuestionsFields q={f.questions} />
+        <div className="flex flex-col gap-4">
+          <EventCheckoutModeField checked={f.guestCheckout} onChange={f.setGuestCheckout} />
+          <EventQuestionsFields q={f.questions} />
+        </div>
       </Section>
       <Section title="Donaciones directas">
         <EventDonationFields d={f.donation} />

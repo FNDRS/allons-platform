@@ -2,10 +2,12 @@ import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Field";
 import { Chip } from "@/components/ui/Pill";
+import { Segmented } from "@/components/ui/Segmented";
 import { SwitchRow } from "@/components/ui/SwitchRow";
 import type { EventQuestionDraft } from "@/hooks/event-form/useEventQuestions";
 import {
   EVENT_QUESTION_KINDS,
+  EVENT_QUESTION_SCOPES,
   MAX_QUESTION_LABEL,
   MAX_QUESTION_OPTIONS,
   eventQuestionKindLabel,
@@ -97,7 +99,19 @@ export function EventQuestionCard({
           />
         </div>
       ) : null}
-      {questionTakesLimits(question.kind) ? (
+      <div className="flex flex-col gap-1.5">
+        <Label hint={`(${EVENT_QUESTION_SCOPES.find((s) => s.value === question.scope)?.hint ?? ""})`}>
+          Quién la responde
+        </Label>
+        <Segmented
+          label={`Quién responde la pregunta ${n}`}
+          tone="gray"
+          value={question.scope}
+          options={EVENT_QUESTION_SCOPES.map((scope) => ({ value: scope.value, label: scope.label }))}
+          onChange={(scope) => onChange({ scope, ...(scope === "buyer" ? { limited: false } : {}) })}
+        />
+      </div>
+      {questionTakesLimits(question.kind) && question.scope === "attendee" ? (
         <OptionLimits question={question} n={n} onChange={onChange} />
       ) : null}
       <SwitchRow
