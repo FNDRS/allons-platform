@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ALLOW_LEAVE_ATTR } from "@/hooks/useLeaveGuard";
 import { buttonClass } from "@/components/ui/Button";
 import { useCountdown } from "@/hooks/useCountdown";
 import { payOrderHref, type ActivePaymentOrder } from "@/lib/api/payments";
@@ -60,6 +61,7 @@ export function PendingOrderNotice({
       </div>
       <Link
         href={href}
+        {...{ [ALLOW_LEAVE_ATTR]: "" }}
         className={buttonClass({ size: "sm", variant: byCard ? "secondary" : "primary" })}
       >
         {byCard ? "Ver estado" : "Continuar pago"}

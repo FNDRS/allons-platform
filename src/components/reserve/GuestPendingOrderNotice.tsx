@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ALLOW_LEAVE_ATTR } from "@/hooks/useLeaveGuard";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { useCountdown } from "@/hooks/useCountdown";
 import type { GuestPendingOrder } from "@/hooks/useReserveForm";
@@ -51,7 +52,7 @@ export function GuestPendingOrderNotice({
       </div>
       {resumable ? (
         <div className="flex flex-wrap gap-2">
-          <Link href={href} className={buttonClass({ size: "md" })}>
+          <Link href={href} className={buttonClass({ size: "md" })} {...{ [ALLOW_LEAVE_ATTR]: "" }}>
             {byCard ? "Ver estado" : "Continuar pago"}
           </Link>
           {!byCard ? (
