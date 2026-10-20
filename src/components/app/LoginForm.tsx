@@ -71,6 +71,10 @@ export function LoginForm() {
   // this is their way in; it also works for any account.
   const [codeSentTo, setCodeSentTo] = useState<string | null>(null);
   const [code, setCode] = useState("");
+  // The code mail's link was opened here, in a browser that did not ask for
+  // it. The code in that same mail still works: the form takes the email and
+  // the code together, with no second mail and no cooldown.
+  const [linkOpenedElsewhere, setLinkOpenedElsewhere] = useState(false);
   // The account that just entered with a code, while the password offer is
   // up: AuthProvider may not have published the session yet.
   const [verifiedUser, setVerifiedUser] = useState<User | null>(null);
@@ -102,7 +106,7 @@ export function LoginForm() {
   // the PKCE verifier is in this browser's storage; opened from a different
   // browser (mail app) there is no session. After a sign-up the email is
   // confirmed by then, so the password gets them in. The code mail carries
-  // the same code as the link, so that one is typed here instead.
+  // the same code as the link, so the form asks for the email and that code.
   useEffect(() => {
     if (loading || user || !params.get("code")) return;
     if (params.get("from") === "signup") {
@@ -111,8 +115,9 @@ export function LoginForm() {
       return;
     }
     setMode("code");
+    setLinkOpenedElsewhere(true);
     setNotice(
-      "El enlace se abrió en otro navegador. Escribe aquí tu correo y el código que viene en el mismo mensaje.",
+      "El enlace se abrió en otro navegador. Escribe tu correo y el código que viene en el mismo mensaje.",
     );
   }, [loading, user, params]);
 
@@ -175,6 +180,8 @@ export function LoginForm() {
       /* same destination either way */
     } finally {
       finish(user ?? verifiedUser);
+      // A `next` that points back here leaves the form mounted.
+      setBusy(null);
     }
   }
 
@@ -187,7 +194,7 @@ export function LoginForm() {
       const supabase = getSupabaseBrowser();
       if (mode === "code") {
         const target = email.trim().toLowerCase();
-        if (!codeSentTo) {
+        if (!codeSentTo && !linkOpenedElsewhere) {
           const { error: err } = await supabase.auth.signInWithOtp({
             email: target,
             options: {
@@ -209,7 +216,7 @@ export function LoginForm() {
         }
         setDeciding(true);
         const { data, error: err } = await supabase.auth.verifyOtp({
-          email: codeSentTo,
+          email: codeSentTo ?? target,
           token,
           type: "email",
         });
@@ -269,8 +276,10 @@ export function LoginForm() {
         // An existing email comes back as a fake user with no identities and
         // no email is sent, so telling them to check their inbox would lie.
         if (data.user && data.user.identities?.length === 0) {
+          // The email stays in the field: one tap sends them a code.
+          setMode("code");
           setError(
-            "Ya existe una cuenta con este correo. Entra con tu contraseña, con Google o Apple, o recupera tu contraseña.",
+            "Ya existe una cuenta con este correo. Pide un código aquí para entrar, o usa Google.",
           );
           return;
         }
@@ -359,7 +368,9 @@ export function LoginForm() {
           : mode === "code"
             ? codeSentTo
               ? `Te enviamos un código a ${codeSentTo}. Escríbelo aquí, no hace falta salir de esta página.`
-              : "Escribe tu correo y te enviamos un código de un solo uso. Sin contraseña. Si aún no tienes cuenta, la creamos con este paso."
+              : linkOpenedElsewhere
+                ? "Tu correo y el código del mensaje, y entras."
+                : `Escribe tu correo y te enviamos un código de un solo uso. Sin contraseña.${error ? "" : " Si aún no tienes cuenta, la creamos con este paso."}`
           : mode === "offer"
             ? "Opcional. Con una contraseña entras también sin esperar el código. Si prefieres, sigue entrando con un código: siempre funciona."
           : mode === "update"
@@ -422,7 +433,7 @@ export function LoginForm() {
           />
         </label>
         ) : null}
-        {mode === "code" && codeSentTo ? (
+        {mode === "code" && (codeSentTo || linkOpenedElsewhere) ? (
           <label className="block">
             <Label>Código</Label>
             <SmoothInput
@@ -433,7 +444,7 @@ export function LoginForm() {
               autoComplete="one-time-code"
               inputMode="numeric"
               placeholder="123456"
-              autoFocus
+              autoFocus={!linkOpenedElsewhere}
               className="tracking-[0.4em]"
               required
             />
@@ -467,7 +478,7 @@ export function LoginForm() {
           size="lg"
           full
           loading={busy === "form"}
-          disabled={busy === "google"}
+          disabled={busy === "google" || busy === "decline"}
           className="!duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-[0_12px_48px_rgba(246,112,16,0.32)] active:!duration-500 active:scale-[0.99]"
         >
           {mode === "login"
@@ -477,7 +488,7 @@ export function LoginForm() {
               : mode === "update" || mode === "offer"
                 ? "Guardar contraseña"
                 : mode === "code"
-                  ? codeSentTo
+                  ? codeSentTo || linkOpenedElsewhere
                     ? "Entrar"
                     : "Enviarme un código"
                   : "Enviar enlace"}
@@ -495,19 +506,21 @@ export function LoginForm() {
             Ahora no
           </Button>
         ) : null}
-        {mode === "code" && codeSentTo ? (
+        {mode === "code" && (codeSentTo || linkOpenedElsewhere) ? (
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-white/50">
             <button
               type="button"
               disabled={busy !== null}
               onClick={() => {
                 setCodeSentTo(null);
+                setLinkOpenedElsewhere(false);
                 setCode("");
                 setError(null);
+                setNotice(null);
               }}
               className="transition-colors hover:text-white disabled:opacity-50"
             >
-              Reenviar o usar otro correo
+              {codeSentTo ? "Reenviar o usar otro correo" : "Pedir un código nuevo"}
             </button>
           </div>
         ) : null}
