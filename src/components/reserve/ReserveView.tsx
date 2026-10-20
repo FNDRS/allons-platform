@@ -580,7 +580,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
 
       <LeaveCheckoutModal
         open={leaveGuard.pending}
-        holdsTicket={Boolean(form.holdExpiresAt)}
+        holdExpiresAt={form.holdExpiresAt}
         hasInput={hasInput}
         onStay={leaveGuard.stay}
         onLeave={leaveGuard.leave}
