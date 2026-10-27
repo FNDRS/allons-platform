@@ -12,7 +12,7 @@ import {
 } from "@/lib/api/events";
 import { getMyTicket, ticketKeys } from "@/lib/api/tickets";
 import { ListedPrice } from "@/components/ui/ListedPrice";
-import { sessionSubtitle } from "@/components/events/EntryTypeSessionModal";
+import { sessionSubtitle } from "@/lib/sessionSubtitle";
 
 /**
  * After buying one session of a bundle event, the others it can still buy.

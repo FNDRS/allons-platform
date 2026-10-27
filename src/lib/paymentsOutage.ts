@@ -1,11 +1,12 @@
 import { ApiError } from "@/lib/api/client";
 
 /**
- * Set to true while Clinpays (the card gateway) is down: the site then shows
- * a banner and refuses to start a payment. Flip back to false once Clinpays
- * confirms it is back.
+/**
+ * Set `NEXT_PUBLIC_PAYMENTS_OUTAGE=true` while Clinpays (the card gateway) is
+ * down: the site then shows a banner and refuses to start a payment. Unset
+ * or false, payments run.
  */
-export const PAYMENTS_OUTAGE = false;
+export const PAYMENTS_OUTAGE = process.env.NEXT_PUBLIC_PAYMENTS_OUTAGE === "true";
 
 export const PAYMENTS_OUTAGE_MESSAGE =
   "Los pagos están pausados mientras se resuelve un problema con la plataforma de pagos. Intenta más tarde.";

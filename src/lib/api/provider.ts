@@ -1,6 +1,6 @@
 import { apiFetch, downloadFile } from "./client";
 import type { EventDonationInfo } from "@/lib/eventDonations";
-import type { EventQuestionKind } from "./events";
+import type { EventQuestionKind, EventQuestionScope } from "./events";
 
 /** What Allons and the pasarela withhold from each sale, as percentages. */
 export interface ProviderCommission {
@@ -142,6 +142,8 @@ export interface ProviderEventQuestion {
   /** Tickets sold or held in checkout per option, for the limits above. */
   optionTaken?: Record<string, number> | null;
   required: boolean;
+  /** `attendee` asks every ticket holder; `buyer` asks once per order. */
+  scope?: EventQuestionScope;
   sortOrder?: number;
   /** Set on questions a campaign hub copied in; those are not the comercio's. */
   campaignQuestionId?: string | null;
@@ -172,6 +174,8 @@ export interface ProviderEventDetail extends ProviderEventListItem {
   smokingAllowed?: boolean;
   petFriendly?: boolean;
   parkingAvailable?: boolean;
+  /** Buyers may pay without an account. Missing on older APIs reads as true. */
+  guestCheckout?: boolean;
 }
 
 export interface HourlySales {
@@ -390,6 +394,8 @@ export interface ProviderEventInput {
   smokingAllowed: boolean;
   petFriendly: boolean;
   parkingAvailable: boolean;
+  /** Off asks the buyer to sign in before paying (the full checkout). */
+  guestCheckout: boolean;
   /** Empty clears it. */
   kitPickupInfo: string;
   /**
@@ -413,6 +419,8 @@ export interface ProviderEventQuestionInput {
   /** Only on select and radio. Omit to keep the stored ones, null clears them. */
   optionLimits?: Record<string, number> | null;
   required: boolean;
+  /** Who answers it. Omitted reads as `attendee` on the API. */
+  scope?: EventQuestionScope;
   sortOrder: number;
 }
 

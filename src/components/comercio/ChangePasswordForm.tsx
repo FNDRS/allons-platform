@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { providersOf } from "@/lib/auth-user";
 import { toast } from "sonner";
 import { useAuth } from "@/components/app/AuthProvider";
 import { Button } from "@/components/ui/Button";
@@ -32,8 +33,8 @@ function messageFor(err: unknown): string {
  */
 export function ChangePasswordForm() {
   const { user } = useAuth();
-  const providers = (user?.app_metadata?.providers as string[] | undefined) ?? [];
-  const hasPassword = providers.includes("email") || user?.app_metadata?.provider === "email";
+  const hasPassword =
+    providersOf(user).includes("email") || user?.app_metadata?.provider === "email";
 
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -66,7 +67,7 @@ export function ChangePasswordForm() {
       }
       const { error: err } = await supabase.auth.updateUser({
         password: next,
-        data: { mustSetPassword: false },
+        data: { mustSetPassword: false, passwordOffered: true },
       });
       if (err) throw err;
       setCurrent("");

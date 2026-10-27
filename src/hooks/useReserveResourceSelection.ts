@@ -19,12 +19,23 @@ function flatten(selected: SelectedByGroup): string[] {
 export function useReserveResourceSelection(input: {
   groups: PublicResourceGroup[] | undefined;
   quantity: number;
+  /**
+   * Picks saved with the form's draft, put back once the map has loaded.
+   * Used once; units taken meanwhile are simply not restored.
+   */
+  restoreIds?: string[] | null;
 }) {
   const groups = input.groups ?? EMPTY_GROUPS;
   const groupsKey = groups.map((group) => group.id).join("|");
   const [selected, setSelected] = useState<SelectedByGroup>({});
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
+  const pendingRestore = useRef<string[] | null>(input.restoreIds ?? null);
+  useEffect(() => {
+    if (input.restoreIds && input.restoreIds.length > 0) {
+      pendingRestore.current = input.restoreIds;
+    }
+  }, [input.restoreIds]);
   const availableByGroup = useMemo(
     () =>
       new Map(
@@ -41,6 +52,22 @@ export function useReserveResourceSelection(input: {
   );
 
   useEffect(() => {
+    const restore = groups.length > 0 ? pendingRestore.current : null;
+    if (restore && restore.length > 0) {
+      pendingRestore.current = null;
+      const wanted = new Set(restore);
+      setSelected(
+        Object.fromEntries(
+          groups.map((group) => [
+            group.id,
+            group.resources
+              .filter((resource) => wanted.has(resource.id) && !resource.taken)
+              .map((resource) => resource.id),
+          ]),
+        ),
+      );
+      return;
+    }
     setSelected(emptyByGroup(groups));
     // Reset only when the set of groups changes, not on every map refetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { displayNameOf, useAuth } from "@/components/app/AuthProvider";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { accountNameOf, useAuth } from "@/components/app/AuthProvider";
 import { deriveReserveState, useEventDetail } from "@/hooks/useEventDetail";
 import { isApiError } from "@/lib/api/client";
 import {
@@ -15,6 +15,8 @@ import {
   eventKeys,
   getEventQuote,
   getEventResources,
+  isBuyerQuestion,
+  requiresAccount,
   resourceGroupsForTicketType,
   isEntryTypeOnSale,
   isEntryTypeUpcoming,
@@ -22,14 +24,26 @@ import {
   type EventEntryType,
   type EventQuestion,
 } from "@/lib/api/events";
+import {
+  cancelGuestOrder,
+  guestInitiatePayment,
+  isGuestUnavailable,
+  readGuestBuyer,
+  readGuestOrder,
+  rememberGuestBuyer,
+  rememberGuestOrder,
+  type GuestBuyer,
+} from "@/lib/api/guest";
 import { PAYMENTS_OUTAGE, PAYMENTS_OUTAGE_MESSAGE } from "@/lib/paymentsOutage";
 import {
+  PENDING_ORDER_EXISTS_CODE,
   initiatePayment,
   paymentKeys,
   paymentLinkStorageKey,
   payOrderHref,
   rememberPendingOrder,
   type InitiatePaymentInput,
+  type PendingOrderChannel,
 } from "@/lib/api/payments";
 import { reserveFreeTickets, type AnswerInput } from "@/lib/api/tickets";
 import { useReserveResourceSelection } from "@/hooks/useReserveResourceSelection";
@@ -39,6 +53,23 @@ export interface HolderDraft {
   name: string;
   email: string;
   answers: Record<string, string>;
+}
+
+/** Who is buying. Ticket 1 is theirs unless they say otherwise. */
+export interface BuyerDraft {
+  name: string;
+  email: string;
+}
+
+/**
+ * The buyer's own open checkout, refused as a duplicate. With the token from
+ * this browser it can be resumed or cancelled; without it, only waited out.
+ */
+export interface GuestPendingOrder {
+  orderId: string;
+  token: string | null;
+  expiresAt: string | null;
+  channel: PendingOrderChannel;
 }
 
 const MAX_QUANTITY = 10;
@@ -89,39 +120,67 @@ function clearStoredHold(eventId: string) {
 }
 
 /**
- * What a guest typed, kept across the Google sign-in round-trip so they come
- * back to the form they filled and not an empty one. Same tab only.
+ * What was typed, kept while the form is open: a reload, a trip out to the
+ * bank's page or to Google and back all return to the filled form, not an
+ * empty one. Same tab only; cleared once the order is placed.
  */
 interface StoredDraft {
   entryTypeId: string | null;
   quantity: number;
+  buyer: BuyerDraft;
+  buyerAnswers: Record<string, string>;
+  firstIsBuyer: boolean;
   holders: HolderDraft[];
   donation: string;
   promoCode: string | null;
   governmentId: string;
+  /** Bikes or seats picked, put back once the map loads. */
+  resourceIds: string[];
   at: number;
 }
 
-/** Older than this the draft is from another visit, not the sign-in. */
+/** Older than this the draft is from another visit, not this one. */
 const DRAFT_TTL_MS = 60 * 60 * 1000;
+const DRAFT_WRITE_DELAY_MS = 400;
 
 function draftStorageKey(eventId: string) {
   return `allons-reserve-draft:${eventId}`;
 }
 
-/** Reads the draft once: it is removed so a later visit starts clean. */
-function takeStoredDraft(eventId: string): StoredDraft | null {
+function readStoredDraft(eventId: string): StoredDraft | null {
   try {
     const raw = window.sessionStorage.getItem(draftStorageKey(eventId));
     if (!raw) return null;
-    window.sessionStorage.removeItem(draftStorageKey(eventId));
     const draft = JSON.parse(raw) as StoredDraft;
     if (!Array.isArray(draft.holders) || Date.now() - draft.at > DRAFT_TTL_MS) {
+      window.sessionStorage.removeItem(draftStorageKey(eventId));
       return null;
     }
     return draft;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Forgets what was typed for this event. Called once the order is paid, not
+ * when it is created: a reload during the bank's verification, or a retry
+ * after a decline, must find the form as it was.
+ */
+/**
+ * The buyer chose to leave: the held entry and the draft go with them, so
+ * coming back starts clean, as the leave modal said it would.
+ */
+export function abandonReserve(eventId: string) {
+  clearStoredHold(eventId);
+  clearReserveDraft(eventId);
+}
+
+export function clearReserveDraft(eventId: string) {
+  try {
+    window.sessionStorage.removeItem(draftStorageKey(eventId));
+  } catch {
+    /* nothing to clear */
   }
 }
 
@@ -169,15 +228,22 @@ export function missingAnswers(
 export function useReserveForm(
   eventId: string,
   initialEntryTypeId?: string | null,
+  /** Runs the invisible anti-bot check for a guest; null token when not configured. */
+  proveHuman?: () => Promise<string | null>,
 ) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const detail = useEventDetail(eventId);
   const event = detail.event;
 
   const [entryTypeId, setEntryTypeId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [buyer, setBuyer] = useState<BuyerDraft>({ name: "", email: "" });
+  const [buyerAnswers, setBuyerAnswers] = useState<Record<string, string>>({});
+  // Ticket 1 goes to the buyer unless they name someone else for it, so the
+  // common case (buying for yourself) types each thing once.
+  const [firstIsBuyer, setFirstIsBuyer] = useState(true);
   const [holders, setHolders] = useState<HolderDraft[]>([emptyHolder()]);
   const [donation, setDonation] = useState("");
   // Required whenever the event is in a campaign: its hub reads attendee data.
@@ -201,6 +267,35 @@ export function useReserveForm(
     value: string;
     message: string;
   } | null>(null);
+  /** A guest's own open checkout the API refused to duplicate. */
+  const [guestPending, setGuestPending] = useState<GuestPendingOrder | null>(null);
+  /** Picks from the draft, handed to the map once it loads. */
+  const [restoredResourceIds, setRestoredResourceIds] = useState<string[] | null>(null);
+  /**
+   * The API said this deployment has guest checkout off. From then on the
+   * page behaves like a full checkout: the account step opens on Reservar.
+   */
+  const [guestUnavailable, setGuestUnavailable] = useState(false);
+  /**
+   * The buyer changed something on this page. What the leave guard arms on:
+   * a form that was only looked at is not worth a confirmation.
+   */
+  const [interacted, setInteracted] = useState(false);
+  const touch = () => setInteracted(true);
+  // Set once the stored draft (or its absence) has been read, so the
+  // periodic write below never saves the empty initial state over it.
+  const restored = useRef(false);
+  // The buyer typed (or a draft restored) their own details: the account's
+  // name no longer overrides them, only its email does.
+  const buyerEdited = useRef(false);
+  // The bike/seat picks live in the resource hook, declared further down;
+  // the draft reads them through a ref and re-saves when they change.
+  const selectedResourceIdsRef = useRef<string[]>([]);
+  const [selectedResourceKey, setSelectedResourceKey] = useState("");
+
+  // Not a guest until the session has been read: a signed-in buyer who
+  // reloads must not be sent through the guest endpoints meanwhile.
+  const isGuest = !authLoading && !user;
 
   const reserveKind =
     event && !detail.isPlaceholderData ? deriveReserveState(event).kind : null;
@@ -249,30 +344,45 @@ export function useReserveForm(
     setQuantity((current) => Math.min(current, maxQuantity));
   }, [maxQuantity]);
 
-  // Back from signing in with Google: put back what they had typed.
+  // Back on the page (a reload, the bank, Google): put back what they had.
+  // Without a draft, a guest who bought here before starts with their name
+  // and email already in.
   useEffect(() => {
-    const draft = takeStoredDraft(eventId);
-    if (!draft) return;
-    setEntryTypeId(draft.entryTypeId);
-    setQuantity(Math.min(Math.max(1, draft.quantity), MAX_QUANTITY));
-    setHolders(draft.holders.length ? draft.holders : [emptyHolder()]);
-    setDonation(draft.donation);
-    setPromoCode(draft.promoCode);
-    setPromoCodeDraft(draft.promoCode ?? "");
-    setGovernmentIdState(draft.governmentId);
+    const draft = readStoredDraft(eventId);
+    if (draft) {
+      buyerEdited.current = true;
+      setEntryTypeId(draft.entryTypeId);
+      setQuantity(Math.min(Math.max(1, draft.quantity), MAX_QUANTITY));
+      setBuyer(draft.buyer ?? { name: "", email: "" });
+      setBuyerAnswers(draft.buyerAnswers ?? {});
+      setFirstIsBuyer(draft.firstIsBuyer ?? true);
+      setHolders(draft.holders.length ? draft.holders : [emptyHolder()]);
+      setDonation(draft.donation);
+      setPromoCode(draft.promoCode);
+      setPromoCodeDraft(draft.promoCode ?? "");
+      setGovernmentIdState(draft.governmentId);
+      if (Array.isArray(draft.resourceIds) && draft.resourceIds.length > 0) {
+        setRestoredResourceIds(draft.resourceIds);
+      }
+    } else {
+      const remembered = readGuestBuyer();
+      if (remembered) setBuyer(remembered);
+    }
+    restored.current = true;
   }, [eventId]);
 
-  // Ticket #1 is the buyer unless they type otherwise.
+  // Signed in: the account is the buyer. Its email always wins (the receipt
+  // goes there whatever is typed); its name fills in unless the buyer wrote
+  // one, so a guest name remembered on this device never shows for an account.
   useEffect(() => {
     if (!user) return;
-    setHolders((current) => {
-      const [first, ...rest] = current;
-      if (first.name || first.email) return current;
-      return [
-        { ...first, name: displayNameOf(user), email: user.email ?? "" },
-        ...rest,
-      ];
-    });
+    setBuyer((current) => ({
+      // The account's own name only (Google, or what was typed when the
+      // account was created). An account without one leaves the field
+      // empty, and it is asked for before paying, not filled from the email.
+      name: buyerEdited.current && current.name ? current.name : (accountNameOf(user) ?? ""),
+      email: user.email ?? current.email,
+    }));
   }, [user]);
 
   useEffect(() => {
@@ -286,9 +396,54 @@ export function useReserveForm(
     });
   }, [quantity]);
 
+  // Keep the draft while the form is open, a moment after each change.
+  useEffect(() => {
+    if (!restored.current) return;
+    const timer = window.setTimeout(() => {
+      const draft: StoredDraft = {
+        entryTypeId,
+        quantity,
+        buyer,
+        buyerAnswers,
+        firstIsBuyer,
+        holders,
+        donation,
+        promoCode,
+        governmentId,
+        resourceIds: selectedResourceIdsRef.current,
+        at: Date.now(),
+      };
+      try {
+        window.sessionStorage.setItem(draftStorageKey(eventId), JSON.stringify(draft));
+      } catch {
+        /* private mode: they fill it again */
+      }
+    }, DRAFT_WRITE_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [
+    eventId,
+    entryTypeId,
+    quantity,
+    buyer,
+    buyerAnswers,
+    firstIsBuyer,
+    holders,
+    donation,
+    promoCode,
+    governmentId,
+    selectedResourceKey,
+  ]);
+
   const questions = useMemo(
     () => [...(event?.questions ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
     [event],
+  );
+  // Asked once per order (about the purchase) or once per ticket (about
+  // the attendee), as the comercio configured each one.
+  const buyerQuestions = useMemo(() => questions.filter(isBuyerQuestion), [questions]);
+  const attendeeQuestions = useMemo(
+    () => questions.filter((question) => !isBuyerQuestion(question)),
+    [questions],
   );
   const campaigns = useMemo(() => event?.campaigns ?? [], [event]);
   const campaignKey = campaigns.length
@@ -429,9 +584,9 @@ export function useReserveForm(
     setPromoError(null);
   }
   // Clinpays no abre su formulario sin identidad. La cotización lo avisa de
-  // antemano; si fue la API quien lo pidió, el formulario lo recuerda — pero
-  // un código que deja el total en 0 nunca abre ese formulario, así que
-  // anula el recuerdo aunque venga de un intento anterior sin el código.
+  // antemano; si fue la API quien lo pidió, el formulario lo recuerda. Un
+  // código que deja el total en 0 nunca abre ese formulario, así que anula
+  // el recuerdo aunque venga de un intento anterior sin el código.
   const needsGovernmentId =
     !isFree &&
     !effectivelyFree &&
@@ -462,7 +617,15 @@ export function useReserveForm(
   const resources = useReserveResourceSelection({
     groups: resourceGroups,
     quantity,
+    restoreIds: restoredResourceIds,
   });
+  const selectedIdsKey = resources.selectedIds.join("|");
+  useEffect(() => {
+    selectedResourceIdsRef.current = resources.selectedIds;
+    setSelectedResourceKey(selectedIdsKey);
+    // selectedIds is the array behind the key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdsKey]);
   const quoteReady = isFree || Boolean(quoteQuery.data);
   const resourcesLoaded = resourceQuery.isSuccess;
   const paymentDataLoading = Boolean(entryType) && (
@@ -477,29 +640,58 @@ export function useReserveForm(
     !paymentDataLoading &&
     (resourceQuery.isFetching || (!isFree && quoteQuery.isFetching));
 
+  const buyerName = buyer.name.trim();
+  const buyerEmail = buyer.email.trim();
+  // Full checkout before signing in: the account will bring the email and,
+  // with Google, the name. Neither is asked for yet; what is missing after
+  // the sign-in is flagged then, by the pay button.
+  const accountPending = isGuest && (requiresAccount(event) || isFree || guestUnavailable);
+  const buyerErrors = useMemo(() => {
+    const errors: { name?: string; email?: string; answers: string[] } = {
+      answers: missingAnswers(buyerQuestions, buyerAnswers),
+    };
+    if (!accountPending && buyerName.length < 2) errors.name = "Escribe tu nombre completo";
+    if (!accountPending && !EMAIL_RE.test(buyerEmail)) errors.email = "Revisa el correo";
+    return errors;
+  }, [buyerName, buyerEmail, buyerQuestions, buyerAnswers, accountPending]);
+  const buyerValid = !buyerErrors.name && !buyerErrors.email && buyerErrors.answers.length === 0;
+
+  // Ticket 1 as it will be issued: the buyer's, unless they named someone.
+  const effectiveHolders = useMemo(
+    () =>
+      holders.map((holder, index) =>
+        index === 0 && firstIsBuyer
+          ? { ...holder, name: buyerName, email: buyerEmail }
+          : holder,
+      ),
+    [holders, firstIsBuyer, buyerName, buyerEmail],
+  );
+
   const holderErrors = useMemo(
     () =>
-      holders.map((holder) => {
+      effectiveHolders.map((holder, index) => {
         const errors: { name?: string; email?: string; answers: string[] } = {
-          answers: missingAnswers(questions, holder.answers),
+          answers: missingAnswers(attendeeQuestions, holder.answers),
         };
+        // Ticket 1's identity comes from the buyer step, and is flagged there.
+        if (index === 0 && firstIsBuyer) return errors;
         if (!holder.name.trim()) errors.name = "Escribe el nombre";
         if (!EMAIL_RE.test(holder.email.trim())) errors.email = "Correo inválido";
         return errors;
       }),
-    [holders, questions],
+    [effectiveHolders, attendeeQuestions, firstIsBuyer],
   );
 
   const duplicateEmail = useMemo(() => {
     const seen = new Set<string>();
-    for (const holder of holders) {
+    for (const holder of effectiveHolders) {
       const key = holder.email.trim().toLowerCase();
       if (!key) continue;
       if (seen.has(key)) return key;
       seen.add(key);
     }
     return null;
-  }, [holders]);
+  }, [effectiveHolders]);
 
   const valid =
     Boolean(entryType) &&
@@ -507,6 +699,7 @@ export function useReserveForm(
     quoteReady &&
     resourcesLoaded &&
     !duplicateEmail &&
+    buyerValid &&
     resources.resourcesReady &&
     holderErrors.every(
       (errors) => !errors.name && !errors.email && errors.answers.length === 0,
@@ -528,6 +721,10 @@ export function useReserveForm(
     );
   }
 
+  function setBuyerAnswer(questionId: string, value: string) {
+    setBuyerAnswers((current) => ({ ...current, [questionId]: value }));
+  }
+
   /**
    * Marks the form as touched and returns the holders payload when every
    * field checks out, or null after setting the error to show.
@@ -536,6 +733,10 @@ export function useReserveForm(
     setTouched(true);
     setError(null);
     if (!event || !entryType) return null;
+    if (authLoading) {
+      setError("Un momento, estamos cargando tu sesión.");
+      return null;
+    }
     if (!isFree && PAYMENTS_OUTAGE) {
       setError(PAYMENTS_OUTAGE_MESSAGE);
       return null;
@@ -572,6 +773,10 @@ export function useReserveForm(
       setError("Acepta compartir los datos con la campaña para continuar.");
       return null;
     }
+    if (!buyerValid) {
+      setError("Revisa tus datos antes de continuar.");
+      return null;
+    }
     if (duplicateEmail) {
       setError("Cada ticket necesita un correo distinto.");
       return null;
@@ -590,16 +795,18 @@ export function useReserveForm(
       );
       return null;
     }
-    const holderPayload = holders.map((holder) => ({
+    const holderPayload = effectiveHolders.map((holder) => ({
       name: holder.name.trim(),
       email: holder.email.trim(),
-      answers: answersToList(questions, holder.answers),
+      answers: answersToList(attendeeQuestions, holder.answers),
     }));
     return {
       event,
       entryType,
       holderPayload,
-      firstAnswers: holderPayload[0]?.answers ?? [],
+      // What the buyer answered about the purchase itself, once per order.
+      buyerAnswers: answersToList(buyerQuestions, buyerAnswers),
+      buyer: { name: buyerName, email: buyerEmail } satisfies GuestBuyer,
     };
   }
 
@@ -614,7 +821,7 @@ export function useReserveForm(
       entryTypeId: draft.entryType.id,
       quantity,
       holders: draft.holderPayload.map((holder) => ({ ...holder, invite: false })),
-      answers: draft.firstAnswers,
+      answers: draft.buyerAnswers,
       ...(donationAllowed && donationCents > 0 ? { donationCents } : {}),
       ...(promoCode ? { discountCode: promoCode } : {}),
       ...(resources.selectedIds.length ? { resourceIds: resources.selectedIds } : {}),
@@ -635,24 +842,79 @@ export function useReserveForm(
     return paidOrderInput(draft, { inAppCard: true });
   }
 
+  /**
+   * Checks the form before the sign-in modal opens on a full checkout, so a
+   * missing size or name is pointed out now and not after creating the
+   * account. The email is not asked yet; the account brings it.
+   */
+  function validateForAccount(): boolean {
+    return validateDraft({ inAppCard: true }) !== null;
+  }
+
+  /** The name the sign-in modal collected, when the account had none. */
+  function setBuyerNameFromAccount(name: string) {
+    const clean = name.trim().replace(/\s+/g, " ");
+    if (!clean) return;
+    buyerEdited.current = true;
+    setBuyer((current) => ({ ...current, name: clean }));
+  }
+
+  /** The buyer as the guest endpoints want them, once the form checks out. */
+  function guestBuyer(): GuestBuyer | null {
+    return buyerValid ? { name: buyerName, email: buyerEmail } : null;
+  }
+
+  /**
+   * The order was placed. The draft stays until the order is paid (the pay
+   * page clears it), so a bank verification or a declined card brings the
+   * buyer back to a filled form. Only a guest's details are remembered for
+   * the next purchase; an account's name and email must not show up for the
+   * next person on a shared device.
+   */
+  function orderPlaced(buyerInfo: GuestBuyer) {
+    if (isGuest) rememberGuestBuyer(buyerInfo);
+  }
+
+  /**
+   * A guest's own checkout is still open and the API refused another. With
+   * its token from this browser it can be resumed or dropped; otherwise it
+   * is waited out. True when the notice now covers the error.
+   */
+  function noteGuestPending(err: unknown): boolean {
+    if (!isGuest || !isApiError(err) || err.code !== PENDING_ORDER_EXISTS_CODE) return false;
+    const details = err.details ?? {};
+    const orderId = typeof details.orderId === "string" ? details.orderId : null;
+    if (!orderId) return false;
+    const stored = readGuestOrder(orderId);
+    setGuestPending({
+      orderId,
+      token: stored?.token ?? null,
+      expiresAt: typeof details.expiresAt === "string" ? details.expiresAt : null,
+      channel: details.channel === "card" ? "card" : "link",
+    });
+    return true;
+  }
+
   async function submit() {
     if (preview) return;
     const draft = validateDraft();
     if (!draft) return;
-    const { event, entryType, holderPayload, firstAnswers } = draft;
+    const { event, entryType, holderPayload, buyerAnswers: orderAnswers } = draft;
     setSubmitting(true);
+    setGuestPending(null);
     try {
-
       if (isFree) {
         const result = await reserveFreeTickets({
           eventId: event.id,
           quantity,
           ticketTypeId: entryType.id,
           holders: holderPayload,
-          answers: firstAnswers,
+          answers: orderAnswers,
           ...(resources.selectedIds.length ? { resourceIds: resources.selectedIds } : {}),
           consentedCampaignIds,
         });
+        orderPlaced(draft.buyer);
+        clearReserveDraft(eventId);
         const ticketId = result.ticketIds?.[0];
         router.replace(
           ticketId ? `/tickets/${encodeURIComponent(ticketId)}?nuevo=1` : "/tickets",
@@ -660,7 +922,29 @@ export function useReserveForm(
         return;
       }
 
-      const order = await initiatePayment(paidOrderInput(draft));
+      const input = paidOrderInput(draft);
+      let order;
+      if (isGuest) {
+        const turnstileToken = proveHuman ? await proveHuman() : null;
+        const placed = await guestInitiatePayment({
+          ...input,
+          buyer: draft.buyer,
+          ...(turnstileToken ? { turnstileToken } : {}),
+        });
+        // Null when the API could not store it: the receipt mail is then
+        // the way to the ticket, and /pagar says so.
+        if (placed.guestToken) {
+          rememberGuestOrder(placed.orderId, {
+            token: placed.guestToken,
+            eventId: event.id,
+            email: placed.buyerEmail,
+          });
+        }
+        order = placed;
+      } else {
+        order = await initiatePayment(input);
+      }
+      orderPlaced(draft.buyer);
       // Null when a promo code covered the total: the order is already
       // settled, there is no Paygate link to open, and `/pagar` reads that
       // straight off the order status without needing one.
@@ -679,16 +963,26 @@ export function useReserveForm(
         /* the query param below still carries it */
       }
       // Coming back to this page should offer this order, not a cached "none".
-      queryClient.setQueryData(paymentKeys.active(event.id), {
-        orderId: order.orderId,
-        paymentLink: order.paymentLink,
-        expiresAt: order.expiresAt,
-      });
+      if (!isGuest) {
+        queryClient.setQueryData(paymentKeys.active(event.id), {
+          orderId: order.orderId,
+          paymentLink: order.paymentLink,
+          expiresAt: order.expiresAt,
+        });
+      }
       router.replace(payOrderHref(order.orderId, event.id, order.paymentLink));
     } catch (err) {
+      if (noteGuestPending(err)) {
+        setSubmitting(false);
+        return;
+      }
+      if (noteGuestUnavailable(err)) {
+        setSubmitting(false);
+        return;
+      }
       // Su propio pago con tarjeta sigue esperando al banco: lo explica el
       // aviso junto al botón de pagar, con el tiempo que falta.
-      if (rememberPendingOrder(queryClient, eventId, err)) {
+      if (!isGuest && rememberPendingOrder(queryClient, eventId, err)) {
         setSubmitting(false);
         return;
       }
@@ -707,8 +1001,42 @@ export function useReserveForm(
         return;
       }
       setError(
-        isApiError(err) ? err.message : "No pudimos crear la reserva. Intenta de nuevo.",
+        isApiError(err)
+          ? err.message
+          : err instanceof Error && err.message
+            ? err.message
+            : "No pudimos crear la reserva. Intenta de nuevo.",
       );
+      setSubmitting(false);
+    }
+  }
+
+  /** The deployment has guest checkout off: switch to the account flow. */
+  function noteGuestUnavailable(err: unknown): boolean {
+    if (!isGuest || !isGuestUnavailable(err)) return false;
+    setGuestUnavailable(true);
+    setError(null);
+    return true;
+  }
+
+  /** Drops the guest's open checkout so a new one can start right away. */
+  async function dropGuestPending() {
+    if (!guestPending?.token) return;
+    setSubmitting(true);
+    try {
+      await cancelGuestOrder(guestPending.orderId, guestPending.token);
+      setGuestPending(null);
+    } catch (err) {
+      // Already closed (paid, expired) reads as done: the next submit says
+      // what the API thinks now.
+      if (isApiError(err) && err.status === 400) {
+        setGuestPending(null);
+      } else {
+        setError(
+          isApiError(err) ? err.message : "No pudimos cancelar el pago anterior.",
+        );
+      }
+    } finally {
       setSubmitting(false);
     }
   }
@@ -718,10 +1046,14 @@ export function useReserveForm(
     const draft: StoredDraft = {
       entryTypeId,
       quantity,
+      buyer,
+      buyerAnswers,
+      firstIsBuyer,
       holders,
       donation,
       promoCode,
       governmentId,
+      resourceIds: resources.selectedIds,
       at: Date.now(),
     };
     try {
@@ -740,26 +1072,59 @@ export function useReserveForm(
     refetch: detail.refetch,
     availableTypes,
     preview,
+    isGuest,
     entryType,
     entryTypeId,
-    setEntryTypeId,
+    setEntryTypeId: (id: string) => {
+      touch();
+      setEntryTypeId(id);
+    },
     saveDraft,
     quantity,
-    setQuantity: (value: number) =>
-      setQuantity(Math.min(Math.max(1, value), maxQuantity)),
+    setQuantity: (value: number) => {
+      touch();
+      setQuantity(Math.min(Math.max(1, value), maxQuantity));
+    },
     maxQuantity,
-    holders,
+    buyer,
+    setBuyer: (patch: Partial<BuyerDraft>) => {
+      touch();
+      buyerEdited.current = true;
+      setBuyer((current) => ({ ...current, ...patch }));
+    },
+    buyerErrors,
+    buyerQuestions,
+    buyerAnswers,
+    setBuyerAnswer: (questionId: string, value: string) => {
+      touch();
+      setBuyerAnswer(questionId, value);
+    },
+    firstIsBuyer,
+    setFirstIsBuyer: (value: boolean) => {
+      touch();
+      setFirstIsBuyer(value);
+    },
+    holders: effectiveHolders,
     holderErrors,
     duplicateEmail,
     touched,
-    updateHolder,
-    setAnswer,
-    questions,
+    updateHolder: (index: number, patch: Partial<HolderDraft>) => {
+      touch();
+      updateHolder(index, patch);
+    },
+    setAnswer: (index: number, questionId: string, value: string) => {
+      touch();
+      setAnswer(index, questionId, value);
+    },
+    questions: attendeeQuestions,
     isFree,
     effectivelyFree,
     donationAllowed,
     donation,
-    setDonation,
+    setDonation: (value: string) => {
+      touch();
+      setDonation(value);
+    },
     suggestedDonationCents,
     ticketsCents,
     donationCents,
@@ -768,7 +1133,10 @@ export function useReserveForm(
     totalCents,
     discount,
     promoCodeDraft,
-    setPromoCodeDraft,
+    setPromoCodeDraft: (value: string) => {
+      touch();
+      setPromoCodeDraft(value);
+    },
     promoApplying,
     promoError,
     applyPromoCode,
@@ -780,7 +1148,10 @@ export function useReserveForm(
       setAcceptedCampaignKey(value ? campaignKey : null),
     resourceGroups,
     selectedResourceByGroup: resources.selected,
-    onToggleResource: resources.toggle,
+    onToggleResource: (groupId: string, resourceId: string) => {
+      touch();
+      return resources.toggle(groupId, resourceId);
+    },
     hasResourceGroups: resources.hasGroups,
     missingGroupName: resources.missingGroupName,
     paymentDataLoading,
@@ -794,9 +1165,23 @@ export function useReserveForm(
       governmentIdRejection && governmentIdRejection.value === governmentId.trim()
         ? governmentIdRejection.message
         : null,
-    setGovernmentId: (value: string) => setGovernmentIdState(formatGovernmentId(value)),
+    setGovernmentId: (value: string) => {
+      touch();
+      setGovernmentIdState(formatGovernmentId(value));
+    },
+    interacted,
     submit,
     preparePaidOrder,
+    validateForAccount,
+    setBuyerNameFromAccount,
+    guestBuyer,
+    orderPlaced,
+    noteGuestPending,
+    noteGuestUnavailable,
+    guestUnavailable,
+    guestPending,
+    dropGuestPending,
+    clearGuestPending: () => setGuestPending(null),
     submitting,
     error,
     valid,

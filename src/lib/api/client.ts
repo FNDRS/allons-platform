@@ -52,6 +52,8 @@ type Options = {
   body?: unknown;
   /** Attach the Supabase access token. Default true. */
   auth?: boolean;
+  /** Extra headers, like the guest order token. */
+  headers?: Record<string, string>;
 };
 
 const FRIENDLY_BY_STATUS: Record<number, string> = {
@@ -120,12 +122,13 @@ async function getAccessToken(): Promise<string | null> {
  */
 export async function apiFetch<T>(
   path: string,
-  { method = "GET", body, auth = true }: Options = {},
+  { method = "GET", body, auth = true, headers: extra }: Options = {},
 ): Promise<T> {
   const headers: Record<string, string> = {
     Accept: "application/json",
     // De dónde salió la compra, para el aviso de venta y el panel.
     "x-allons-client": "web",
+    ...(extra ?? {}),
   };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (auth) {

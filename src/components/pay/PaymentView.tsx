@@ -3,11 +3,19 @@
 import confetti from "canvas-confetti";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Check, Clock, Loader2, XCircle } from "lucide-react";
+import { Check, Clock, Loader2, Mail, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/components/app/AuthProvider";
 import { useCountdown } from "@/hooks/useCountdown";
 import { usePaymentOrder } from "@/hooks/usePaymentOrder";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { clearReserveDraft } from "@/hooks/useReserveForm";
+import {
+  forgetGuestOrder,
+  getGuestOrder,
+  readGuestOrder,
+  type GuestOrderDetail,
+  type StoredGuestOrder,
+} from "@/lib/api/guest";
 import { isClassPackageOrder, paymentLinkStorageKey } from "@/lib/api/payments";
 import { paidOutcomeFor, retryHrefFor } from "@/lib/paymentOrderLinks";
 import { formatCents } from "@/lib/format";
@@ -16,23 +24,30 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorState, Skeleton } from "@/components/ui/States";
 import { AnotherSessionCard } from "./AnotherSessionCard";
+import { GuestTicketsPanel } from "./GuestTicketsPanel";
 import { PaygateModal } from "./PaygateModal";
 
 /**
  * Hosts the Paygate (Clinpays) hosted page is served from. The checkout
  * link itself is on paygate.biz (`https://<env>.paygate.biz/checkout/<id>`);
- * the API host is paygatehn.com.
+ * the API host is paygatehn.com. A local run adds its own API, which serves
+ * the simulated form.
  */
 const PAYGATE_HOSTS = ["paygate.biz", "paygatehn.com", "clinpays.com"];
+const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
 
 /**
- * The link only ever comes from `POST /me/payments/initiate`. The reserve
- * step stores it per order in sessionStorage; the query param is a fallback
- * for a page opened in another tab, and is honored only on a Paygate host so
- * a crafted URL cannot make this page open somewhere else.
+ * The link only ever comes from the initiate call. The reserve step stores
+ * it per order in sessionStorage; the query param is a fallback for a page
+ * opened in another tab, and is honored only on a Paygate host so a crafted
+ * URL cannot make this page open somewhere else.
  */
 function trustedLink(orderId: string, fromQuery: string | null): string | null {
-  const candidates = [readStoredLink(orderId), fromQuery];
+  return trustedCandidate([readStoredLink(orderId), fromQuery]);
+}
+
+/** The first candidate that is a payment form on a host we know. */
+function trustedCandidate(candidates: Array<string | null | undefined>): string | null {
   for (const raw of candidates) {
     if (!raw) continue;
     try {
@@ -42,6 +57,14 @@ function trustedLink(orderId: string, fromQuery: string | null): string | null {
         (suffix) => host === suffix || host.endsWith(`.${suffix}`),
       );
       if (url.protocol === "https:" && known) return url.toString();
+      // Only while developing: the simulated gateway lives on this machine.
+      if (
+        process.env.NODE_ENV === "development" &&
+        LOCAL_HOSTS.includes(host) &&
+        url.pathname.startsWith("/dev/paygate/")
+      ) {
+        return url.toString();
+      }
     } catch {
       /* try the next candidate */
     }
@@ -58,8 +81,21 @@ function readStoredLink(orderId: string): string | null {
 }
 
 export function PaymentView({ orderId }: { orderId: string }) {
-  const { ready } = useRequireAuth();
   const params = useSearchParams();
+  const { user, loading: authLoading } = useAuth();
+  // A guest order is read with the token this browser kept when it was
+  // placed. `undefined` until localStorage has been looked at, so neither
+  // the sign-in prompt nor the wrong endpoint fires on the first render.
+  const [guest, setGuest] = useState<StoredGuestOrder | null | undefined>(undefined);
+  useEffect(() => {
+    setGuest(readGuestOrder(orderId));
+  }, [orderId]);
+  const guestToken = guest?.token ?? null;
+  // An order placed as a guest answers to its token, even once the buyer
+  // has signed in: the account does not own it until the claim runs. With
+  // neither a token nor a session there is nothing to poll, and the page
+  // says so below.
+  const ready = !authLoading && guest !== undefined && (Boolean(user) || Boolean(guestToken));
   const [link, setLink] = useState<string | null>(null);
   useEffect(() => {
     setLink(trustedLink(orderId, params.get("link")));
@@ -74,7 +110,24 @@ export function PaymentView({ orderId }: { orderId: string }) {
   const estado = params.get("estado");
   const returnedOk = estado === "exito";
   const returnedFailed = estado === "error";
-  const { order, phase, error, resume } = usePaymentOrder(ready ? orderId : "");
+  const { order, phase, error, resume } = usePaymentOrder(
+    ready ? orderId : "",
+    guestToken ? () => getGuestOrder(orderId, guestToken) : undefined,
+  );
+  const asGuest = Boolean(guestToken);
+  // A guest resuming a link order in a new tab has no stored link; the
+  // order carries the form's URL, checked against the same hosts.
+  const orderLink = asGuest ? ((order as GuestOrderDetail | undefined)?.paymentLink ?? null) : null;
+  useEffect(() => {
+    if (link || !orderLink) return;
+    setLink(trustedCandidate([orderLink]));
+  }, [link, orderLink]);
+  // A closed order needs no token any more. (`orderStatus` is read below.)
+  const closedStatus =
+    order && order.status !== "pending_payment" && order.status !== "paid" ? order.status : null;
+  useEffect(() => {
+    if (asGuest && closedStatus) forgetGuestOrder(orderId);
+  }, [asGuest, orderId, closedStatus]);
   const countdown = useCountdown(order?.expiresAt);
   // A one-off card vaulted for a 3DS charge waited in the vault for the
   // bank's answer. The order is settled: let it go.
@@ -97,8 +150,14 @@ export function PaymentView({ orderId }: { orderId: string }) {
   useEffect(() => {
     if (phase !== "paid" || celebrated.current) return;
     celebrated.current = true;
+    // Paid: the filled form has nothing left to restore.
+    if (order?.eventId) clearReserveDraft(order.eventId);
     void confetti({ particleCount: 140, spread: 80, origin: { y: 0.6 }, colors: ["#f67010", "#ffffff", "#ffb27a"] });
-  }, [phase]);
+  }, [phase, order?.eventId]);
+
+  if (!authLoading && guest !== undefined && !user && !guestToken) {
+    return <NoAccessPanel orderId={orderId} eventId={eventId} />;
+  }
 
   if (!ready || phase === "loading") {
     return (
@@ -116,6 +175,14 @@ export function PaymentView({ orderId }: { orderId: string }) {
   const forClass = order ? isClassPackageOrder(order) : false;
 
   if (phase === "paid" && order) {
+    if (asGuest) {
+      return (
+        <GuestTicketsPanel
+          order={order as GuestOrderDetail}
+          eventId={order.eventId ?? eventId}
+        />
+      );
+    }
     const outcome = paidOutcomeFor(order);
     return (
       <div className="flex flex-col items-center px-4 py-12 text-center sm:py-16">
@@ -184,22 +251,28 @@ export function PaymentView({ orderId }: { orderId: string }) {
         </h1>
         <p className="mt-2 max-w-sm text-sm text-muted">
           {stalled
-            ? "El pago entró y no se te cobrará de nuevo. Dejamos de revisar automáticamente; vuelve a revisar o búscalo en Mis tickets en un momento."
+            ? asGuest
+              ? "El pago entró y no se te cobrará de nuevo. Dejamos de revisar automáticamente; vuelve a revisar aquí o espera el correo con tu ticket."
+              : "El pago entró y no se te cobrará de nuevo. Dejamos de revisar automáticamente; vuelve a revisar o búscalo en Mis tickets en un momento."
             : forClass
               ? "El pago entró. En unos segundos tus sesiones estarán listas para agendar; si tarda, revisa en un momento."
-              : "El pago entró. En unos segundos aparecerá en Mis tickets; si tarda, revisa ahí en un momento."}
+              : asGuest
+                ? "El pago entró. En unos segundos aparece aquí tu ticket y también te lo enviamos por correo."
+                : "El pago entró. En unos segundos aparecerá en Mis tickets; si tarda, revisa ahí en un momento."}
         </p>
         {stalled ? (
           <Button size="lg" onClick={resume} className="mt-7">
             Volver a revisar
           </Button>
         ) : null}
-        <Link
-          href="/tickets"
-          className={buttonClass({ variant: "secondary", className: stalled ? "mt-3" : "mt-7" })}
-        >
-          Ir a mis tickets
-        </Link>
+        {!asGuest ? (
+          <Link
+            href="/tickets"
+            className={buttonClass({ variant: "secondary", className: stalled ? "mt-3" : "mt-7" })}
+          >
+            Ir a mis tickets
+          </Link>
+        ) : null}
       </Card>
     );
   }
@@ -289,5 +362,39 @@ export function PaymentView({ orderId }: { orderId: string }) {
         {forClass ? "Cancelar y volver a la clase" : "Cancelar y volver al evento"}
       </Link>
     </div>
+  );
+}
+
+/**
+ * This browser has no way to read the order: no session, and no token
+ * because the checkout started somewhere else. The receipt mail is the way
+ * to the ticket; an account holder can also sign in.
+ */
+function NoAccessPanel({ orderId, eventId }: { orderId: string; eventId: string | null }) {
+  const next = `/pagar/${encodeURIComponent(orderId)}${
+    eventId ? `?event=${encodeURIComponent(eventId)}` : ""
+  }`;
+  return (
+    <Card className="flex flex-col items-center py-10 text-center">
+      <span className="flex size-14 items-center justify-center rounded-[18px] bg-white/[0.04] ring-1 ring-white/12">
+        <Mail className="size-6 text-white/80" strokeWidth={1.6} aria-hidden />
+      </span>
+      <h1 className="mt-6 break-words text-[24px] font-bold tracking-[-0.03em] sm:text-[28px]">
+        Tu ticket está en tu correo
+      </h1>
+      <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
+        Este pago se inició desde otro navegador o dispositivo. Si se completó, el
+        ticket con su código QR ya llegó al correo que escribiste al comprar.
+      </p>
+      <Link
+        href={`/login?next=${encodeURIComponent(next)}`}
+        className={buttonClass({ size: "lg", variant: "secondary", className: "mt-7" })}
+      >
+        Tengo cuenta, iniciar sesión
+      </Link>
+      <Link href={eventId ? `/eventos/${encodeURIComponent(eventId)}` : "/eventos"} className="mt-4 text-[13px] text-white/40 transition hover:text-white">
+        Volver al evento
+      </Link>
+    </Card>
   );
 }

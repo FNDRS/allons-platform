@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { FieldError, Label } from "@/components/ui/Field";
 import { SmoothInput } from "@/components/ui/SmoothInput";
+import type { User } from "@supabase/supabase-js";
+import { friendlyOtpError } from "@/lib/auth-errors";
+import { shouldOfferPassword } from "@/lib/auth-user";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import {
   forgetLoginNext,
@@ -17,7 +20,19 @@ import {
 } from "@/lib/login-next";
 import { useAuth } from "./AuthProvider";
 
-type Mode = "login" | "signup" | "reset" | "update";
+/**
+ * `code` is the passwordless sign-in: a one-time code by email, and the way
+ * in by default. `login` is the password form. `offer` comes right after a
+ * code sign-in, once per account: a password is optional, never required.
+ */
+type Mode = "login" | "signup" | "reset" | "update" | "code" | "offer";
+
+/** `?mode=password` opens the password form; anything else starts on the code. */
+function initialMode(param: string | null): Mode {
+  if (param === "update") return "update";
+  if (param === "password") return "login";
+  return "code";
+}
 
 function friendlyAuthError(message: string): string {
   const lower = message.toLowerCase();
@@ -29,11 +44,9 @@ function friendlyAuthError(message: string): string {
     return "Ese correo ya tiene cuenta. Inicia sesión.";
   if (lower.includes("password should be at least"))
     return "La contraseña necesita al menos 6 caracteres.";
-  if (lower.includes("rate limit"))
-    return "Demasiados intentos. Espera un momento.";
   if (lower.includes("bad_oauth_state") || lower.includes("invalid_request"))
     return "No se pudo entrar con Google. Inténtalo de nuevo.";
-  return message || "Algo salió mal. Intenta de nuevo.";
+  return friendlyOtpError(message);
 }
 
 export function LoginForm() {
@@ -46,15 +59,29 @@ export function LoginForm() {
   const { user, loading } = useAuth();
 
   // /verify lands here with a session already open from the invite link.
-  const [mode, setMode] = useState<Mode>(
-    params.get("mode") === "update" ? "update" : "login",
-  );
+  const [mode, setMode] = useState<Mode>(() => initialMode(params.get("mode")));
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState<"google" | "form" | null>(null);
+  const [busy, setBusy] = useState<"google" | "form" | "decline" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // Passwordless sign-in: where the code went, and what was typed back.
+  // Accounts made at checkout (code or Google) have no password at all, so
+  // this is their way in; it also works for any account.
+  const [codeSentTo, setCodeSentTo] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  // The code mail's link was opened here, in a browser that did not ask for
+  // it. The code in that same mail still works: the form takes the email and
+  // the code together, with no second mail and no cooldown.
+  const [linkOpenedElsewhere, setLinkOpenedElsewhere] = useState(false);
+  // The account that just entered with a code, while the password offer is
+  // up: AuthProvider may not have published the session yet.
+  const [verifiedUser, setVerifiedUser] = useState<User | null>(null);
+  // True from the moment a code is sent to verify until this form decides
+  // where the new session goes. Supabase publishes the session before
+  // verifyOtp resolves, and the redirect effect must not get there first.
+  const [deciding, setDeciding] = useState(false);
 
   // Supabase reports a failed email link either in the query (PKCE) or in
   // the hash (implicit). An expired confirmation link is not a Google error.
@@ -68,21 +95,30 @@ export function LoginForm() {
     if (!failed) return;
     if (code === "otp_expired" || /expired|invalid/i.test(description)) {
       setError(
-        "El enlace ya no sirve. Vuelve a crear la cuenta o usa Olvidé mi contraseña.",
+        "El enlace venció o ya se usó. Pide uno nuevo, o entra con un código por correo: no necesitas contraseña.",
       );
       return;
     }
     setError("No se pudo entrar con Google. Inténtalo de nuevo.");
   }, [params]);
 
-  // The confirmation link lands here with ?code=. supabase-js only exchanges
-  // it when the PKCE verifier is in this browser's storage; opened from a
-  // different browser (mail app) there is no session, but the email is
-  // already confirmed by then, so a password login gets them in.
+  // An email link lands here with ?code=. supabase-js only exchanges it when
+  // the PKCE verifier is in this browser's storage; opened from a different
+  // browser (mail app) there is no session. After a sign-up the email is
+  // confirmed by then, so the password gets them in. The code mail carries
+  // the same code as the link, so the form asks for the email and that code.
   useEffect(() => {
     if (loading || user || !params.get("code")) return;
-    setMode("login");
-    setNotice("Tu correo quedó confirmado. Entra con tu contraseña para continuar.");
+    if (params.get("from") === "signup") {
+      setMode("login");
+      setNotice("Tu correo quedó confirmado. Entra con tu contraseña para continuar.");
+      return;
+    }
+    setMode("code");
+    setLinkOpenedElsewhere(true);
+    setNotice(
+      "El enlace se abrió en otro navegador. Escribe tu correo y el código que viene en el mismo mensaje.",
+    );
   }, [loading, user, params]);
 
   // A recovery link lands here with a session already open. Supabase raises
@@ -117,16 +153,37 @@ export function LoginForm() {
   // Update mode without a session (stale tab, link used elsewhere) has no
   // account to change, so fall back to a normal login.
   useEffect(() => {
-    if (loading || user || mode !== "update") return;
+    if (loading || user || verifiedUser || mode !== "update") return;
     if (window.location.hash.includes("type=recovery")) return;
     setMode("login");
-  }, [loading, user, mode]);
+  }, [loading, user, verifiedUser, mode]);
 
   useEffect(() => {
-    if (!nextReady || loading || !user || mode === "update") return;
+    if (!nextReady || loading || !user || deciding || mode === "update" || mode === "offer") {
+      return;
+    }
     forgetLoginNext();
     router.replace(homeFor(user, next));
-  }, [nextReady, loading, user, router, next, mode]);
+  }, [nextReady, loading, user, router, next, mode, deciding]);
+
+  function finish(account: User | null) {
+    forgetLoginNext();
+    router.replace(homeFor(account, next));
+  }
+
+  async function declinePassword() {
+    setBusy("decline");
+    try {
+      // Best effort: the worst case is being asked once more next time.
+      await getSupabaseBrowser().auth.updateUser({ data: { passwordOffered: true } });
+    } catch {
+      /* same destination either way */
+    } finally {
+      finish(user ?? verifiedUser);
+      // A `next` that points back here leaves the form mounted.
+      setBusy(null);
+    }
+  }
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -135,13 +192,68 @@ export function LoginForm() {
     setBusy("form");
     try {
       const supabase = getSupabaseBrowser();
+      if (mode === "code") {
+        const target = email.trim().toLowerCase();
+        if (!codeSentTo && !linkOpenedElsewhere) {
+          const { error: err } = await supabase.auth.signInWithOtp({
+            email: target,
+            options: {
+              // An email without an account gets one: same as the checkout.
+              shouldCreateUser: true,
+              emailRedirectTo: `${window.location.origin}/login`,
+            },
+          });
+          if (err) throw err;
+          rememberLoginNext(next);
+          setCodeSentTo(target);
+          setCode("");
+          return;
+        }
+        const token = code.replace(/\D/g, "");
+        if (token.length < 6) {
+          setError("Escribe el código completo.");
+          return;
+        }
+        setDeciding(true);
+        const { data, error: err } = await supabase.auth.verifyOtp({
+          email: codeSentTo ?? target,
+          token,
+          type: "email",
+        });
+        if (err) throw err;
+        setVerifiedUser(data.user);
+        setPassword("");
+        const meta = (data.user?.user_metadata ?? {}) as Record<string, unknown>;
+        if (meta.mustSetPassword === true) {
+          // An invited account still owes its password: not optional.
+          setMode("update");
+          return;
+        }
+        if (shouldOfferPassword(data.user)) {
+          setMode("offer");
+          return;
+        }
+        finish(data.user);
+        return;
+      }
+      if (mode === "offer") {
+        const { error: err } = await supabase.auth.updateUser({
+          password,
+          data: { mustSetPassword: false, passwordOffered: true },
+        });
+        if (err) throw err;
+        toast.success("Contraseña guardada. También puedes seguir entrando con un código.");
+        setPassword("");
+        finish(user ?? verifiedUser);
+        return;
+      }
       if (mode === "login") {
         const { data, error: err } = await supabase.auth.signInWithPassword({
           email: email.trim().toLowerCase(),
           password,
         });
         if (err) throw err;
-        router.replace(homeFor(data.user, next));
+        finish(data.user);
         return;
       }
       if (mode === "signup") {
@@ -153,23 +265,26 @@ export function LoginForm() {
           email: email.trim().toLowerCase(),
           password,
           options: {
-            data: { full_name: name.trim() },
+            // They chose a password here; never offer one after a code.
+            data: { full_name: name.trim(), passwordOffered: true },
             // Without this the link follows the project Site URL, which is
             // shared with the app, and the user never comes back here.
-            emailRedirectTo: `${window.location.origin}/login`,
+            emailRedirectTo: `${window.location.origin}/login?from=signup`,
           },
         });
         if (err) throw err;
         // An existing email comes back as a fake user with no identities and
         // no email is sent, so telling them to check their inbox would lie.
         if (data.user && data.user.identities?.length === 0) {
+          // The email stays in the field: one tap sends them a code.
+          setMode("code");
           setError(
-            "Ya existe una cuenta con este correo. Entra con tu contraseña, con Google o Apple, o recupera tu contraseña.",
+            "Ya existe una cuenta con este correo. Pide un código aquí para entrar, o usa Google.",
           );
           return;
         }
         if (data.session) {
-          router.replace(homeFor(data.user, next));
+          finish(data.user);
         } else {
           // The link opens /login with a session; this is where it goes next.
           rememberLoginNext(next);
@@ -185,13 +300,12 @@ export function LoginForm() {
         // ask for a new password again on every sign-in.
         const { error: err } = await supabase.auth.updateUser({
           password,
-          data: { mustSetPassword: false },
+          data: { mustSetPassword: false, passwordOffered: true },
         });
         if (err) throw err;
         toast.success("Contraseña actualizada");
         setPassword("");
-        forgetLoginNext();
-        router.replace(homeFor(user, next));
+        finish(user);
         return;
       }
       const { error: err } = await supabase.auth.resetPasswordForEmail(
@@ -205,6 +319,7 @@ export function LoginForm() {
       toast.success("Revisa tu correo para cambiar la contraseña.");
       setMode("login");
     } catch (err) {
+      setDeciding(false);
       setError(friendlyAuthError((err as Error).message ?? ""));
     } finally {
       setBusy(null);
@@ -230,13 +345,17 @@ export function LoginForm() {
   }
 
   const title =
-    mode === "login"
+    mode === "login" || mode === "code"
       ? "Entra a Allons"
       : mode === "signup"
         ? "Crea tu cuenta"
         : mode === "update"
           ? "Elige una nueva contraseña"
-          : "Recupera tu contraseña";
+          : mode === "offer"
+            ? "¿Quieres una contraseña?"
+            : "Recupera tu contraseña";
+  // Google sits above the form wherever an account can be opened from scratch.
+  const showGoogle = mode === "login" || mode === "signup" || (mode === "code" && !codeSentTo);
 
   return (
     <div className="mx-auto w-full max-w-md">
@@ -245,13 +364,23 @@ export function LoginForm() {
       </h1>
       <p className="mt-3 text-sm text-white/55">
         {mode === "reset"
-          ? "Te enviaremos un enlace para elegir una nueva contraseña."
+          ? "Te enviaremos un enlace para elegir una nueva contraseña. Si creaste tu cuenta con un código por correo o con Google, no tienes contraseña: entra con un código."
+          : mode === "code"
+            ? codeSentTo
+              ? `Te enviamos un código a ${codeSentTo}. Escríbelo aquí, no hace falta salir de esta página.`
+              : linkOpenedElsewhere
+                ? "Tu correo y el código del mensaje, y entras."
+                : `Escribe tu correo y te enviamos un código de un solo uso. Sin contraseña.${error ? "" : " Si aún no tienes cuenta, la creamos con este paso."}`
+          : mode === "offer"
+            ? "Opcional. Con una contraseña entras también sin esperar el código. Si prefieres, sigue entrando con un código: siempre funciona."
           : mode === "update"
             ? "Escribe la contraseña que usarás desde ahora, en la web y en la app."
-            : "Usa la misma cuenta que en la app. Tus tickets se ven en los dos lados."}
+            : mode === "signup"
+              ? "Usa la misma cuenta que en la app. Tus tickets se ven en los dos lados."
+              : "Entra con tu contraseña. Es la misma cuenta que en la app."}
       </p>
 
-      {mode === "login" || mode === "signup" ? (
+      {showGoogle ? (
         <div className="mt-8">
           <Button
             type="button"
@@ -276,7 +405,7 @@ export function LoginForm() {
 
       <form
         onSubmit={onSubmit}
-        className={`flex flex-col gap-4 ${mode === "login" || mode === "signup" ? "" : "mt-8"}`}
+        className={`flex flex-col gap-4 ${showGoogle ? "" : "mt-8"}`}
       >
         {mode === "signup" ? (
           <label className="block">
@@ -290,7 +419,7 @@ export function LoginForm() {
             />
           </label>
         ) : null}
-        {mode !== "update" ? (
+        {mode !== "update" && mode !== "offer" && !(mode === "code" && codeSentTo) ? (
         <label className="block">
           <Label>Correo</Label>
           <SmoothInput
@@ -304,9 +433,26 @@ export function LoginForm() {
           />
         </label>
         ) : null}
-        {mode !== "reset" ? (
+        {mode === "code" && (codeSentTo || linkOpenedElsewhere) ? (
           <label className="block">
-            <Label>{mode === "update" ? "Nueva contraseña" : "Contraseña"}</Label>
+            <Label>Código</Label>
+            <SmoothInput
+              value={code}
+              onChange={(event) =>
+                setCode(event.target.value.replace(/\D/g, "").slice(0, 8))
+              }
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              placeholder="123456"
+              autoFocus={!linkOpenedElsewhere}
+              className="tracking-[0.4em]"
+              required
+            />
+          </label>
+        ) : null}
+        {mode !== "reset" && mode !== "code" ? (
+          <label className="block">
+            <Label>{mode === "update" || mode === "offer" ? "Nueva contraseña" : "Contraseña"}</Label>
             <SmoothInput
               type="password"
               value={password}
@@ -314,6 +460,7 @@ export function LoginForm() {
               autoComplete={mode === "login" ? "current-password" : "new-password"}
               placeholder="Mínimo 6 caracteres"
               minLength={6}
+              autoFocus={mode === "offer"}
               required
             />
           </label>
@@ -331,22 +478,68 @@ export function LoginForm() {
           size="lg"
           full
           loading={busy === "form"}
-          disabled={busy === "google"}
+          disabled={busy === "google" || busy === "decline"}
           className="!duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-[0_12px_48px_rgba(246,112,16,0.32)] active:!duration-500 active:scale-[0.99]"
         >
           {mode === "login"
             ? "Entrar"
             : mode === "signup"
               ? "Crear cuenta"
-              : mode === "update"
+              : mode === "update" || mode === "offer"
                 ? "Guardar contraseña"
-                : "Enviar enlace"}
+                : mode === "code"
+                  ? codeSentTo || linkOpenedElsewhere
+                    ? "Entrar"
+                    : "Enviarme un código"
+                  : "Enviar enlace"}
         </Button>
+        {mode === "offer" ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="lg"
+            full
+            loading={busy === "decline"}
+            disabled={busy !== null && busy !== "decline"}
+            onClick={() => void declinePassword()}
+          >
+            Ahora no
+          </Button>
+        ) : null}
+        {mode === "code" && (codeSentTo || linkOpenedElsewhere) ? (
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-white/50">
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() => {
+                setCodeSentTo(null);
+                setLinkOpenedElsewhere(false);
+                setCode("");
+                setError(null);
+                setNotice(null);
+              }}
+              className="transition-colors hover:text-white disabled:opacity-50"
+            >
+              {codeSentTo ? "Reenviar o usar otro correo" : "Pedir un código nuevo"}
+            </button>
+          </div>
+        ) : null}
       </form>
 
+      {mode !== "offer" ? (
       <div className="mt-6 flex flex-col items-center gap-3 text-sm text-white/55">
         {mode === "login" ? (
           <>
+            <button
+              type="button"
+              className="font-semibold text-white/80 transition-colors duration-700 ease-out hover:text-white"
+              onClick={() => {
+                setError(null);
+                setMode("code");
+              }}
+            >
+              Entrar con un código por correo, sin contraseña
+            </button>
             <button
               type="button"
               className="transition-colors duration-700 ease-out hover:text-white"
@@ -366,15 +559,33 @@ export function LoginForm() {
             </p>
           </>
         ) : (
-          <button
-            type="button"
-            className="transition-colors duration-700 ease-out hover:text-white"
-            onClick={() => setMode("login")}
-          >
-            Ya tengo cuenta, entrar
-          </button>
+          <>
+            {mode === "reset" ? (
+              <button
+                type="button"
+                className="font-semibold text-white/80 transition-colors duration-700 ease-out hover:text-white"
+                onClick={() => {
+                  setError(null);
+                  setMode("code");
+                }}
+              >
+                Entrar con un código por correo
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="transition-colors duration-700 ease-out hover:text-white"
+              onClick={() => {
+                setCodeSentTo(null);
+                setMode("login");
+              }}
+            >
+              {mode === "code" ? "Entrar con contraseña" : "Ya tengo cuenta, entrar"}
+            </button>
+          </>
         )}
       </div>
+      ) : null}
     </div>
   );
 }

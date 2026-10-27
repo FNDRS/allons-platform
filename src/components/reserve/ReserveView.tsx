@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Lock } from "lucide-react";
 import { useActivePaymentOrder } from "@/hooks/useActivePaymentOrder";
 import { useCardCheckout } from "@/hooks/useCardCheckout";
 import { useBuyerUnitPrices } from "@/hooks/useBuyerUnitPrices";
-import { useReserveForm } from "@/hooks/useReserveForm";
+import { useLeaveGuard } from "@/hooks/useLeaveGuard";
+import { useReserveForm, abandonReserve } from "@/hooks/useReserveForm";
+import { useTurnstile } from "@/hooks/useTurnstile";
 import { useAuth } from "@/components/app/AuthProvider";
 import { formatEventWhen } from "@/lib/allons-api";
+import { requiresAccount } from "@/lib/api/events";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { PaymentsPausedButton } from "@/components/ui/PaymentsPaused";
 import { PAYMENTS_OUTAGE } from "@/lib/paymentsOutage";
@@ -17,10 +20,14 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { EventCover, EventPosterWash } from "@/components/events/EventCover";
 import { PaymentMethodStep } from "@/components/pay/PaymentMethodStep";
 import { HoldCountdown } from "./HoldCountdown";
+import { ConsentNote, consentLabelFor } from "@/components/pay/ConsentNote";
+import { LeaveCheckoutModal } from "./LeaveCheckoutModal";
+import { GuestPendingOrderNotice } from "./GuestPendingOrderNotice";
 import { PendingOrderNotice } from "./PendingOrderNotice";
-import { ReserveAccountStep } from "./ReserveAccountStep";
+import { ReserveAccountModal } from "./ReserveAccountModal";
 import { ReserveBikePicker } from "./ReserveBikePicker";
 import {
+  BuyerCard,
   CampaignConsentField,
   DonationField,
   EntryTypePicker,
@@ -36,31 +43,68 @@ import { scrollToFirstInvalid } from "@/lib/scroll-to-invalid";
 
 export function ReserveView({ eventId }: { eventId: string }) {
   const params = useSearchParams();
-  const form = useReserveForm(eventId, params.get("entrada"));
+  // Invisible anti-bot check for guests: a token per request, nothing on
+  // screen unless Cloudflare asks for one click.
+  const turnstile = useTurnstile();
+  const form = useReserveForm(eventId, params.get("entrada"), turnstile.getToken);
   const listed = useBuyerUnitPrices(
     eventId,
     form.availableTypes,
     form.event?.feeMode,
   );
-  // Guests fill the whole form here. The account is one more step on this
-  // page (email code or Google), not a detour through /login.
+  // Two checkouts, chosen by the comercio per event. The simple one needs no
+  // account: the buyer step asks name and email, the order answers to a
+  // token this browser keeps, and the ticket arrives by mail. The full one
+  // asks the buyer to sign in (email code or Google) before paying. A free
+  // reservation always takes the account, since the API issues it to one.
   const { user, loading: authLoading } = useAuth();
   const ready = !authLoading;
-  const needsAccount = !user && !form.preview;
+  // Set once the guard exists below; the card hook is created first.
+  const releaseGuardRef = useRef<(() => void) | null>(null);
+  const isGuest = ready && !user;
+  const accountRequired = requiresAccount(form.event) || form.isFree || form.guestUnavailable;
+  const needsAccount = isGuest && accountRequired && !form.preview;
   // A promo code can cover the ticket in full; nothing is charged, so the
   // card step is as pointless there as it is on a genuinely free entry.
   const chargesNothing = form.isFree || form.effectivelyFree;
-  // Saved cards load only for a paid ticket; a free one never shows the step.
+  // Saved cards load only for a signed-in buyer of a paid ticket; a guest
+  // can still type a card when the deployment charges them directly.
   const checkout = useCardCheckout({
     userId: user?.id ?? null,
-    enabled: ready && Boolean(user) && !chargesNothing && Boolean(form.entryType),
+    enabled: ready && !chargesNothing && Boolean(form.entryType),
     directCard: form.cardPaymentEnabled,
+    guestBuyer: isGuest && !accountRequired ? form.guestBuyer : null,
+    proveHuman: turnstile.getToken,
+    onGuestPending: form.noteGuestPending,
+    onGuestUnavailable: form.noteGuestUnavailable,
+    onOrderPlaced: () => {
+      releaseGuardRef.current?.();
+      const buyer = form.guestBuyer();
+      if (buyer) form.orderPlaced(buyer);
+    },
   });
-  const pendingOrder = useActivePaymentOrder(
+  // Leaving a started checkout asks first. Not armed while the sale is only
+  // previewed, nor before there is something to lose: a held ticket (the
+  // clock started the moment a paid entry was picked, even one picked for
+  // them from the event page), something typed, or a card being entered.
+  // Stood down when the checkout itself moves on (order placed, Google
+  // sign-in).
+  const back = `/eventos/${encodeURIComponent(eventId)}`;
+  const hasInput =
+    form.interacted || checkout.draft.number.length > 0 || checkout.draft.name.length > 0;
+  const leaveGuard = useLeaveGuard({
+    armed: !form.preview && (Boolean(form.holdExpiresAt) || hasInput),
+    unsaved: !form.preview && hasInput,
+    fallbackHref: back,
+  });
+  const { order: pendingOrder, settled: pendingOrderSettled } = useActivePaymentOrder(
     eventId,
     ready && Boolean(user) && !form.preview,
   );
-  const payInApp = !chargesNothing && checkout.available && checkout.cardReady;
+  // While the account is still missing on a full checkout, nothing is
+  // charged here: the CTA sends the buyer to the sign-in step instead.
+  const payInApp =
+    !chargesNothing && !needsAccount && checkout.available && checkout.cardReady;
   // While the card list loads the CTA must not send anyone to the hosted
   // page: the buyer is about to be offered the in-app card. Same while a
   // promo code is being priced: the total on screen (and what `submit`
@@ -79,26 +123,90 @@ export function ReserveView({ eventId }: { eventId: string }) {
   // Un paso más cuando la pasarela pide identidad; corre la numeración de abajo.
   // Con tarjeta en Allons no se pide: el DNI va en el formulario de la tarjeta.
   // Tampoco mientras cargan las tarjetas, para que no aparezca y desaparezca.
+  // Not before the account step either: which channel will charge (and
+  // whether it needs the id) is only known once the buyer is signed in.
   const showGovernmentId =
-    form.needsGovernmentId && !payInApp && !(checkout.loading && !chargesNothing);
-  const idStep = showGovernmentId ? 1 : 0;
-  const donationStep = form.donationAllowed ? 1 : 0;
-  // El código promocional sólo aplica a lo que se cobra: no tiene sentido en
-  // una entrada gratuita.
-  const promoStep = form.isFree ? 0 : 1;
+    form.needsGovernmentId &&
+    !payInApp &&
+    !needsAccount &&
+    !(checkout.loading && !chargesNothing);
 
   const pageRef = useRef<HTMLDivElement>(null);
+  releaseGuardRef.current = leaveGuard.release;
+  // The sign-in asked for on "Reservar" when the event wants an account. It
+  // sits over the filled form; once the session opens it closes and the
+  // page scrolls to the payment step, right where the buyer left off. After
+  // a Google round trip the same spot is restored from the flag below.
+  const [accountOpen, setAccountOpen] = useState(false);
+  // The API turned a guest purchase down because guest checkout is off on
+  // this deployment: the buyer already pressed pay, so the account step
+  // opens by itself instead of making them press again.
+  useEffect(() => {
+    if (form.guestUnavailable && isGuest) setAccountOpen(true);
+  }, [form.guestUnavailable, isGuest]);
+  // Set when the session arrives through the modal or the Google round
+  // trip; consumed below once the payment step is really on the page.
+  const scrollToPay = useRef(false);
+  useEffect(() => {
+    if (!user) return;
+    let resume = false;
+    try {
+      resume = window.sessionStorage.getItem(resumeKey(eventId)) === "1";
+      window.sessionStorage.removeItem(resumeKey(eventId));
+    } catch {
+      /* nothing stored */
+    }
+    if (!accountOpen && !resume) return;
+    setAccountOpen(false);
+    scrollToPay.current = true;
+  }, [user, accountOpen, eventId]);
+  // The sign-in redraws the page: the buyer step appears above, the saved
+  // cards load into the payment step, a pending order may show up at the
+  // top, and after Google the whole form is still a skeleton. The old
+  // scroll fired 150ms after the modal closed, before any of that was on
+  // the page, so it waits for the pay container to be mounted (a ref, not
+  // an id lookup, so a skeleton or an empty state cannot fool it) and for
+  // everything that lands above it to have answered.
+  const payNode = useRef<HTMLDivElement | null>(null);
+  const [payMounted, setPayMounted] = useState(false);
+  const setPayNode = useCallback((node: HTMLDivElement | null) => {
+    payNode.current = node;
+    setPayMounted(node !== null);
+  }, []);
+  const paySettled =
+    payMounted &&
+    Boolean(user) &&
+    !needsAccount &&
+    !accountOpen &&
+    !form.isLoading &&
+    !checkout.loading &&
+    pendingOrderSettled;
+  useEffect(() => {
+    if (!scrollToPay.current || !paySettled) return;
+    scrollToPay.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      payNode.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [paySettled]);
 
   function onPay() {
     if (form.preview) return;
     if (needsAccount) {
-      document
-        .getElementById("reserve-account")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Everything above the button must already be right: signing in is
+      // the last step, not a way to find out a field is missing.
+      if (!form.validateForAccount()) {
+        scrollToFirstInvalid(pageRef.current);
+        return;
+      }
+      setAccountOpen(true);
       return;
     }
     if (!payInApp) {
-      void form.submit();
+      void form.submit().then(() => {
+        // Placed and on its way to /pagar, or still here with an error.
+        if (form.valid) leaveGuard.release();
+      });
     } else {
       const input = form.preparePaidOrder();
       if (input) void checkout.pay(input);
@@ -126,7 +234,6 @@ export function ReserveView({ eventId }: { eventId: string }) {
   }
 
   const event = form.event;
-  const back = `/eventos/${encodeURIComponent(eventId)}`;
   const opensAt =
     form.preview && form.entryType?.saleStartsAt
       ? formatDateTime(form.entryType.saleStartsAt)
@@ -153,6 +260,29 @@ export function ReserveView({ eventId }: { eventId: string }) {
       </div>
     );
   }
+
+  // Step numbers follow what is on the page, so the buyer never sees a gap.
+  let step = 2;
+  const next = () => (step += 1);
+  const bikesStep = form.hasResourceGroups ? next() : 0;
+  // On a full checkout the account brings name and email, so before the
+  // sign-in there is nothing to ask here unless the comercio has questions
+  // for the buyer. After it, the step shows what the account gave.
+  const showBuyerStep = !needsAccount || form.buyerQuestions.length > 0;
+  const buyerStep = showBuyerStep ? next() : 0;
+  // One ticket for the buyer with nothing to ask about them: no attendee
+  // section at all. The ticket is theirs and the step would be empty.
+  const soloBuyer =
+    form.quantity === 1 && form.firstIsBuyer && form.questions.length === 0;
+  const attendeesStep = soloBuyer ? 0 : next();
+  const idStep = showGovernmentId ? next() : 0;
+  const donationStep = form.donationAllowed ? next() : 0;
+  const promoStep = form.isFree ? 0 : next();
+  const summaryStep = next();
+  const payStep = needsAccount ? 0 : next();
+  const signInHref = `/login?next=${encodeURIComponent(
+    `/eventos/${eventId}/reservar${params.toString() ? `?${params.toString()}` : ""}`,
+  )}`;
 
   return (
     <div ref={pageRef} className="flex flex-col gap-10 pb-36 sm:gap-12">
@@ -201,6 +331,16 @@ export function ReserveView({ eventId }: { eventId: string }) {
             <PendingOrderNotice order={pendingOrder} eventId={eventId} />
           </div>
         ) : null}
+        {form.guestPending ? (
+          <div className="mt-5">
+            <GuestPendingOrderNotice
+              order={form.guestPending}
+              eventId={eventId}
+              busy={form.submitting}
+              onDrop={() => void form.dropGuestPending()}
+            />
+          </div>
+        ) : null}
       </header>
 
       <EntryTypePicker
@@ -222,7 +362,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
           groups={form.resourceGroups}
           selectedByGroup={form.selectedResourceByGroup}
           quantity={form.quantity}
-          step={3}
+          step={bikesStep}
           error={
             form.touched && form.missingGroupName
               ? `Elige tu ${form.missingGroupName.toLowerCase()} antes de continuar.`
@@ -232,41 +372,73 @@ export function ReserveView({ eventId }: { eventId: string }) {
         />
       ) : null}
 
+      {showBuyerStep ? (
       <section>
-        <StepHeading n={3 + (form.hasResourceGroups ? 1 : 0)}>
-          Asistentes
+        <StepHeading n={buyerStep} hint={needsAccount ? undefined : "Ahí llega tu ticket"}>
+          {needsAccount ? "Sobre tu compra" : "Tus datos"}
         </StepHeading>
-        <div className="flex flex-col gap-3">
-          {form.holders.map((holder, index) => (
-            <HolderCard
-              key={index}
-              index={index}
-              holder={holder}
-              errors={form.holderErrors[index]}
-              showErrors={form.touched}
-              questions={form.questions}
-              typeName={form.entryType?.name ?? ""}
-              isMe={
-                Boolean(user?.email) &&
-                holder.email.trim().toLowerCase() === user?.email?.toLowerCase()
-              }
-              onChange={(patch) => form.updateHolder(index, patch)}
-              onAnswer={(questionId, value) => form.setAnswer(index, questionId, value)}
-            />
-          ))}
-        </div>
-        {form.touched && form.duplicateEmail ? (
-          <p data-scroll-target="invalid" className="mt-2 text-sm text-red-300">
-            Cada ticket necesita un correo distinto.
-          </p>
+        <BuyerCard
+          buyer={form.buyer}
+          errors={form.buyerErrors}
+          showErrors={form.touched}
+          emailLocked={Boolean(user?.email)}
+          emailFromAccount={needsAccount}
+          questions={form.buyerQuestions}
+          answers={form.buyerAnswers}
+          onChange={form.setBuyer}
+          onAnswer={form.setBuyerAnswer}
+          signInHref={isGuest && !accountRequired ? signInHref : null}
+        />
+        {/* One ticket with nothing else to ask: the attendee card is not
+            shown, so this is how it goes to someone else. */}
+        {soloBuyer ? (
+          <button
+            type="button"
+            onClick={() => form.setFirstIsBuyer(false)}
+            className="mt-3 text-[13px] font-semibold text-white/50 underline underline-offset-4 transition hover:text-white"
+          >
+            La entrada es para otra persona
+          </button>
         ) : null}
       </section>
+      ) : null}
+
+      {attendeesStep ? (
+        <section>
+          <StepHeading n={attendeesStep}>
+            {form.quantity === 1 ? "Tu entrada" : "Asistentes"}
+          </StepHeading>
+          <div className="flex flex-col gap-3">
+            {form.holders.map((holder, index) => (
+              <HolderCard
+                key={index}
+                index={index}
+                holder={holder}
+                errors={form.holderErrors[index]}
+                showErrors={form.touched}
+                questions={form.questions}
+                typeName={form.entryType?.name ?? ""}
+                isMe={false}
+                forBuyer={index === 0 ? form.firstIsBuyer : undefined}
+                onForBuyer={index === 0 ? form.setFirstIsBuyer : undefined}
+                onChange={(patch) => form.updateHolder(index, patch)}
+                onAnswer={(questionId, value) => form.setAnswer(index, questionId, value)}
+              />
+            ))}
+          </div>
+          {form.touched && form.duplicateEmail ? (
+            <p data-scroll-target="invalid" className="mt-2 text-sm text-red-300">
+              Cada ticket necesita un correo distinto.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       {showGovernmentId ? (
         <GovernmentIdField
           value={form.governmentId}
           onChange={form.setGovernmentId}
-          step={4 + (form.hasResourceGroups ? 1 : 0)}
+          step={idStep}
           showError={form.touched && !form.governmentIdValid}
           rejectedMessage={form.governmentIdRejectedMessage}
         />
@@ -277,13 +449,13 @@ export function ReserveView({ eventId }: { eventId: string }) {
           value={form.donation}
           onChange={form.setDonation}
           suggestedCents={form.suggestedDonationCents}
-          step={4 + (form.hasResourceGroups ? 1 : 0) + idStep}
+          step={donationStep}
         />
       ) : null}
 
       {!form.isFree ? (
         <PromoCodeField
-          step={4 + (form.hasResourceGroups ? 1 : 0) + idStep + donationStep}
+          step={promoStep}
           value={form.promoCodeDraft}
           onChange={form.setPromoCodeDraft}
           onApply={form.applyPromoCode}
@@ -295,17 +467,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
       ) : null}
 
       <section>
-        <StepHeading
-          n={
-            4 +
-            (form.hasResourceGroups ? 1 : 0) +
-            idStep +
-            donationStep +
-            promoStep
-          }
-        >
-          Tu compra
-        </StepHeading>
+        <StepHeading n={summaryStep}>Tu compra</StepHeading>
         <ReserveSummary
           quantity={form.quantity}
           typeName={form.entryType?.name ?? ""}
@@ -318,31 +480,11 @@ export function ReserveView({ eventId }: { eventId: string }) {
         />
       </section>
 
-      {needsAccount ? (
-        <ReserveAccountStep
-          step={
-            5 +
-            (form.hasResourceGroups ? 1 : 0) +
-            idStep +
-            donationStep +
-            promoStep
-          }
-          suggestedEmail={form.holders[0]?.email ?? ""}
-          suggestedName={form.holders[0]?.name ?? ""}
-          onLeave={form.saveDraft}
-        />
-      ) : !chargesNothing ? (
-        <PaymentMethodStep
-          step={
-            5 +
-            (form.hasResourceGroups ? 1 : 0) +
-            idStep +
-            donationStep +
-            promoStep
-          }
-          checkout={checkout}
-        />
-      ) : null}
+      <div id="reserve-pay" ref={setPayNode} className="scroll-mt-6">
+        {!needsAccount && !chargesNothing ? (
+          <PaymentMethodStep step={payStep} checkout={checkout} />
+        ) : null}
+      </div>
 
       <CampaignConsentField
         campaigns={form.campaigns}
@@ -356,27 +498,24 @@ export function ReserveView({ eventId }: { eventId: string }) {
       {pendingOrder ? (
         <PendingOrderNotice order={pendingOrder} eventId={eventId} />
       ) : null}
+      {form.guestPending ? (
+        <GuestPendingOrderNotice
+          order={form.guestPending}
+          eventId={eventId}
+          busy={form.submitting}
+          onDrop={() => void form.dropGuestPending()}
+        />
+      ) : null}
 
       {error ? <ErrorState message={error} /> : null}
 
-      {/* Informed consent before paying: the terms, the refund policy, the
-          privacy notice and the event's own refund rules are linked right where
-          the buyer commits. */}
-      <p className="text-center text-[12px] leading-relaxed text-white/45">
-        Al {chargesNothing ? "confirmar" : "pagar"} aceptas los{" "}
-        <Link href="/terminos" target="_blank" className="underline underline-offset-2 hover:text-white">
-          Términos y Condiciones
-        </Link>
-        , la{" "}
-        <Link href="/reembolsos" target="_blank" className="underline underline-offset-2 hover:text-white">
-          Política de Reembolsos
-        </Link>{" "}
-        y la{" "}
-        <Link href="/privacidad" target="_blank" className="underline underline-offset-2 hover:text-white">
-          Política de Privacidad
-        </Link>{" "}
-        de Allons, y compartes con el organizador los datos de los asistentes.
-      </p>
+      {/* Where Turnstile draws its box when it needs a click; empty otherwise. */}
+      <div ref={turnstile.container} className="flex justify-center empty:hidden" />
+
+      {/* Same tab: a policy opened behind the checkout read as leaving with
+          no warning. The leave guard asks first; reading one keeps the hold
+          and the draft, so coming back lands where they were. */}
+      <ConsentNote verb={chargesNothing ? "confirmar" : "pagar"} sharesAttendees />
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(14px,env(safe-area-inset-bottom))] sm:px-6">
         <div className="pointer-events-auto mx-auto flex max-w-2xl items-center gap-2 rounded-[28px] border border-white/10 bg-[#0a0a0b]/80 p-2 pl-4 shadow-[0_-20px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:gap-3 sm:p-2.5 sm:pl-5">
@@ -401,7 +540,7 @@ export function ReserveView({ eventId }: { eventId: string }) {
             {form.preview
               ? "Reservar"
               : needsAccount
-                ? "Continuar"
+                ? "Reservar"
                 : chargesNothing
                 ? "Confirmar"
                 : payInApp
@@ -426,6 +565,46 @@ export function ReserveView({ eventId }: { eventId: string }) {
         ) : null}
       </div>
 
+      <LeaveCheckoutModal
+        open={leaveGuard.pending}
+        holdExpiresAt={form.holdExpiresAt}
+        hasInput={hasInput}
+        readingPolicy={consentLabelFor(leaveGuard.pendingHref)}
+        onStay={leaveGuard.stay}
+        onLeave={() => {
+          // A policy page is a detour, not an exit: the hold and the draft
+          // stay in storage and the checkout resumes on the way back.
+          if (!consentLabelFor(leaveGuard.pendingHref)) abandonReserve(eventId);
+          leaveGuard.leave();
+        }}
+      />
+
+      <ReserveAccountModal
+        open={accountOpen && needsAccount}
+        onClose={() => setAccountOpen(false)}
+        reason={
+          form.guestUnavailable
+            ? "Por ahora este evento pide entrar con tu cuenta para pagar. Todo lo que llenaste sigue aquí."
+            : null
+        }
+        suggestedEmail={form.buyer.email}
+        suggestedName={form.buyer.name}
+        onName={form.setBuyerNameFromAccount}
+        onLeave={() => {
+          leaveGuard.release();
+          form.saveDraft();
+          try {
+            window.sessionStorage.setItem(resumeKey(eventId), "1");
+          } catch {
+            /* they scroll down themselves */
+          }
+        }}
+      />
     </div>
   );
+}
+
+/** Set before leaving for Google: come back to the payment step, not the top. */
+function resumeKey(eventId: string) {
+  return `allons-reserve-resume:${eventId}`;
 }

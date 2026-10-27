@@ -16,7 +16,7 @@ export function EventQuestionsFields({ q }: { q: ReturnType<typeof useEventQuest
     <Card className="flex flex-col gap-4">
       <SwitchRow
         label="Pedir datos al registrarse"
-        hint="Preguntas que responde cada persona al comprar o reservar, además de su nombre y correo."
+        hint="Preguntas al comprar o reservar, además del nombre y correo. Cada una se hace a cada asistente o una sola vez a quien compra."
         checked={q.enabled}
         onChange={q.setEnabled}
       />

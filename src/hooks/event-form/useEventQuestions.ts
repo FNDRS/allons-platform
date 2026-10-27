@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { EventQuestionKind } from "@/lib/api/events";
+import type { EventQuestionKind, EventQuestionScope } from "@/lib/api/events";
 import type {
   ProviderEventDetail,
   ProviderEventQuestion,
@@ -11,6 +11,7 @@ import {
   MAX_EVENT_QUESTIONS,
   MAX_QUESTION_OPTIONS,
   isEventQuestionKind,
+  isEventQuestionScope,
   parseOptionLimit,
   parseQuestionOptions,
   questionNeedsOptions,
@@ -29,7 +30,9 @@ export interface EventQuestionDraft {
   /** Comma separated, as typed, so a comma can be written mid-option. */
   optionsText: string;
   required: boolean;
-  /** Each option has its own stock. Only select and radio. */
+  /** Asked per ticket (attendee) or once per order (buyer). */
+  scope: EventQuestionScope;
+  /** Each option has its own stock. Only select and radio, per attendee. */
   limited: boolean;
   /** Limit per option, as typed. Empty means no limit for that option. */
   limitsText: Record<string, string>;
@@ -52,6 +55,7 @@ function fromQuestion(question: ProviderEventQuestion): EventQuestionDraft {
     kind: isEventQuestionKind(question.kind) ? question.kind : "text",
     optionsText: (question.options ?? []).join(", "),
     required: question.required,
+    scope: isEventQuestionScope(question.scope) ? question.scope : "attendee",
     limited: limits.length > 0,
     limitsText: Object.fromEntries(limits.map(([option, limit]) => [option, String(limit)])),
     taken: question.optionTaken ?? {},
@@ -74,8 +78,13 @@ function toPayload(drafts: EventQuestionDraft[]): ProviderEventQuestionInput[] {
     label: draft.label.trim(),
     kind: draft.kind,
     ...(questionNeedsOptions(draft.kind) ? { options: parseQuestionOptions(draft.optionsText) } : {}),
-    ...(questionTakesLimits(draft.kind) ? { optionLimits: limitsPayload(draft) } : {}),
+    // Null clears stored limits: a question asked once per order has no
+    // per-option stock, and the editor hides the limits for it.
+    ...(questionTakesLimits(draft.kind)
+      ? { optionLimits: draft.scope === "attendee" ? limitsPayload(draft) : null }
+      : {}),
     required: draft.required,
+    scope: draft.scope,
     sortOrder,
   }));
 }
@@ -116,7 +125,7 @@ export function useEventQuestions(event: ProviderEventDetail | null) {
             out.push(`dejar como máximo ${MAX_QUESTION_OPTIONS} opciones en la pregunta ${n}`);
           }
         }
-        if (questionTakesLimits(draft.kind) && draft.limited) {
+        if (questionTakesLimits(draft.kind) && draft.scope === "attendee" && draft.limited) {
           const bad = parseQuestionOptions(draft.optionsText).some(
             (option) => parseOptionLimit(draft.limitsText[option] ?? "") === null,
           );
@@ -138,6 +147,7 @@ export function useEventQuestions(event: ProviderEventDetail | null) {
               kind: "text",
               optionsText: "",
               required: true,
+              scope: "attendee",
               limited: false,
               limitsText: {},
               taken: {},
