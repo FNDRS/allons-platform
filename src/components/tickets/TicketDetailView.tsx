@@ -82,14 +82,21 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
             {ticket.answers.map((row) => (
               <li
                 key={row.label}
-                className="min-w-[160px] rounded-[20px] bg-accent-soft px-6 py-3.5 ring-1 ring-accent/45"
+                className="min-w-[172px] rounded-[22px] bg-[linear-gradient(135deg,rgba(246,112,16,0.75),rgba(246,112,16,0.18)_50%,rgba(255,255,255,0.1))] p-px shadow-[0_22px_48px_-24px_rgba(246,112,16,0.6)]"
               >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">
-                  {row.label}
-                </p>
-                <p className="mt-1 break-words text-[28px] font-bold leading-none tracking-[-0.02em] text-white">
-                  {row.answer}
-                </p>
+                <div className="relative overflow-hidden rounded-[21px] bg-[linear-gradient(165deg,#1c120b_0%,#0f0b08_100%)] px-6 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.09)]">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -right-6 -top-10 size-28 rounded-full bg-accent/30 blur-2xl"
+                  />
+                  <p className="relative flex items-center justify-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.2em] text-accent">
+                    <span aria-hidden className="size-1 rounded-full bg-accent shadow-[0_0_8px_rgba(246,112,16,0.9)]" />
+                    {row.label}
+                  </p>
+                  <p className="relative mt-1.5 break-words text-[32px] font-bold leading-none tracking-[-0.03em] text-white [text-shadow:0_0_28px_rgba(246,112,16,0.35)]">
+                    {row.answer}
+                  </p>
+                </div>
               </li>
             ))}
           </ul>

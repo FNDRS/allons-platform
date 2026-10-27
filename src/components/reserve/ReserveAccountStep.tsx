@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { FieldError, Label } from "@/components/ui/Field";
+import { CodeInput } from "@/components/ui/CodeInput";
 import { SmoothInput } from "@/components/ui/SmoothInput";
 import { GoogleMark } from "@/components/app/LoginForm";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -143,20 +144,17 @@ export function ReserveAccountStep({
               <span className="font-semibold text-white">{sentTo}</span>.
               Escríbelo aquí, no hace falta salir de esta página.
             </p>
-            <label className="block">
+            <div>
               <Label>Código</Label>
-              <SmoothInput
+              <CodeInput
                 value={code}
-                onChange={(event) =>
-                  setCode(event.target.value.replace(/\D/g, "").slice(0, 8))
-                }
-                autoComplete="one-time-code"
-                inputMode="numeric"
-                placeholder="123456"
+                onChange={setCode}
+                length={8}
                 autoFocus
-                className="tracking-[0.4em]"
+                invalid={Boolean(error)}
+                aria-label="Código de 8 dígitos"
               />
-            </label>
+            </div>
             <FieldError>{error}</FieldError>
             <Button type="submit" size="lg" full loading={busy === "verify"}>
               Confirmar código
